@@ -79,6 +79,11 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: NEXTAUTH_URL
+            - name: AUTH_TRUST_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: AUTH_TRUST_HOST
 
   selector:
     matchLabels:
