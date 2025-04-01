@@ -4,6 +4,11 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
+
+# Install pnpm
+RUN npm install -g pnpm
+
+
 WORKDIR /app
 
 # Install dependencies
@@ -20,7 +25,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build the application
-RUN pnpm build
+RUN npm build
 
 # Production stage
 FROM base AS runner
