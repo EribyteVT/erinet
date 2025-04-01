@@ -104,6 +104,11 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: DEFAULT_REDIRECT_URL
+            - name: NEXT_PUBLIC_DISCORD_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXT_PUBLIC_DISCORD_CLIENT_ID
 
   selector:
     matchLabels:
