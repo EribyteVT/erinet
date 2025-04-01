@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: "https://stage.eri.bot",
+  assetPrefix: "https://eri.bot",
   output: "standalone",
   images: {
     remotePatterns: [
@@ -9,14 +9,14 @@ const nextConfig = {
         hostname: "cdn.discordapp.com",
       },
     ],
-    domains: ["erinet-stage.eribyte.net", "erinet.eribyte.net"],
+    domains: ["eri.bot", "stage.eri.bot"],
   },
   
 
   experimental: {
     serverActions: {
       allowedOrigins: [
-        "erinet.eribyte.net",
+        "eri.bot",
         "stage.eri.bot",
         "192.168.49.2:8443",
         "localhost:3000",
