@@ -20,7 +20,7 @@ const getCallbackUrl = () => {
 
 const getAuthorizationUrl = () => {
   const params = new URLSearchParams({
-    client_id: "1299167617004732486",
+    client_id: process.env.AUTH_DISCORD_ID!,
     response_type: "code",
     redirect_uri: getCallbackUrl(),
     integration_type: "0",
