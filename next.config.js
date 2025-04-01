@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: process.env.ASSET_PREFIX,
+  assetPrefix: "stage.eri.bot",
   output: "standalone",
   images: {
     remotePatterns: [
@@ -11,15 +11,13 @@ const nextConfig = {
     ],
     domains: ["erinet-stage.eribyte.net", "erinet.eribyte.net"],
   },
-  env: {
-    ASSET_PREFIX: process.env.ASSET_PREFIX || "",
-  },
+  
 
   experimental: {
     serverActions: {
       allowedOrigins: [
         "erinet.eribyte.net",
-        "erinet-stage.eribyte.net",
+        "stage.eri.bot",
         "192.168.49.2:8443",
         "localhost:3000",
       ],
