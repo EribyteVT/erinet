@@ -25,7 +25,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build the application
-RUN npm build
+RUN pnpm build
 
 # Production stage
 FROM base AS runner
