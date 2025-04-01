@@ -5,6 +5,31 @@ import DiscordProvider from "next-auth/providers/discord";
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
 
+const getCallbackUrl = () => {
+  // Use environment variable if available (production)
+  if (process.env.AUTH_DISCORD_REDIRECT_URI) {
+    return new URL(
+      "/api/auth/callback/discord",
+      process.env.AUTH_DISCORD_REDIRECT_URI
+    ).toString();
+  }
+
+  // Fallback for development
+  return "http://localhost:3000/api/auth/callback/discord";
+};
+
+const getAuthorizationUrl = () => {
+  const params = new URLSearchParams({
+    client_id: process.env.AUTH_DISCORD_ID!,
+    response_type: "code",
+    redirect_uri: getCallbackUrl(),
+    integration_type: "0",
+    scope: "email identify guilds",
+  });
+
+  return `https://discord.com/oauth2/authorize?${params.toString()}`;
+};
+
 // Extend the JWT type to include our custom properties
 interface ExtendedJWT extends JWT {
   discordAccount?: {
@@ -28,8 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     DiscordProvider({
       id: "discord",
       name: "Discord",
-      authorization:
-        "https://discord.com/oauth2/authorize?client_id=1299167617004732486&response_type=code&redirect_uri=https%3A%2F%2Ferinet.eribot.net%2Fapi%2Fauth%2Fcallback%2Fdiscord&scope=identify+email+guilds",
+      authorization: getAuthorizationUrl(),
       token: "https://discord.com/api/oauth2/token",
       userinfo: "https://discord.com/api/users/@me",
       profile(profile) {

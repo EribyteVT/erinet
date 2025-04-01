@@ -11,6 +11,15 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "erinet.eribyte.net",
+        "192.168.49.2:8443",
+        // Add any other domains that might forward requests
+      ],
+    },
+  },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Add node-loader for .node files
     config.module.rules.push({

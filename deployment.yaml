@@ -69,6 +69,21 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: NEXT_PUBLIC_API_BASE_URL
+            - name: NEXT_PUBLIC_TRUSTED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXT_PUBLIC_TRUSTED_HOSTS
+            - name: NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS
+            - name: AUTH_DISCORD_REDIRECT_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: AUTH_DISCORD_REDIRECT_URI
             - name: TWITCH_REDIRECT_URI
               valueFrom:
                 configMapKeyRef:
