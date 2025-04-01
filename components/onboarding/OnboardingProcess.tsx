@@ -31,12 +31,14 @@ interface OnboardingProcessProps {
   guild: GuildData;
   session: Session;
   apiBaseUrl: string;
+  botInviteBase: string
 }
 
 export default function OnboardingProcess({
   guild,
   session,
   apiBaseUrl,
+  botInviteBase,
 }: OnboardingProcessProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
@@ -47,7 +49,7 @@ export default function OnboardingProcess({
   const [botInvited, setBotInvited] = useState(false);
 
   // Generate bot invite URL with required permissions
-  const botInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=${guild.id}`;
+  const botInviteUrl = botInviteBase + guild.id;
 
   const handleInviteBot = () => {
     window.open(botInviteUrl, "_blank");
