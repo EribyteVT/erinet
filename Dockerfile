@@ -8,7 +8,14 @@ FROM base AS deps
 WORKDIR /app
 
 ARG ASSET_PREFIX
-ENV ASSET_PREFIX=${ASSET_PREFIX}
+
+RUN echo "get arg"
+RUN echo "${ASSET_PREFIX}"
+
+ENV ASSET_PREFIX ${ASSET_PREFIX}
+
+RUN echo "get use arg"
+RUN echo "${ASSET_PREFIX}"
 
 # Install dependencies
 COPY package.json pnpm-lock.yaml ./
