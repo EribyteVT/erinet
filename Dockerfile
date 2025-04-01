@@ -47,4 +47,4 @@ ENV PORT 8085
 ENV HOSTNAME "0.0.0.0"
 
 # Start the application
-CMD ["pnpm", "start"]
+CMD ["node", "server.js"]
