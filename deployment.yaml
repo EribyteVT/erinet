@@ -99,6 +99,11 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: AUTH_TRUST_HOST
+            - name: DEFAULT_REDIRECT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: DEFAULT_REDIRECT_URL
 
   selector:
     matchLabels:
