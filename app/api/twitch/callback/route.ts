@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
     });
 
     const successRedirectUrl = guildId
-      ? `/${guildId}/manage`
+      ? DEFAULT_REDIRECT_URL + `/${guildId}/manage`
       : DEFAULT_REDIRECT_URL;
 
     return NextResponse.redirect(new URL(successRedirectUrl, request.url));
