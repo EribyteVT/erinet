@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: "stage.eri.bot",
+  assetPrefix: "https://stage.eri.bot",
   output: "standalone",
   images: {
     remotePatterns: [
