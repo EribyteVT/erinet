@@ -64,6 +64,7 @@ export default function OnboardingProcess({
     setError(null);
 
     try {
+      let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const response = await fetch(`${apiBaseUrl}/streamers/create`, {
         method: "POST",
         headers: {
@@ -72,6 +73,7 @@ export default function OnboardingProcess({
         body: JSON.stringify({
           streamerName,
           levelSystem,
+          timezone,
           guildId: guild.id,
           authToken: session.user.discordAccount?.access_token,
         }),
