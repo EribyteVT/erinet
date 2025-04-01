@@ -152,7 +152,9 @@ export default function OnboardingProcess({
                 </p>
                 <p className="text-sm text-amber-600 dark:text-amber-400">
                   <AlertCircle className="h-4 w-4 inline-block mr-1" />
-                  Note: You'll need Admin permissions in the server to add bots.
+                  {
+                    "Note: You'll need Admin permissions in the server to add bots."
+                  }
                 </p>
               </div>
 
@@ -209,8 +211,9 @@ export default function OnboardingProcess({
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 rounded-lg">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
                   <AlertCircle className="h-4 w-4 inline-block mr-1" />
-                  Once you complete this setup, you'll be able to manage streams
-                  and connect with Twitch.
+                  {
+                    "Once you complete this setup, you'll be able to manage streams and connect with Twitch."
+                  }
                 </p>
               </div>
 
