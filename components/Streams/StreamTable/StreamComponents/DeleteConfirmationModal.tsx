@@ -37,13 +37,14 @@ export function DeleteConfirmationModal({
             <Trash2 className="h-5 w-5" /> Delete Stream
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the stream "{stream.stream_name}"?
+            Are you sure you want to delete the stream &quo{stream.stream_name}
+            &quo?
           </DialogDescription>
         </DialogHeader>
 
         {hasExternalServices && (
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-3 my-2">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start 1gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
               <div>
                 <p className="font-medium text-amber-800 dark:text-amber-300">

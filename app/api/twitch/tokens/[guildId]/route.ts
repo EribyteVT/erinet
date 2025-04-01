@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 
-// Set these in your environment variables
-const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID!;
-const TWITCH_REDIRECT_URI = process.env.TWITCH_REDIRECT_URI!;
-
 export async function GET(
   request: NextRequest,
-  { params }: { params: { guildId: string } }
+  { params }: { params: Promise<{ guildId: string }> }
 ) {
   try {
     const resolvedParams = await Promise.resolve(params);

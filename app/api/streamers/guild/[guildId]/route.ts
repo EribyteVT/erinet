@@ -3,12 +3,10 @@ import { prisma } from "@/app/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: { guildId: string } }
+  params: { params: Promise<{ guildId: string }> }
 ) {
   try {
-    // If params is a Promise, await it first
-    const resolvedParams = await Promise.resolve(params);
-    const { guildId } = resolvedParams;
+    const { guildId } = await params.params;
 
     const streamer = await prisma.streamer_lookup.findFirst({
       where: { guild: guildId },

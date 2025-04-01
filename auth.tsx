@@ -2,6 +2,27 @@ import NextAuth from "next-auth";
 
 import DiscordProvider from "next-auth/providers/discord";
 
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
+
+// Extend the JWT type to include our custom properties
+interface ExtendedJWT extends JWT {
+  discordAccount?: {
+    id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+    access_token?: string;
+  };
+  twitchAccount?: {
+    id: string;
+    username: string;
+    email: string;
+    avatar?: string;
+    access_token?: string;
+  };
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     DiscordProvider({
@@ -41,17 +62,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (account.provider === "discord") {
           token.discordAccount = {
             id: user.id,
-            username: user.name,
-            email: user.email,
-            avatar: user.image,
-            access_token: account.access_token,
-          };
-        }
-        if (account.provider === "twitch") {
-          token.twitchAccount = {
-            id: user.id,
-            username: user.name,
-            email: user.email,
+            username: user.name || "",
+            email: user.email || "",
             avatar: user.image,
             access_token: account.access_token,
           };
@@ -61,12 +73,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     async session({ session, token }) {
-      // Add the account information from the token to the session
-      if (token.discordAccount) {
-        session.user.discordAccount = token.discordAccount;
+      const extendedToken = token as ExtendedJWT;
+
+      const typedSession = session as Session & {
+        user: {
+          id: string;
+          discordAccount?: {
+            id: string;
+            username: string;
+            email: string;
+            avatar?: string;
+            access_token?: string;
+          };
+        };
+      };
+
+      if (extendedToken.discordAccount) {
+        typedSession.user.discordAccount = extendedToken.discordAccount;
       }
-      session.user.id = token.sub;
-      return session;
+      typedSession.user.id = extendedToken.sub || "";
+
+      return typedSession;
     },
 
     async signIn({ user, account, profile }) {

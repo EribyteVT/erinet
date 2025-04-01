@@ -1,4 +1,3 @@
-// app/api/twitch/users/id/[userId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
@@ -67,7 +66,7 @@ async function getTwitchUserById(twitchUserId: string, authToken: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const resolvedParams = await Promise.resolve(params);
