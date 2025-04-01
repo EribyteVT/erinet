@@ -29,7 +29,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       id: "discord",
       name: "Discord",
       authorization:
-        "https://discord.com/oauth2/authorize?client_id=1300567946917187627&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fcallback%2Fdiscord&integration_type=0&scope=email+identify+guilds",
+        "https://discord.com/oauth2/authorize?client_id=1299167617004732486&response_type=code&redirect_uri=https%3A%2F%2Ferinet.eribot.net&scope=identify+email+guilds",
       token: "https://discord.com/api/oauth2/token",
       userinfo: "https://discord.com/api/users/@me",
       profile(profile) {
