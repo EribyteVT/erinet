@@ -14,6 +14,7 @@ export const TwitchUserSearch = ({
   setLoadingMessage,
   onTwitchConnected,
   setError,
+  apiBaseUrl,
 }: {
   streamer: Streamer;
   session: Session;
@@ -21,8 +22,9 @@ export const TwitchUserSearch = ({
   setLoadingMessage: (message: string) => void;
   onTwitchConnected: (twitchId: string) => void;
   setError: (error: string | null) => void;
+  apiBaseUrl: string;
 }) => {
-  const wrapper = ErinetCrudWrapper();
+  const wrapper = ErinetCrudWrapper(apiBaseUrl);
   const [twitchName, setTwitchName] = useState("");
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
   const [searching, setSearching] = useState(false);

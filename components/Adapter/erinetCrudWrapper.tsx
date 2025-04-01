@@ -7,8 +7,10 @@ import {
 } from "../Streams/types";
 import dayjs from "dayjs";
 
-export default function createStreamApiClient() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export default function createStreamApiClient(baseUrlClient?: string) {
+  const baseUrl = baseUrlClient
+    ? baseUrlClient
+    : process.env.NEXT_PUBLIC_API_BASE_URL;
 
   return {
     async getStreamerByGuildId(guildId: string): Promise<StreamerDataResponse> {

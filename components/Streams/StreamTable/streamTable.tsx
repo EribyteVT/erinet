@@ -48,6 +48,7 @@ export function StreamTable({
   isLoading,
   setLoadingMessage,
   loadingMessage,
+  apiBaseUrl,
 }: {
   guild: string;
   session: Session;
@@ -58,6 +59,7 @@ export function StreamTable({
   isLoading: boolean;
   setLoadingMessage: Dispatch<SetStateAction<string>>;
   loadingMessage: string;
+  apiBaseUrl: string;
 }) {
   // State management
   const [data, setData] = React.useState<Stream[]>([]);
@@ -77,7 +79,8 @@ export function StreamTable({
 
   const { fetchStreamsArb, deleteStream, updateStream } = useStreams(
     guild,
-    sid
+    sid,
+    apiBaseUrl
   );
 
   // Stream operations handlers
@@ -166,6 +169,7 @@ export function StreamTable({
       broadcasterId: twitchBroadcasterId,
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
+      apiBaseUrl: apiBaseUrl,
     }),
     state: { sorting },
     onSortingChange: setSorting,
@@ -287,6 +291,7 @@ export function StreamTable({
                   }}
                   streamer={streamer}
                   hasTwitchAuth={hasTwitchAuth}
+                  apiBaseUrl={apiBaseUrl}
                 />
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (

@@ -12,9 +12,14 @@ import type { Session } from "next-auth";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 
 // Helper function to send stream to Discord
-async function sendToDiscord(stream: Stream, authToken: string, guild: string) {
+async function sendToDiscord(
+  stream: Stream,
+  authToken: string,
+  guild: string,
+  apiBaseUrl: string
+) {
   try {
-    const wrapper = ErinetCrudWrapper();
+    const wrapper = ErinetCrudWrapper(apiBaseUrl);
     const response = await wrapper.addEventToGuild(stream, authToken, guild);
     return response.data.event_id;
   } catch (error) {
@@ -28,10 +33,11 @@ async function sendToTwitch(
   stream: Stream,
   discordAuthToken: string,
   broadcasterId: string,
-  guild: string
+  guild: string,
+  apiBaseUrl: string
 ) {
   try {
-    const wrapper = ErinetCrudWrapper();
+    const wrapper = ErinetCrudWrapper(apiBaseUrl);
     const response = await wrapper.addEventToTwitch(
       stream,
       discordAuthToken,
@@ -52,6 +58,7 @@ export const AddRow: React.FC<{
   setIsLoading: (loading: boolean) => void;
   streamer: Streamer;
   hasTwitchAuth: boolean;
+  apiBaseUrl: string;
 }> = ({
   guild,
   session,
@@ -59,12 +66,13 @@ export const AddRow: React.FC<{
   setIsLoading,
   streamer,
   hasTwitchAuth,
+  apiBaseUrl,
 }) => {
   const [date, setDate] = React.useState(new Date());
   const [time, setTime] = React.useState(dayjs());
   const [name, setName] = React.useState("");
   const [duration, setDuration] = React.useState("150");
-  const { addStream } = useStreams(guild, streamer.streamer_id);
+  const { addStream } = useStreams(guild, streamer.streamer_id, apiBaseUrl);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -101,7 +109,8 @@ export const AddRow: React.FC<{
           const eventId = await sendToDiscord(
             updatedStream,
             session.user.discordAccount?.access_token!,
-            guild
+            guild,
+            apiBaseUrl
           );
           if (eventId) {
             updatedStream.event_id = eventId;
@@ -118,7 +127,8 @@ export const AddRow: React.FC<{
             updatedStream,
             session.user.discordAccount?.access_token!,
             streamer.twitch_user_id,
-            guild
+            guild,
+            apiBaseUrl
           );
           if (segmentId) {
             updatedStream.twitch_segment_id = segmentId;

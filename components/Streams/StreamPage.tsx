@@ -21,10 +21,12 @@ export default function StreamPage({
   session,
   guild,
   streamer_pass,
+  apiBaseUrl,
 }: {
   session: Session;
   guild: GuildData;
   streamer_pass: Streamer;
+  apiBaseUrl: string;
 }) {
   // Main state
   const [streamer, setStreamer] = useState<Streamer>(streamer_pass);
@@ -38,7 +40,7 @@ export default function StreamPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading...");
 
-  const wrapper = ErinetCrudWrapper();
+  const wrapper = ErinetCrudWrapper(apiBaseUrl);
 
   // Fetch Twitch auth status once, share with child components
   useEffect(() => {
@@ -107,6 +109,7 @@ export default function StreamPage({
           isLoading={isLoading}
           setLoadingMessage={setLoadingMessage}
           loadingMessage={loadingMessage}
+          apiBaseUrl={apiBaseUrl}
         />
       </div>
 
@@ -126,6 +129,7 @@ export default function StreamPage({
               setTwitchBroadcasterId={setTwitchBroadcasterId}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
+              apiBaseUrl={apiBaseUrl}
             />
           </div>
         </div>
@@ -143,6 +147,7 @@ export default function StreamPage({
               hasTwitchAuth={hasTwitchAuth}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
+              apiBaseUrl={apiBaseUrl}
             />
           </div>
         </div>

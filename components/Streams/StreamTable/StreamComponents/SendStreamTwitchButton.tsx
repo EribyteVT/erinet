@@ -17,12 +17,14 @@ export const SendStreamTwitchButton = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
+  apiBaseUrl,
 }: {
   stream: Stream;
   discordAuthToken: string;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
+  apiBaseUrl: string;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -83,7 +85,7 @@ export const SendStreamTwitchButton = ({
   async function sendToTwitch() {
     setIsLoading(true);
     try {
-      const wrapper = ErinetCrudWrapper();
+      const wrapper = ErinetCrudWrapper(apiBaseUrl);
 
       // We don't need to pass the twitchAuthToken anymore - it will be retrieved server-side
       const response = await wrapper.addEventToTwitch(

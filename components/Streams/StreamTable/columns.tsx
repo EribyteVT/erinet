@@ -30,6 +30,7 @@ export const columns = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
+  apiBaseUrl,
 }: {
   onDelete: (stream: Stream) => void;
   onEdit: (stream: Stream) => void;
@@ -37,6 +38,7 @@ export const columns = ({
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
+  apiBaseUrl: string;
 }): ColumnDef<Stream>[] => [
   {
     accessorKey: "stream_id",
@@ -88,6 +90,7 @@ export const columns = ({
             stream={row.original}
             authToken={discordAuthToken}
             guild={guild}
+            apiBaseUrl={apiBaseUrl}
           />
         }
       </div>
@@ -105,6 +108,7 @@ export const columns = ({
             broadcasterId={broadcasterId}
             guild={guild}
             hasTwitchAuth={hasTwitchAuth}
+            apiBaseUrl={apiBaseUrl}
           />
         }
       </div>

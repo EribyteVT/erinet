@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Streamer } from "../types";
 import { TwitchUserSearch } from "./TwitchUserSearch";
 import { Session } from "next-auth";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import ConnectedTwitchUser from "./ConnectedTwitch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -16,6 +15,7 @@ export const TwitchConnect = ({
   setTwitchBroadcasterId,
   setIsLoading,
   setLoadingMessage,
+  apiBaseUrl,
 }: {
   streamer: Streamer;
   session: Session;
@@ -24,6 +24,7 @@ export const TwitchConnect = ({
   setTwitchBroadcasterId: (id: string | undefined) => void;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
+  apiBaseUrl: string;
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +52,7 @@ export const TwitchConnect = ({
             setIsLoading={setIsLoading}
             setLoadingMessage={setLoadingMessage}
             setError={setError}
+            apiBaseUrl={apiBaseUrl}
           />
         </div>
       ) : (
@@ -78,6 +80,7 @@ export const TwitchConnect = ({
             setLoadingMessage={setLoadingMessage}
             onTwitchConnected={handleTwitchConnected}
             setError={setError}
+            apiBaseUrl={apiBaseUrl}
           />
         </div>
       )}

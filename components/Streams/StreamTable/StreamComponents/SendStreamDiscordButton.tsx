@@ -9,10 +9,12 @@ export const SendStreamDiscordButton = ({
   stream,
   authToken,
   guild,
+  apiBaseUrl,
 }: {
   stream: Stream;
   authToken: string;
   guild: string;
+  apiBaseUrl: string;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -25,7 +27,7 @@ export const SendStreamDiscordButton = ({
   async function sendToDiscord() {
     setIsLoading(true);
     try {
-      const wrapper = ErinetCrudWrapper();
+      const wrapper = ErinetCrudWrapper(apiBaseUrl);
       const response = await wrapper.addEventToGuild(stream, authToken, guild);
 
       if (response.response === "OKAY") {

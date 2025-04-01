@@ -12,6 +12,7 @@ export default async function Page({
   const wrapper = ErinetCrudWrapper();
   const guildId = (await params).guildId;
   const session = await auth();
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
   const api = DiscordApi("https://discord.com/api/v10/");
 
@@ -47,6 +48,7 @@ export default async function Page({
       session={session}
       guild={guild}
       streamer_pass={streamer}
+      apiBaseUrl={apiBaseUrl}
     ></StreamPage>
   );
 }

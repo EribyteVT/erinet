@@ -15,6 +15,7 @@ export const GuildOptions = ({
   hasTwitchAuth,
   setIsLoading,
   setLoadingMessage,
+  apiBaseUrl,
 }: {
   streamer: Streamer;
   session: Session;
@@ -22,6 +23,7 @@ export const GuildOptions = ({
   hasTwitchAuth: boolean;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
+  apiBaseUrl: string;
 }) => {
   const [isDiscordAuto, setIsDiscordAuto] = useState<CheckedState>(
     streamer.auto_discord_event === "Y"
@@ -43,7 +45,7 @@ export const GuildOptions = ({
     setSaveStatus({ type: null, message: "" });
 
     try {
-      const wrapper = ErinetCrudWrapper();
+      const wrapper = ErinetCrudWrapper(apiBaseUrl);
       const updatedStreamer = await wrapper.setAutos(
         streamer.streamer_id,
         session.user.discordAccount!.access_token!,

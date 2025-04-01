@@ -9,9 +9,13 @@ interface AddStreamParams {
   accessToken: string;
 }
 
-export const useStreams = (guildId: string, streamerId: number) => {
+export const useStreams = (
+  guildId: string,
+  streamerId: number,
+  apiBaseUrl: string
+) => {
   // Create wrapper instance once and store it in a ref
-  const wrapper = useRef(ErinetCrudWrapper()).current;
+  const wrapper = useRef(ErinetCrudWrapper(apiBaseUrl)).current;
   // Cache streamer ID to avoid repeated API calls
   const streamerIdRef = useRef<string | null>(null);
 
