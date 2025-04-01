@@ -42,7 +42,7 @@ function BuildList({ changelog }: { changelog: any[] }) {
 }
 
 export default function ChangeLog({ content }: { content: any }) {
-  console.log(content.changelog);
+  // console.log(content.changelog);
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div>

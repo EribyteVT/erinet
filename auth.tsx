@@ -27,9 +27,9 @@ const getAuthorizationUrl = () => {
     scope: "email identify guilds",
   });
 
-  console.log(getCallbackUrl());
+  // console.log(getCallbackUrl());
 
-  console.log(`https://discord.com/oauth2/authorize?${params.toString()}`);
+  // console.log(`https://discord.com/oauth2/authorize?${params.toString()}`);
 
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
 };

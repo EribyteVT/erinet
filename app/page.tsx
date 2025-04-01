@@ -11,6 +11,7 @@ import { auth } from "@/auth";
 import ChangeLog from "@/components/home-screen/ChangeLog";
 
 import { promises as fs } from "fs";
+import AssetPrefixDisplay from "@/components/debug/AssetPrefixDisplay";
 
 const myReadFile = async (path: string) => {
   const file = await fs.readFile(process.cwd() + path, "utf8");
@@ -25,9 +26,14 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage() {
   const session = await auth();
+
+  console.log("ASSET PATH RIGHT HERE");
+  console.log(process.env.ASSET_PREFIX);
+  console.log("LOOK ABOVE HERE");
   if (!session || !session.user.discordAccount)
     return (
       <>
+        <AssetPrefixDisplay />
         <div
           className="hidden md:grid place-items-center overflow-hidden"
           style={{ height: "calc(100vh - 66px)" }}
@@ -55,6 +61,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <AssetPrefixDisplay />
       <div className=" relative">
         <h1 className=" text-6xl text-center py-7">Welcome to Eribot!</h1>
         <Image

@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  // local, stage, or prod
   assetPrefix: process.env.ASSET_PREFIX || "",
   output: "standalone",
   images: {
