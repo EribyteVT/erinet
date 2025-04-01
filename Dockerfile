@@ -7,6 +7,9 @@ RUN npm install -g pnpm
 FROM base AS deps
 WORKDIR /app
 
+ARG ASSET_PREFIX
+ENV ASSET_PREFIX=${ASSET_PREFIX}
+
 # Install dependencies
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
@@ -28,9 +31,6 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
-
-ARG ASSET_PREFIX
-ENV ASSET_PREFIX=${ASSET_PREFIX}
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

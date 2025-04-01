@@ -9,7 +9,12 @@ const nextConfig = {
         hostname: "cdn.discordapp.com",
       },
     ],
+    domains: ["erinet-stage.eribyte.net", "erinet.eribyte.net"],
   },
+  env: {
+    ASSET_PREFIX: process.env.ASSET_PREFIX || "",
+  },
+
   experimental: {
     serverActions: {
       allowedOrigins: [

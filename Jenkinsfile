@@ -31,6 +31,9 @@ pipeline {
                     def assetPrefix = environ == "stage" 
                         ? "https://erinet-stage.eribyte.net" 
                         : "https://erinet.eribyte.net"
+
+                
+                    sh "ASSET_PREFIX=${assetPrefix} docker build -t ${DOCKER_IMAGE_NAME} --build-arg ASSET_PREFIX=${assetPrefix} ."
                     
                     // Build the Docker image with the environment variable
                     app = docker.build(DOCKER_IMAGE_NAME, "--build-arg ASSET_PREFIX=${assetPrefix} .")
