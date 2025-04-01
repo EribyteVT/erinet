@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath:
-    process.env.NODE_ENV === "production" ? "https://erinet.eribyte.net" : "",
+  basePath: process.env.NODE_ENV === "production" ? "" : "",
   assetPrefix:
     process.env.NODE_ENV === "production" ? "https://erinet.eribyte.net" : "",
   output: "standalone",
