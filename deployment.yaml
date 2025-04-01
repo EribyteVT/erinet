@@ -74,6 +74,11 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: TWITCH_REDIRECT_URI
+            - name: NEXTAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXTAUTH_URL
 
   selector:
     matchLabels:
