@@ -1,22 +1,6 @@
-module.exports = {
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Modify the `config` object here
-    config.module.rules.push({
-      test: /.node$/,
-      use: {
-        loader: "node-loader",
-      },
-    });
-
-    return config;
-  },
-};
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-};
-
-module.exports = {
   images: {
     remotePatterns: [
       {
@@ -24,4 +8,16 @@ module.exports = {
       },
     ],
   },
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Add node-loader for .node files
+    config.module.rules.push({
+      test: /.node$/,
+      use: {
+        loader: "node-loader",
+      },
+    });
+    return config;
+  },
 };
+
+module.exports = nextConfig;
