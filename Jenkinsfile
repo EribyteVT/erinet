@@ -27,11 +27,13 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Set DEPLOYMENT_ENV based on the environment we're building for
-                    def deployEnv = environ == "stage" ? "stage" : "prod"
+                    // Set ASSET_PREFIX based on the environment we're building for
+                    def assetPrefix = environ == "stage" 
+                        ? "https://erinet-stage.eribyte.net" 
+                        : "https://erinet.eribyte.net"
                     
                     // Build the Docker image with the environment variable
-                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg DEPLOYMENT_ENV=${deployEnv} .")
+                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg ASSET_PREFIX=${assetPrefix} .")
                 }
             }
         }

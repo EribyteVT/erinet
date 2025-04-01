@@ -9,7 +9,7 @@
         "CONFIG_NAME": "erinet-config-stage",
         "ip": "10.96.46.200",
         "external-ip": "10.111.131.200",
-        "env": "stage"
+        "assetPrefix": "https://erinet-stage.eribyte.net"
       }
     },
     {
@@ -20,7 +20,7 @@
         "CONFIG_NAME": "erinet-config-prod",
         "ip": "10.96.46.201",
         "external-ip": "10.111.131.201",
-        "env": "prod"
+        "assetPrefix": "https://erinet.eribyte.net"
       }
     }
   ]
