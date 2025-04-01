@@ -1,29 +1,36 @@
 # Base stage for dependencies
 FROM node:20-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
-
+# Install dependencies only when needed
 FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm i --frozen-lockfile
 
+# Build stage
 FROM base AS builder
 WORKDIR /app
-
-# Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Modify next.config.js to properly build for standalone with host binding
+RUN if [ -f next.config.js ]; then \
+      echo "Updating next.config.js to support output: 'standalone' and proper host binding"; \
+      sed -i '/module.exports/a\  output: "standalone",\n  experimental: {\n    ...((config) => config?.experimental || {})(),\n  },\n' next.config.js; \
+    else \
+      echo "module.exports = {\n  output: \"standalone\",\n  experimental: {}\n};" > next.config.js; \
+    fi
+
 # Generate Prisma client
-RUN pnpm exec prisma generate
+RUN npx prisma generate
 
 # Build the application
 RUN pnpm build
 
+# Production stage
 FROM base AS runner
 WORKDIR /app
 
@@ -43,6 +50,10 @@ USER nextjs
 
 # Expose port
 EXPOSE 3000
+
+# Set environment variables
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
 
 # Start the application
 CMD ["node", "server.js"]
