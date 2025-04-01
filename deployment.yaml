@@ -91,5 +91,5 @@ spec:
   externalIPs:
     - ${external-ip}
   ports:
-    - targetPort: 80085
-      port: 80085
+    - targetPort: 8085
+      port: 8085
