@@ -1,0 +1,13 @@
+{
+  "envs": ["stage"],
+  "configs": [
+    {
+      "env": "stage",
+      "templateParams": {
+        "APPLICATION_NAME": "erinet-stage",
+        "SECRET_NAME": "erinet-secrets-stage",
+        "CONFIG_NAME": "erinet-config-stage"
+      }
+    }
+  ]
+}

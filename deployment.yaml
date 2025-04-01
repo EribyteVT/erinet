@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APPLICATION_NAME}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${APPLICATION_NAME}
+    spec:
+      containers:
+        - name: ${APPLICATION_NAME}
+          image: eribyteofficial/erinet
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: AUTH_SECRET
+            - name: AUTH_DISCORD_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: AUTH_DISCORD_ID
+            - name: AUTH_DISCORD_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: AUTH_DISCORD_SECRET
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: NEXTAUTH_SECRET
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: DATABASE_URL
+            - name: DISCORD_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: DISCORD_BOT_TOKEN
+            - name: TWITCH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: TWITCH_CLIENT_ID
+            - name: TWITCH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: TWITCH_CLIENT_SECRET
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ${SECRET_NAME}
+                  key: ENCRYPTION_KEY
+
+            - name: NEXT_PUBLIC_API_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXT_PUBLIC_API_BASE_URL
+            - name: TWITCH_REDIRECT_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: TWITCH_REDIRECT_URI
+
+  selector:
+    matchLabels:
+      app: ${APPLICATION_NAME}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${APPLICATION_NAME}
+spec:
+  type: ClusterIP
+  clusterIP: ${ip}
+  selector:
+    app: ${APPLICATION_NAME}
+  externalIPs:
+    - ${external-ip}
+  ports:
+    - targetPort: 80085
+      port: 80085

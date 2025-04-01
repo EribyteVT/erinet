@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model auth_state {
+  state     String   @id
+  guild_id   String
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([expires_at])
+}
+
+model EncryptedToken {
+  id             String    @id @default(cuid())
+  guildId        String    @map("guild_id")
+  service        String    
+  tokenType      String    @map("token_type") // "access" or "refresh"
+  encryptedToken String    @map("encrypted_token")
+  iv             String    // Initialization Vector for encryption
+  expiresAt      DateTime? @map("expires_at") // null for refresh tokens that don't expire
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@unique([guildId, service, tokenType])
+  @@index([guildId, service])
+  @@map("encrypted_tokens")
+}
+
+model stream_table_tied {
+  stream_date       DateTime @db.Timestamptz(6)
+  stream_name       String   @db.VarChar
+  streamer_id       String   @db.VarChar
+  event_id          String?  @db.VarChar
+  twitch_segment_id String?  @db.VarChar
+  stream_id         Int      @id @map("stream_id") @default(dbgenerated("nextval('schedules.stream_table_tied_seq'::regclass)")) @unique(map: "stream_table_tied_stream_id_idx")
+  duration          Int?
+  category_id       String?  @db.VarChar
+
+  @@unique([stream_date, streamer_id], map: "stream_table_tied_stream_date_idx")
+}
+
+model streamer_lookup {
+  streamer_id          Int     @unique(map: "streamer_lookup_streamer_id_idx") @default(autoincrement())
+  streamer_name        String  @db.VarChar
+  timezone             String  @db.VarChar
+  guild                String  @db.VarChar
+  level_system         String  @db.Char(1)
+  level_ping_role      String? @db.VarChar
+  level_channel        String? @db.VarChar
+  twitch_user_id       String? @db.VarChar
+  auto_discord_event   String? @default("N") @db.VarChar
+  auto_twitch_schedule String? @default("N") @db.VarChar
+  auto_image_post      String? @default("N") @db.VarChar
+  schedule_message_id  String? @db.VarChar
+  auto_change_schedule String? @db.VarChar
+  image_message_id     String? @db.VarChar
+}
+
+model streamer_refresh_tokens {
+  twitch_user_id Int    @unique(map: "streamer_refresh_tokens_streamer_id_idx")
+  refresh_token  String @db.VarChar
+  refresh_salt   String @db.VarChar
+  access_token   String @db.VarChar
+  access_salt    String @db.VarChar
+}
