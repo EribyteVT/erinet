@@ -20,10 +20,7 @@ const nextConfig = {
       ],
     },
   },
-  env: {
-    NEXT_PUBLIC_API_BASE_URL:
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:46468",
-  },
+
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Add node-loader for .node files
     config.module.rules.push({
