@@ -14,7 +14,7 @@ pipeline {
     stages {
         stage("Checkout from github repo"){
             steps{
-                git  branch: "${params.BRANCH}", url: 'https://github.com/EribyteVT/eri-auth-localONLY'
+                git  branch: "${params.BRANCH}", url: 'https://github.com/EribyteVT/erinet.git'
 
                 script{
                     envConfigJson = readJSON file: "deployEnvs.json"
