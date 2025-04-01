@@ -6,7 +6,9 @@
       "templateParams": {
         "APPLICATION_NAME": "erinet-stage",
         "SECRET_NAME": "erinet-secrets-stage",
-        "CONFIG_NAME": "erinet-config-stage"
+        "CONFIG_NAME": "erinet-config-stage",
+        "ip": "10.96.46.200",
+        "external-ip": "10.111.131.200"
       }
     }
   ]
