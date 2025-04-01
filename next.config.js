@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: process.env.ASSET_PREFIX || "",
+  assetPrefix: "https://erinet-stage.eribyte.net",
   output: "standalone",
   images: {
     remotePatterns: [
@@ -12,7 +12,7 @@ const nextConfig = {
     domains: ["erinet-stage.eribyte.net", "erinet.eribyte.net"],
   },
   env: {
-    ASSET_PREFIX: process.env.ASSET_PREFIX || "",
+    ASSET_PREFIX: "https://erinet-stage.eribyte.net" || "",
   },
 
   experimental: {
