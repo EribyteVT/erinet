@@ -10,6 +10,16 @@
         "ip": "10.96.46.200",
         "external-ip": "10.111.131.200"
       }
+    },
+    {
+      "env": "prod",
+      "templateParams": {
+        "APPLICATION_NAME": "erinet-prod",
+        "SECRET_NAME": "erinet-secrets-prod",
+        "CONFIG_NAME": "erinet-config-prod",
+        "ip": "10.96.46.201",
+        "external-ip": "10.111.131.201"
+      }
     }
   ]
 }

@@ -15,6 +15,7 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: [
         "erinet.eribyte.net",
+        "erinet-stage.eribyte.net",
         "192.168.49.2:8443",
         "localhost:3000",
       ],
