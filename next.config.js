@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
+  // local, stage, or prod
   assetPrefix:
-    process.env.NODE_ENV === "production" ? "https://erinet.eribyte.net" : "",
+    process.env.NODE_ENV === "prod"
+      ? "https://erinet.eribyte.net"
+      : process.env.DEPLOYMENT_ENV === "stage"
+      ? "https://erinet-stage.eribyte.net"
+      : "",
   output: "standalone",
   images: {
     remotePatterns: [

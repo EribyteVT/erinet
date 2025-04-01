@@ -27,7 +27,11 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    app = docker.build(DOCKER_IMAGE_NAME)
+                    // Set DEPLOYMENT_ENV based on the environment we're building for
+                    def deployEnv = environ == "stage" ? "stage" : "prod"
+                    
+                    // Build the Docker image with the environment variable
+                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg DEPLOYMENT_ENV=${deployEnv} .")
                 }
             }
         }

@@ -109,6 +109,8 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: NEXT_PUBLIC_DISCORD_CLIENT_ID
+            - name: DEPLOYMENT_ENV
+              value: "${env}"
 
   selector:
     matchLabels:

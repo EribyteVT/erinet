@@ -27,7 +27,8 @@ RUN pnpm build
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ARG DEPLOYMENT_ENV
+ENV DEPLOYMENT_ENV=${DEPLOYMENT_ENV}
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
