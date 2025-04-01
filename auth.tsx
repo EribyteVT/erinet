@@ -20,12 +20,16 @@ const getCallbackUrl = () => {
 
 const getAuthorizationUrl = () => {
   const params = new URLSearchParams({
-    client_id: process.env.AUTH_DISCORD_ID!,
+    client_id: "1299167617004732486",
     response_type: "code",
     redirect_uri: getCallbackUrl(),
     integration_type: "0",
     scope: "email identify guilds",
   });
+
+  console.log(getCallbackUrl());
+
+  console.log(`https://discord.com/oauth2/authorize?${params.toString()}`);
 
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
 };
@@ -105,6 +109,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           discordAccount?: {
             id: string;
             username: string;
+
             email: string;
             avatar?: string;
             access_token?: string;
@@ -118,13 +123,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       typedSession.user.id = extendedToken.sub || "";
 
       return typedSession;
-    },
-
-    async signIn({ user, account, profile }) {
-      if (account?.provider === "twitch") {
-        return false;
-      }
-      return true;
     },
   },
 });

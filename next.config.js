@@ -16,7 +16,7 @@ const nextConfig = {
       allowedOrigins: [
         "erinet.eribyte.net",
         "192.168.49.2:8443",
-        // Add any other domains that might forward requests
+        "localhost:3000",
       ],
     },
   },

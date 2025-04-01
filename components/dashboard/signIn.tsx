@@ -1,5 +1,4 @@
-import { signIn, auth } from "@/auth";
-
+import { auth, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { UserNav } from "./user-nav";
