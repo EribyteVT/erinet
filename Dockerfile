@@ -18,13 +18,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN if [ -f next.config.js ]; then \
-      echo "Updating next.config.js to support output: 'standalone' and proper host binding"; \
-      sed -i '/module.exports/a\  output: "standalone",\n  experimental: {\n    ...((config) => config?.experimental || {})(),\n  },\n' next.config.js; \
-    else \
-      echo "module.exports = {\n  output: \"standalone\",\n  experimental: {}\n};" > next.config.js; \
-    fi
-
 # Generate Prisma client
 RUN pnpm exec prisma generate
 
