@@ -56,7 +56,12 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "zlib-sync": "^0.1.9"
+    "zlib-sync": "^0.1.9",
+    "@hookform/resolvers": "^3.3.4",
+    "@iconify/react": "^4.1.1",
+    "jszip": "^3.10.1",
+    "react-hook-form": "^7.49.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.17.28",
