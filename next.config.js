@@ -11,7 +11,6 @@ const nextConfig = {
     ],
     domains: ["eri.bot", "stage.eri.bot"],
   },
-  
 
   experimental: {
     serverActions: {
