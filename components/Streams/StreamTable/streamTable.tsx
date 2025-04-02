@@ -170,6 +170,7 @@ export function StreamTable({
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
       apiBaseUrl: apiBaseUrl,
+      twitchName: streamer.streamer_name,
     }),
     state: { sorting },
     onSortingChange: setSorting,
@@ -292,6 +293,7 @@ export function StreamTable({
                   streamer={streamer}
                   hasTwitchAuth={hasTwitchAuth}
                   apiBaseUrl={apiBaseUrl}
+                  twitchName={streamer.streamer_name}
                 />
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
