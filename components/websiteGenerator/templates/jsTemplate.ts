@@ -1,15 +1,13 @@
 // components/Streams/WebsiteGenerator/templates/jsTemplate.ts
-import { Stream } from "@/components/Streams/types";
 
 export function jsTemplate(
-  streamerName: string,
-  apiEndpoint: string = "",
-  streams: Stream[] = []
+  initialStreams: Array<{ name: string; date: string; duration: number }>,
+  useCustomStreamFetch: boolean = false,
+  streamer_url: string,
+  apiEndpoint?: string
 ): string {
-  // Format the streams data as a JSON string for embedding in the JS
-  const streamsJSON = JSON.stringify(streams, null, 2);
-  
-  const useApiEndpoint = apiEndpoint !== "";
+  // Convert initial streams to a JSON string for embedding
+  const streamsJSON = JSON.stringify(initialStreams);
 
   return `Date.prototype.addDays = function (days) {
   let date = new Date(this.valueOf());
@@ -18,7 +16,7 @@ export function jsTemplate(
 };
 
 let countdown;
-let streams = [];
+let streams = ${streamsJSON};
 let streamNowEle = document.getElementById("streamNow");
 let streamCountdownEle = document.getElementById("streamCountdown");
 let updateCountdownTimer;
@@ -36,6 +34,8 @@ function updateCountdownCheck() {
     let streamDate = Date.parse(soonestStream["date"]);
     // Get the difference between the stream set date and now.
     let delta = streamDate - now;
+    // Add this for debugging to show the Stream Countdown banner.
+    // delta = 0;
     // Check if the stream is in the future.
     if (delta > 0) {
       streamNowEle.hidden = true;
@@ -58,7 +58,7 @@ function updateCountdownCheck() {
   if (timerSet === false) {
     streamCountdownEle.hidden = true;
     streamNowEle.hidden = true;
-    console.log("No upcoming streams found");
+    console.log("No upcoming streams found.");
     // Remove the interval check, so we don't waste resources.
     clearInterval(updateCountdownTimer);
   }
@@ -82,9 +82,10 @@ function renderStreamCountdown(datetime) {
   countdown.innerHTML = printString;
 }
 
-${useApiEndpoint ? generateFetchFromApiCode(apiEndpoint) : generateStaticStreamsCode(streamsJSON)}
-
-function displaySchedule() {
+window.onload = function () {
+  streamNowEle = document.getElementById("streamNow");
+  streamCountdownEle = document.getElementById("streamCountdown");
+  countdown = document.getElementById("Countdown");
   let d = new Date();
 
   const weekdayNames = [
@@ -99,29 +100,40 @@ function displaySchedule() {
   const dateWeekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   let weekday = d.getDay(); //0 Sunday, 1 Monday
+
   let scheduleGrid = document.getElementById("gridSchedule");
+
+  //we subtract this from right now to get a number, that way if it's 2:01PM and the stream happens at 2:00pm, it still shows up
+  //current value: 5 hours
+  let gracePeriod = 18000000;
+  
+  ${useCustomStreamFetch ? generateFetchCode(apiEndpoint) : ""}
+
+  // Sort streams by date
+  streams = streams.sort((a, b) => {
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
 
   //get time zone
   let zone = new Date()
     .toLocaleTimeString("en-us", { timeZoneName: "short" })
     .split(" ")[2];
-    
   //loop through the days, starting with today
+
   for (let i = 0; i < 7; i++) {
-    //check if there is a stream today
+    // console.log(dateWeekdayNames[(weekday + i) % 7])
+    //o(n^2), does js have a filter method?
     let streamObject = null;
     for (let z in streams) {
       //if there is a stream today
-      let streamDate = new Date(streams[z].date);
       if (
-        streamDate.getDate() == d.getDate() &&
-        streamDate.getMonth() == d.getMonth()
+        new Date(streams[z].date).getDate() == d.getDate() &&
+        new Date(streams[z].date).getMonth() == d.getMonth()
       ) {
         streamObject = streams[z];
         break;
       }
     }
-    
     let base = [
       "<div class = gridRow><div class = 'scheduleDay'>",
       "DAY_PLACEHOLDER",
@@ -133,26 +145,25 @@ function displaySchedule() {
       "STREAM TIME",
       "</div></div>",
     ];
-    
     if (streamObject != null) {
       base[1] = weekdayNames[(weekday + i) % 7];
       base[3] = (d.getMonth() + 1).toString() + "/" + d.getDate().toString();
-      
-      let streamLink = "${useApiEndpoint ? "https://www.twitch.tv/" + streamerName.toLowerCase() : "streams[z].twitch_url || 'https://www.twitch.tv'" }";
-      base[5] = "<a href='" + streamLink + "'>" + streamObject.stream + "</a>";
+      base[5] = <a href=${streamer_url} >streamObject.name;</a>
 
-      let AmOrPm = new Date(streamObject.date).getHours() >= 12 ? "pm" : "am";
-      let hours = new Date(streamObject.date).getHours() % 12 || 12;
+      let streamDateObj = new Date(streamObject.date);
+      let AmOrPm = streamDateObj.getHours() >= 12 ? "pm" : "am";
+      let hours = streamDateObj.getHours() % 12 || 12;
 
       base[7] =
         hours +
         ":" +
-        (new Date(streamObject.date).getMinutes() < 10 ? "0" : "") +
-        new Date(streamObject.date).getMinutes() +
+        (streamDateObj.getMinutes() < 10 ? "0" : "") +
+        streamDateObj.getMinutes() +
         AmOrPm +
         " " +
         zone;
-        
+
+      // console.log(base)
       scheduleGrid.innerHTML += base.join("");
     } else {
       base[1] = weekdayNames[(weekday + i) % 7];
@@ -166,85 +177,56 @@ function displaySchedule() {
     d = d.addDays(1);
   }
   
-  // Sort streams by date for the countdown
-  streams = streams.sort((a, b) => {
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
-  });
-  
   updateCountdownCheck();
   updateCountdownTimer = setInterval(updateCountdownCheck, 1000);
-}
-
-window.onload = function () {
-  streamNowEle = document.getElementById("streamNow");
-  streamCountdownEle = document.getElementById("streamCountdown");
-  countdown = document.getElementById("Countdown");
-  
-  // Initialize streams and schedule
-  initializeStreams();
 };
-`;
-}
-
-// Helper function to generate code for fetching from API
-function generateFetchFromApiCode(apiEndpoint: string): string {
-  return `
-function initializeStreams() {
-  // Fetch streams from API
-  const rightNowMs = Date.now();
-  const url = "${apiEndpoint}" + rightNowMs.toString();
-  
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      if (data && data.data) {
-        // Process the streams data
-        for (let z in data.data) {
-          let stream = data.data[z];
-          let streamDate = new Date(stream.stream_date);
-          
-          streams.push({
-            stream: stream.stream_name,
-            date: streamDate,
-            duration: stream.duration || 120,
-          });
-        }
-        
-        // Display the schedule once data is loaded
-        displaySchedule();
-      }
-    })
-    .catch(error => {
-      console.error("Error fetching streams:", error);
-      // Show error message or fallback
-      document.getElementById("gridSchedule").innerHTML += 
-        "<div class='gridRow'><div class='scheduleDay'></div>" +
-        "<div class='scheduleDate'></div>" +
-        "<div class='scheduleStream'>Error loading schedule</div></div>";
-    });
-}`;
-}
-
-// Helper function to generate code for static streams
-function generateStaticStreamsCode(streamsJSON: string): string {
-  return `
-function initializeStreams() {
-  // Use embedded stream data
-  const streamData = ${streamsJSON};
-  
-  // Process the streams data
-  for (let z in streamData) {
-    let stream = streamData[z];
-    let streamDate = new Date(stream.stream_date);
+${
+  useCustomStreamFetch
+    ? `
+// Fetch streams from API
+async function fetchStreams(apiUrl) {
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    const data = await response.json();
     
-    streams.push({
-      stream: stream.stream_name,
-      date: streamDate,
-      duration: stream.duration || 120,
-    });
+    // Extract streams from response
+    if (data && data.data) {
+      return data.data.map(stream => ({
+        name: stream.stream_name,
+        date: stream.stream_date,
+        duration: stream.duration || 120
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching streams:', error);
+    return [];
   }
-  
-  // Display the schedule
-  displaySchedule();
+}`
+    : ""
 }`;
+}
+
+function generateFetchCode(apiEndpoint?: string): string {
+  if (!apiEndpoint) return "";
+
+  return `
+  // Fetch streams from API with current timestamp
+  (async function() {
+    try {
+      const rightNowMs = Date.now();
+      const apiUrl = \`${apiEndpoint}\${rightNowMs - gracePeriod}\`;
+      
+      const fetchedStreams = await fetchStreams(apiUrl);
+      if (fetchedStreams && fetchedStreams.length > 0) {
+        // Add fetched streams to existing ones
+        streams = [...streams, ...fetchedStreams];
+      }
+    } catch (error) {
+      console.error("Error fetching streams:", error);
+    }
+  })();`;
 }

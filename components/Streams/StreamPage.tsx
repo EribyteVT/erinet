@@ -65,11 +65,10 @@ export default function StreamPage({
           streamer.streamer_id,
           Date.now().toString()
         );
-        
+
         if (streamData?.data) {
           setStreams(streamData.data);
         }
-        
       } catch (error) {
         console.error("Error checking Twitch integration:", error);
       } finally {
@@ -94,11 +93,12 @@ export default function StreamPage({
         </div>
       )}
 
-    <WebsiteGeneratorModal
+      <WebsiteGeneratorModal
         isOpen={isWebsiteModalOpen}
         onClose={() => setIsWebsiteModalOpen(false)}
         streamer={streamer}
         streams={streams}
+        session={session}
       />
 
       {/* Header with back button and guild info */}
@@ -116,13 +116,10 @@ export default function StreamPage({
           </Link>
           <GuildHeader guild={guild} />
         </div>
-        <Button 
-            onClick={() => setIsWebsiteModalOpen(true)}
-            className="gap-2"
-          >
-            <Globe className="h-4 w-4" />
-            Generate Website
-          </Button>
+        <Button onClick={() => setIsWebsiteModalOpen(true)} className="gap-2">
+          <Globe className="h-4 w-4" />
+          Generate Website
+        </Button>
         <div className="mt-2 border-b border-border" />
       </div>
 
