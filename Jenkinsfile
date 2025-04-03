@@ -41,7 +41,7 @@ pipeline {
                     
                     
 
-                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg ASSET_PREFIX=${assetPrefix}")
+                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix} --build-arg ASSET_PREFIX=${assetPrefix} .")
                 }
             }
         }
