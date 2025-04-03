@@ -18,15 +18,6 @@ RUN npm install -g pnpm
 FROM base AS deps
 WORKDIR /app
 
-ARG ASSET_PREFIX
-
-RUN echo "get arg"
-RUN echo "${ASSET_PREFIX}"
-
-ENV ASSET_PREFIX ${ASSET_PREFIX}
-
-RUN echo "ASSET_PREFIX during build: $ASSET_PREFIX"
-
 # Install dependencies
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
