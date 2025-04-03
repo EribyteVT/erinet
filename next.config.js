@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: process.env.ASSET_PREFIX || "",
+  assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || "",
+
   output: "standalone",
   reactStrictMode: true,
   images: {
@@ -38,6 +39,10 @@ const nextConfig = {
   },
 };
 
-console.log(`Using assetPrefix: ${process.env.ASSET_PREFIX || "(none)"}`);
+console.log(
+  "Using assetPrefix:",
+  process.env.NEXT_PUBLIC_ASSET_PREFIX || "(none)"
+);
+
 
 module.exports = nextConfig;

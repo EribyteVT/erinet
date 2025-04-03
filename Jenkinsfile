@@ -27,19 +27,27 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Set ASSET_PREFIX based on the environment we're building for
                     def assetPrefix = environ == "stage" 
                         ? "https://stage.eri.bot" 
                         : "https://eri.bot"
-
-                
-                    sh "ASSET_PREFIX=${assetPrefix} docker build -t ${DOCKER_IMAGE_NAME} --build-arg ASSET_PREFIX=${assetPrefix} ."
                     
-                    // Build the Docker image with the environment variable
-                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg ASSET_PREFIX=${assetPrefix} .")
+                    sh "export NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix}"
+                    // """
+                    //     
+                    //     docker build -t ${DOCKER_IMAGE_NAME} \
+                    //         --build-arg ASSET_PREFIX=${assetPrefix} \
+                    //         --build-arg NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix} \
+                    //         .
+                    // """
+                    
+
+                    
+
+                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix} --build-arg ASSET_PREFIX=${assetPrefix} .")
                 }
             }
         }
+        
         stage('Push Docker Image') {
             steps {
                 script {

@@ -159,7 +159,8 @@ interface WebsiteGeneratorProps {
   discordAvatar: string;
 }
 
-export default function WebsiteGenerator({
+export function WebsiteGenerator({
+
   streamer,
   streams,
   apiBaseUrl,
