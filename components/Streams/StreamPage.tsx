@@ -3,7 +3,7 @@
 import { Session } from "next-auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Undo2 } from "lucide-react";
+import { Globe, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 
@@ -11,11 +11,12 @@ import { StreamTable } from "@/components/Streams/StreamTable/streamTable";
 import { TwitchConnect } from "@/components/Streams/TwitchConnect/TwitchConnect";
 import { GuildOptions } from "@/components/Streams/GuildOptions/GuildOptions";
 import { GuildHeader } from "@/components/Streams/GuildHeader/GuildHeader";
-import { GuildData, Streamer } from "@/components/Streams/types";
+import { GuildData, Streamer, Stream } from "@/components/Streams/types";
 import { PageContainer } from "@/components/ui/page-container";
 import { SectionHeader } from "@/components/ui/selection-header";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import WebsiteGenerator from "../WebsiteGenerator/WebsiteGenerator";
 
 export default function StreamPage({
   session,
@@ -30,11 +31,14 @@ export default function StreamPage({
 }) {
   // Main state
   const [streamer, setStreamer] = useState<Streamer>(streamer_pass);
+  const [streams, setStreams] = useState<Stream[]>([]);
 
   const [twitchBroadcasterId, setTwitchBroadcasterId] = useState<
     string | null | undefined
   >(streamer.twitch_user_id);
   const [hasTwitchAuth, setHasTwitchAuth] = useState<boolean>(false);
+
+  // Website generator modal state
 
   // Shared loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -54,6 +58,15 @@ export default function StreamPage({
 
         if (streamer.twitch_user_id) {
           setTwitchBroadcasterId(streamer.twitch_user_id);
+        }
+
+        const streamData = await wrapper.getStreams(
+          streamer.streamer_id,
+          Date.now().toString()
+        );
+
+        if (streamData?.data) {
+          setStreams(streamData.data);
         }
       } catch (error) {
         console.error("Error checking Twitch integration:", error);
@@ -94,8 +107,16 @@ export default function StreamPage({
           </Link>
           <GuildHeader guild={guild} />
         </div>
+
         <div className="mt-2 border-b border-border" />
       </div>
+
+      <WebsiteGenerator
+        streamer={streamer}
+        streams={streams}
+        apiBaseUrl={apiBaseUrl}
+        discordAvatar={session.user.discordAccount.avatar!}
+      />
 
       {/* Stream table */}
       <div className="mb-8">
