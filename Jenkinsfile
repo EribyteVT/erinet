@@ -31,13 +31,11 @@ pipeline {
                         ? "https://stage.eri.bot" 
                         : "https://eri.bot"
                     
-                    sh """
-                        export NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix}
-                        docker build -t ${DOCKER_IMAGE_NAME} \
-                            --build-arg ASSET_PREFIX=${assetPrefix} \
-                            --build-arg NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix} \
-                            .
-                    """
+                    sh "export NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix}"
+                    
+                    
+
+                    app = docker.build(DOCKER_IMAGE_NAME, "--build-arg NEXT_PUBLIC_ASSET_PREFIX=${assetPrefix} --build-arg ASSET_PREFIX=${assetPrefix}")
                 }
             }
         }
