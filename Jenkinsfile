@@ -29,8 +29,8 @@ pipeline {
                 script {
                     // Set ASSET_PREFIX based on the environment we're building for
                     def assetPrefix = environ == "stage" 
-                        ? "https://erinet-stage.eribyte.net" 
-                        : "https://erinet.eribyte.net"
+                        ? "https://stage.eri.bot" 
+                        : "https://eri.bot"
 
                 
                     sh "ASSET_PREFIX=${assetPrefix} docker build -t ${DOCKER_IMAGE_NAME} --build-arg ASSET_PREFIX=${assetPrefix} ."
