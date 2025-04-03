@@ -22,13 +22,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     "name",
     "startTime",
     "endTime",
+    "twitchName",
   ]);
 
   if (!params) {
     return errorResponse("Missing required parameters", 400);
   }
 
-  const { authToken, guildId, streamId, name, startTime, endTime } = params;
+  const { authToken, guildId, streamId, name, startTime, endTime, twitchName } =
+    params;
 
   // Check Discord permissions
   const isAllowed = await isAllowedGuild(authToken, guildId);
@@ -37,7 +39,13 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   // Create Discord event
-  const eventData = await createDiscordEvent(guildId, name, startTime, endTime);
+  const eventData = await createDiscordEvent(
+    guildId,
+    name,
+    startTime,
+    endTime,
+    `https://twitch.tv/${twitchName}`
+  );
   const eventId = eventData.id;
 
   // Update stream with event ID

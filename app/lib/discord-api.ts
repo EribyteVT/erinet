@@ -5,7 +5,7 @@ export async function createDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string = "https://twitch.tv/EribyteVT"
+  location: string
 ): Promise<any> {
   try {
     const response = await fetch(

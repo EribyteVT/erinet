@@ -136,7 +136,8 @@ export default function createStreamApiClient(baseUrlClient?: string) {
     async addEventToGuild(
       stream: Stream,
       authToken: string,
-      guildId: string
+      guildId: string,
+      twitchName: string
     ): Promise<StreamDataResponse> {
       const endDate = dayjs(new Date(stream.stream_date)).add(
         stream.duration!,
@@ -150,7 +151,10 @@ export default function createStreamApiClient(baseUrlClient?: string) {
         endTime: endDate.toISOString(),
         authToken,
         guildId,
+        twitchName,
       };
+
+      console.log(data);
 
       const response = await fetch(`${baseUrl}/discord/events`, {
         method: "POST",

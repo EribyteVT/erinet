@@ -16,11 +16,17 @@ async function sendToDiscord(
   stream: Stream,
   authToken: string,
   guild: string,
-  apiBaseUrl: string
+  apiBaseUrl: string,
+  twitchName: string
 ) {
   try {
     const wrapper = ErinetCrudWrapper(apiBaseUrl);
-    const response = await wrapper.addEventToGuild(stream, authToken, guild);
+    const response = await wrapper.addEventToGuild(
+      stream,
+      authToken,
+      guild,
+      twitchName
+    );
     return response.data.event_id;
   } catch (error) {
     console.error("Error sending to Discord:", error);
@@ -59,6 +65,7 @@ export const AddRow: React.FC<{
   streamer: Streamer;
   hasTwitchAuth: boolean;
   apiBaseUrl: string;
+  twitchName: string;
 }> = ({
   guild,
   session,
@@ -67,6 +74,7 @@ export const AddRow: React.FC<{
   streamer,
   hasTwitchAuth,
   apiBaseUrl,
+  twitchName,
 }) => {
   const [date, setDate] = React.useState(new Date());
   const [time, setTime] = React.useState(dayjs());
@@ -110,7 +118,8 @@ export const AddRow: React.FC<{
             updatedStream,
             session.user.discordAccount?.access_token!,
             guild,
-            apiBaseUrl
+            apiBaseUrl,
+            twitchName
           );
           if (eventId) {
             updatedStream.event_id = eventId;
