@@ -160,6 +160,7 @@ interface WebsiteGeneratorProps {
 }
 
 export function WebsiteGenerator({
+
   streamer,
   streams,
   apiBaseUrl,

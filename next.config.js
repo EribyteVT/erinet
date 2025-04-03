@@ -2,6 +2,7 @@
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
   assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || "",
+
   output: "standalone",
   reactStrictMode: true,
   images: {
@@ -42,5 +43,6 @@ console.log(
   "Using assetPrefix:",
   process.env.NEXT_PUBLIC_ASSET_PREFIX || "(none)"
 );
+
 
 module.exports = nextConfig;
