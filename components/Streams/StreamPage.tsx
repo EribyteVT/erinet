@@ -16,7 +16,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { SectionHeader } from "@/components/ui/selection-header";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import WebsiteGenerator from "../WebsiteGenerator/WebsiteGenerator";
+import { WebsiteGenerator } from "@/components/WebsiteGenerator/WebsiteGenerator";
 
 export default function StreamPage({
   session,
