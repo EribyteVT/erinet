@@ -1,6 +1,17 @@
 # Base stage for dependencies
 FROM node:20-alpine AS base
 
+ARG ASSET_PREFIX
+ARG NEXT_PUBLIC_ASSET_PREFIX
+
+ENV ASSET_PREFIX=${ASSET_PREFIX}
+ENV NEXT_PUBLIC_ASSET_PREFIX=${NEXT_PUBLIC_ASSET_PREFIX}
+
+# Add echo statements to verify
+RUN echo "ASSET_PREFIX: $ASSET_PREFIX"
+RUN echo "NEXT_PUBLIC_ASSET_PREFIX: $NEXT_PUBLIC_ASSET_PREFIX"
+
+
 # Install pnpm
 RUN npm install -g pnpm
 

@@ -1,3 +1,6 @@
+console.log("ALL ENV VARS:");
+console.log(JSON.stringify(process.env, null, 2));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
