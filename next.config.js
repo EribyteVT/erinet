@@ -3,6 +3,7 @@ const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
   assetPrefix: process.env.ASSET_PREFIX || "",
   output: "standalone",
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
@@ -29,6 +30,9 @@ const nextConfig = {
         loader: "node-loader",
       },
     });
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    };
     return config;
   },
 };
