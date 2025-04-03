@@ -10,8 +10,9 @@ const nextConfig = {
       {
         hostname: "cdn.discordapp.com",
       },
+      { hostname: "eri.bot" },
+      { hostname: "stage.eri.bot" },
     ],
-    domains: ["eri.bot", "stage.eri.bot"],
   },
 
   experimental: {
@@ -43,6 +44,5 @@ console.log(
   "Using assetPrefix:",
   process.env.NEXT_PUBLIC_ASSET_PREFIX || "(none)"
 );
-
 
 module.exports = nextConfig;

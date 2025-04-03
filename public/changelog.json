@@ -1,9 +1,14 @@
 {
   "changelog": [
     {
+      "date": "4/04/2025",
+      "version": "0.2.0",
+      "items": ["fixed discord event", "Basic Website generation"]
+    },
+    {
       "date": "4/01/2025",
       "version": "0.1.0",
-      "items": ["REALEASE", "made prod environment"]
+      "items": ["BETA REALEASE", "made prod environment"]
     },
     {
       "date": "3/19/2025",

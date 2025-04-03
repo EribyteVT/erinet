@@ -109,8 +109,11 @@ spec:
                 configMapKeyRef:
                   name: ${CONFIG_NAME}
                   key: NEXT_PUBLIC_DISCORD_CLIENT_ID
-            - name: ASSET_PREFIX
-              value: "${assetPrefix}"
+            - name: NEXT_PUBLIC_CRUD_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ${CONFIG_NAME}
+                  key: NEXT_PUBLIC_CRUD_URL
 
   selector:
     matchLabels:

@@ -11,6 +11,10 @@ type SocialLink = {
 
 type WebsiteConfig = {
   backgroundColor: string;
+  useGradient: boolean;
+  gradientStartColor: string;
+  gradientEndColor: string;
+  gradientDirection: string;
   name: string;
   socialLinks: SocialLink[];
 };
@@ -19,7 +23,8 @@ export function generateHTML(
   config: WebsiteConfig,
   streams: Stream[],
   streamer: Streamer,
-  discordAvatar: string
+  discordAvatar: string,
+  crudUrl: string
 ): string {
   const socialLinks = config.socialLinks
     .map((link) => {
@@ -35,7 +40,7 @@ export function generateHTML(
   const streamsHTML = `
         <!-- 
           This schedule automatically updates from the API:
-          https://crud-stage.eribyte.net/getStreams/{streamerId}/{dateMS} 
+          https://${crudUrl}/getWeek/{streamerId}
           
           Always displays all 7 days of the week, starting with today
         -->
@@ -50,8 +55,8 @@ export function generateHTML(
         <div id="NextStreamCountdown" class="center">
           <div id="streamNow" hidden>
             <b>Stream is NOW! <a href="${
-              config.socialLinks.find((link) => link.icon === "Twitch")?.url ||
-              `https://www.twitch.tv/${streamer.streamer_name}`
+              config.socialLinks.find((link) => link.icon.includes("twitch"))
+                ?.url || `https://www.twitch.tv/${streamer.streamer_name}`
             }">Join the stream</a></b>
           </div>
           <div id="streamCountdown">
@@ -59,13 +64,18 @@ export function generateHTML(
           </div>
         </div>`;
 
+  // Generate meta tag for theme color - useful for mobile browser theming
+  let themeColor = config.useGradient
+    ? config.gradientStartColor
+    : config.backgroundColor;
+
   return `<!DOCTYPE html>
     <!--
       This website was generated with Erinet Website Generator
       
       LIVE STREAM DATA:
       This website automatically fetches stream data from:
-      https://crud-stage.eribyte.net/getStreams/{streamerId}/{currentTimestamp}
+      https://${crudUrl}/getWeek/{streamerId}
       
       The streams will refresh every 30 minutes while the page is open.
       Always displays all 7 days of the week, starting with today.
@@ -80,12 +90,14 @@ export function generateHTML(
         />
         <script src="index.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="${themeColor}">
+        <meta name="description" content="${config.name}'s official website - Check out stream schedule and social media links">
       </head>
       <body>
         <div class="center-div">
           <div class="content">
             <div class="image-cropper">
-              <img src="${discordAvatar}" class="rounded" />
+              <img src="${discordAvatar}" class="rounded" alt="${config.name}'s profile picture" />
             </div>
             <h1>${config.name}</h1>
           </div>
@@ -95,7 +107,7 @@ export function generateHTML(
         </div>
         ${streamsHTML}
         <footer>
-          <p>Made with <a href="https://erinet.eribyte.net">Erinet</a></p>
+          <p>Made with <a href="https://eri.bot">Eribot</a></p>
         </footer>
       </body>
     </html>`;
