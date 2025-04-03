@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: process.env.NODE_ENV === "production" ? "" : "",
-  assetPrefix: "",
+  assetPrefix: process.env.ASSET_PREFIX || "",
   output: "standalone",
   images: {
     remotePatterns: [
@@ -11,8 +11,6 @@ const nextConfig = {
     ],
     domains: ["eri.bot", "stage.eri.bot"],
   },
-  
-
   experimental: {
     serverActions: {
       allowedOrigins: [
@@ -23,7 +21,6 @@ const nextConfig = {
       ],
     },
   },
-
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     // Add node-loader for .node files
     config.module.rules.push({
@@ -35,5 +32,7 @@ const nextConfig = {
     return config;
   },
 };
+
+console.log(`Using assetPrefix: ${process.env.ASSET_PREFIX || "(none)"}`);
 
 module.exports = nextConfig;
