@@ -11,12 +11,12 @@ import { StreamTable } from "@/components/Streams/StreamTable/streamTable";
 import { TwitchConnect } from "@/components/Streams/TwitchConnect/TwitchConnect";
 import { GuildOptions } from "@/components/Streams/GuildOptions/GuildOptions";
 import { GuildHeader } from "@/components/Streams/GuildHeader/GuildHeader";
-import { WebsiteGeneratorModal } from "@/components/websiteGenerator/WebsiteGeneratorModal";
 import { GuildData, Streamer, Stream } from "@/components/Streams/types";
 import { PageContainer } from "@/components/ui/page-container";
 import { SectionHeader } from "@/components/ui/selection-header";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import WebsiteGenerator from "../WebsiteGenerator/WebsiteGenerator";
 
 export default function StreamPage({
   session,
@@ -39,7 +39,6 @@ export default function StreamPage({
   const [hasTwitchAuth, setHasTwitchAuth] = useState<boolean>(false);
 
   // Website generator modal state
-  const [isWebsiteModalOpen, setIsWebsiteModalOpen] = useState<boolean>(false);
 
   // Shared loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -93,14 +92,6 @@ export default function StreamPage({
         </div>
       )}
 
-      <WebsiteGeneratorModal
-        isOpen={isWebsiteModalOpen}
-        onClose={() => setIsWebsiteModalOpen(false)}
-        streamer={streamer}
-        streams={streams}
-        session={session}
-      />
-
       {/* Header with back button and guild info */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
@@ -116,12 +107,16 @@ export default function StreamPage({
           </Link>
           <GuildHeader guild={guild} />
         </div>
-        <Button onClick={() => setIsWebsiteModalOpen(true)} className="gap-2">
-          <Globe className="h-4 w-4" />
-          Generate Website
-        </Button>
+
         <div className="mt-2 border-b border-border" />
       </div>
+
+      <WebsiteGenerator
+        streamer={streamer}
+        streams={streams}
+        apiBaseUrl={apiBaseUrl}
+        discordAvatar={session.user.discordAccount.avatar!}
+      />
 
       {/* Stream table */}
       <div className="mb-8">
