@@ -32,6 +32,8 @@ pipeline {
                         ? "https://stage.eri.bot" 
                         : "https://eri.bot"
 
+                    echo "Asset Prefix: ${assetPrefix}"
+
                 
                     sh "ASSET_PREFIX=${assetPrefix} docker build -t ${DOCKER_IMAGE_NAME} --build-arg ASSET_PREFIX=${assetPrefix} ."
                     

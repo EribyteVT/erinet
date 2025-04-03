@@ -38,6 +38,8 @@ const nextConfig = {
   },
 };
 
-console.log(`Using assetPrefix: ${process.env.ASSET_PREFIX || "(none)"}`);
+console.log("Environment:", process.env.NODE_ENV);
+console.log("ASSET_PREFIX:", process.env.ASSET_PREFIX);
+console.log("Using assetPrefix:", process.env.ASSET_PREFIX || "(none)");
 
 module.exports = nextConfig;
