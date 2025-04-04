@@ -112,7 +112,7 @@ export default function PrivacyPolicyPage() {
                   <li>Your name on twitch</li>
                   <li>The id of any Discord servers Eribot is enabled in</li>
                   <li>Your timezone</li>
-                  <li>Any Discord channel or role id's you give us </li>
+                  <li>Any Discord channel or role id&apos;s you give us </li>
                 </ul>
 
                 <h3 className="text-xl font-medium mt-6 mb-3">
@@ -144,7 +144,7 @@ export default function PrivacyPolicyPage() {
                 <h3 className="text-xl font-medium mt-6 mb-3">
                   5.1 Discord Integration
                 </h3>
-                <p>We use Discord's API to:</p>
+                <p>We use Discord&apos;s API to:</p>
                 <ul className="list-disc ml-6 space-y-1">
                   <li>Authenticate users</li>
                   <li>Access guild information</li>
@@ -155,7 +155,7 @@ export default function PrivacyPolicyPage() {
                 <h3 className="text-xl font-medium mt-6 mb-3">
                   5.2 Twitch Integration
                 </h3>
-                <p>We use Twitch's API to:</p>
+                <p>We use Twitch&apos;s API to:</p>
                 <ul className="list-disc ml-6 space-y-1">
                   <li>Connect streamer accounts</li>
                   <li>Create and manage schedule segments</li>
@@ -229,7 +229,7 @@ export default function PrivacyPolicyPage() {
 
               <section className="mb-8">
                 <h2 className="text-2xl font-semibold mb-4">
-                  9. Children's Privacy
+                  9. Children&apos;s Privacy
                 </h2>
                 <p>
                   Our service is not intended for use by individuals under the
