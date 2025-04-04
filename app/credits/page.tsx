@@ -81,7 +81,8 @@ const creditData: CreditCategory[] = [
   },
   {
     title: "Beta Testers",
-    description: "The testers who helped improve the project",
+    description:
+      "The testers who used Eribot while it was bad, so that one day it could be good",
     colorScheme: {
       bg: "bg-blue-50",
       darkBg: "dark:bg-blue-900/20",
@@ -108,7 +109,7 @@ const creditData: CreditCategory[] = [
   },
   {
     title: "Misc Credits I want to give, It's my site I do what I want",
-    description: "The testers who helped improve the project",
+    description: "Miscallaneous shoutouts",
     colorScheme: {
       bg: "bg-red-50",
       darkBg: "dark:bg-red-900/20",
@@ -122,19 +123,29 @@ const creditData: CreditCategory[] = [
     people: [
       {
         name: "Synth Samurii",
-        role: "Beta Tester",
+        role: "Misc",
         description:
           "The man that got me into vtubing, as well as a good friend that always has my back",
         imageUrl: "/Synth.png",
-        websiteUrl: "https://example.com",
+        websiteUrl: "https://twitch.tv/synthsamurii",
         websiteLabel: "Visit Website",
       },
       {
         name: "Eris Aconitum",
-        role: "Beta Tester",
-        description: "My vtuber mom that rigged my model",
-        imageUrl: "/Eris.png",
+        role: "Misc",
+        description:
+          "My vtuber mom that rigged my model, highly reccomend if you need a mdoel rigged",
+        imageUrl: "/eris.png",
         websiteUrl: "https://erisaconitum.wordpress.com/",
+        websiteLabel: "Visit Website",
+      },
+      {
+        name: "A. Mihan ᜀᜁᜇ ᜋᜒᜑᜈ᜔",
+        role: "Misc",
+        description:
+          "My vtuber mom that made my Eribyte model! Her style is really nice and I reccomend her if you ever want a model :3",
+        imageUrl: "/Mihan.png",
+        websiteUrl: "https://x.com/aidamihan",
         websiteLabel: "Visit Website",
       },
     ],
