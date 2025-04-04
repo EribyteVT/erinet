@@ -43,13 +43,6 @@ interface ExtendedJWT extends JWT {
     avatar?: string;
     access_token?: string;
   };
-  twitchAccount?: {
-    id: string;
-    username: string;
-    email: string;
-    avatar?: string;
-    access_token?: string;
-  };
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
