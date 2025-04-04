@@ -25,7 +25,7 @@ type CreditCategory = {
     darkImageBorder: string;
   };
   people: Person[];
-  footerText?: string;
+  footerText?: string | undefined;
 };
 
 const creditData: CreditCategory[] = [
@@ -228,18 +228,12 @@ const CreditCategorySection = ({ category }: { category: CreditCategory }) => (
   </div>
 );
 
-export default function CreditsPage({
-  pageTitle = "Credits",
-  pageDescription = "The people who made this project possible",
-  footerText = "Special thanks to everyone who supported this project!",
-  copyrightName = "Project Name",
-}: {
-  pageTitle?: string;
-  pageDescription?: string;
-  creditData?: CreditCategory[];
-  footerText?: string;
-  copyrightName?: string;
-}) {
+export default function CreditsPage() {
+  let pageTitle = "Credits";
+  let pageDescription = "The people who made this project possible";
+  let footerText = "Shoutout to my mom, I love my mom";
+  let copyrightName = "Eribot";
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12">
       <div className="max-w-max mx-auto px-4">
