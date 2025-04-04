@@ -45,7 +45,7 @@ const creditData: CreditCategory[] = [
     people: [
       {
         name: "Eribyte",
-        role: "Lead Developer",
+        role: "Lead Developer/God",
         description:
           "Lead developer and creator. Designed and built the core functionality, backend systems, and frontend interface.",
         imageUrl: "/Eribyte.png",
@@ -74,7 +74,7 @@ const creditData: CreditCategory[] = [
         description:
           "Im getting a new one soon, my ms paint doodles don't cut it",
         imageUrl: "/Eribyte.png",
-        websiteUrl: "https://example.com",
+        websiteUrl: "https://eribyte.net",
         websiteLabel: "Visit Portfolio",
       },
     ],
@@ -100,7 +100,7 @@ const creditData: CreditCategory[] = [
         description:
           "Provided valuable feedback and helped identify bugs during development. Has been using Eribot since it was just a discord bot",
         imageUrl: "/Aka.png",
-        websiteUrl: "https://example.com",
+        websiteUrl: "https://www.akafox.live",
         websiteLabel: "Visit Website",
       },
     ],
