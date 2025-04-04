@@ -14,6 +14,10 @@ const fontSans = FontSans({
   variable: "--font-sans",
 });
 
+const metadataBase = process.env.DEFAULT_REDIRECT_URL
+  ? new URL(process.env.DEFAULT_REDIRECT_URL)
+  : new URL("https://eri.bot");
+
 export const metadata: Metadata = {
   title: "Eribot",
   description:
@@ -24,7 +28,7 @@ export const metadata: Metadata = {
   robots: "index, follow",
   applicationName: "Eribot",
 
-  metadataBase: new URL(process.env.DEFAULT_REDIRECT_URL!),
+  metadataBase: metadataBase,
 
   openGraph: {
     title: "Eribot",
