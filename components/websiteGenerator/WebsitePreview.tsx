@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import DOMPurify from "dompurify";
 
 interface WebsitePreviewProps {
   html: string;
@@ -89,12 +90,6 @@ export default function WebsitePreview({ html, css, js }: WebsitePreviewProps) {
       </div>
     `;
 
-    // Replace the schedule placeholder in HTML with our mock schedule
-    const modifiedHTML = html.replace(
-      /<div id="gridSchedule"[\s\S]*?<\/div>\s*<div id="NextStreamCountdown"[\s\S]*?<\/div>/,
-      mockScheduleHTML
-    );
-
     // Create simplified JS that just updates the countdown timer for demo purposes
     const simplifiedJS = `
       // Just for demo - decreasing countdown timer
@@ -131,22 +126,29 @@ export default function WebsitePreview({ html, css, js }: WebsitePreviewProps) {
       }
     `;
 
+    // Replace the schedule placeholder in HTML with our mock schedule
+    let modifiedHTML = html.replace(
+      /<div id="gridSchedule"[\s\S]*?<\/div>\s*<div id="NextStreamCountdown"[\s\S]*?<\/div>/,
+      mockScheduleHTML
+    );
+
     // Create a combined HTML document with inline CSS and JS
     const combinedContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>${css}</style>
-        </head>
-        <body>
-
-          ${html
-            .replace(/<link.*?>/g, "")
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/g, "")}
-          <script>${js}</script>
-        </body>
-      </html>
-    `;
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>${DOMPurify.sanitize(css)}</style>
+            <link
+              rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+            />
+          </head>
+          <body>
+            ${DOMPurify.sanitize(modifiedHTML)}
+            <script>${DOMPurify.sanitize(simplifiedJS)}</script>
+          </body>
+        </html>
+      `;
 
     const iframe = iframeRef.current;
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
