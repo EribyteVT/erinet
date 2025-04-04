@@ -33,7 +33,7 @@ export function MainNav({
         Tutorial
       </Link>
       <Link
-        href="/howto"
+        href="/credits"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         Credits!

@@ -12,6 +12,7 @@ import {
 
 import { auth } from "@/auth";
 import { SignOut } from "@/components/dashboard/signOut";
+import Link from "next/link";
 
 export async function UserNav() {
   const session = await auth();
@@ -35,11 +36,14 @@ export async function UserNav() {
             <p className="text-sm font-medium leading-none">
               {session.user?.name}
             </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {session.user?.email}
-            </p>
           </div>
         </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Link href="/privacy">Privacy Policy</Link>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <SignOut />
