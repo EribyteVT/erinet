@@ -13,6 +13,7 @@ export default async function Page({
   const guildId = (await params).guildId;
   const session = await auth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const crudUrl = process.env.NEXT_PUBLIC_CRUD_URL!;
 
   const api = DiscordApi("https://discord.com/api/v10/");
 
@@ -49,6 +50,7 @@ export default async function Page({
       guild={guild}
       streamer_pass={streamer}
       apiBaseUrl={apiBaseUrl}
+      crudUrl={crudUrl}
     ></StreamPage>
   );
 }

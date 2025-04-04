@@ -12,7 +12,11 @@ type WebsiteConfig = {
   socialLinks: SocialLink[];
 };
 
-export function generateJS(config: WebsiteConfig, streamer: Streamer): string {
+export function generateJS(
+  config: WebsiteConfig,
+  streamer: Streamer,
+  crudUrl: string
+): string {
   return `Date.prototype.addDays = function (days) {
         let date = new Date(this.valueOf());
         date.setDate(date.getDate() + days);
@@ -21,7 +25,7 @@ export function generateJS(config: WebsiteConfig, streamer: Streamer): string {
     
     // Streamer ID set during site generation
     const STREAMER_ID = "${streamer.streamer_id}";
-    const API_BASE_URL = "https://crud-stage.eribyte.net";
+    const API_BASE_URL = "${crudUrl}";
     
     let countdown;
     let streams = [];
@@ -108,7 +112,7 @@ export function generateJS(config: WebsiteConfig, streamer: Streamer): string {
         
         //streamer id is local to the erinet system
         const now = Date.now();
-        const url = \`\${API_BASE_URL}/getStreams/\${STREAMER_ID}/\${now}\`;
+        const url = \`\${API_BASE_URL}/getWeek/\${STREAMER_ID}\`;
         
         console.log(\`Fetching streams from \${url}\`);
         

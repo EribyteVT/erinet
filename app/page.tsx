@@ -20,47 +20,14 @@ const myReadFile = async (path: string) => {
 };
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Example dashboard app built using the components.",
+  title: "Eribot!",
+  description: "A website for managing a streamer's schedule",
 };
 
 export default async function DashboardPage() {
-  const session = await auth();
-
-  console.log("ASSET PATH RIGHT HERE");
-  console.log(process.env.ASSET_PREFIX);
-  console.log("LOOK ABOVE HERE");
-  if (!session || !session.user.discordAccount)
-    return (
-      <>
-        <AssetPrefixDisplay />
-        <div
-          className="hidden md:grid place-items-center overflow-hidden"
-          style={{ height: "calc(100vh - 66px)" }}
-        >
-          <div className="space-y-4 ">
-            <div className="flex items-center justify-center">
-              <h2 className="text-3xl font-bold tracking-tight text-center">
-                Dashboard
-              </h2>
-            </div>
-            <div className="flex items-center justify-center">
-              <Card>
-                <CardHeader className="flex items-center justify-center">
-                  <CardTitle>⚠️ Protected Content</CardTitle>
-                  <CardDescription>
-                    To view your dashboard, please sign in using discord.
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-
   return (
     <>
+      {/* debug info */}
       <AssetPrefixDisplay />
       <div className=" relative">
         <h1 className=" text-6xl text-center py-7">Welcome to Eribot!</h1>
@@ -71,6 +38,15 @@ export default async function DashboardPage() {
           height={600}
           width={600}
         />
+        <div className="text-center py-4">
+          art by:{" "}
+          <a
+            className=" border-b-2 border-white"
+            href="https://twitch.tv/eribytevt"
+          >
+            no one
+          </a>
+        </div>
       </div>
       <Card className=" dark:black shadow-xl  mx-8">
         <div className=" px-3">

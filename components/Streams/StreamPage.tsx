@@ -18,17 +18,18 @@ import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WebsiteGenerator } from "@/components/websiteGenerator/WebsiteGenerator";
 
-
 export default function StreamPage({
   session,
   guild,
   streamer_pass,
   apiBaseUrl,
+  crudUrl,
 }: {
   session: Session;
   guild: GuildData;
   streamer_pass: Streamer;
   apiBaseUrl: string;
+  crudUrl: string;
 }) {
   // Main state
   const [streamer, setStreamer] = useState<Streamer>(streamer_pass);
@@ -38,8 +39,6 @@ export default function StreamPage({
     string | null | undefined
   >(streamer.twitch_user_id);
   const [hasTwitchAuth, setHasTwitchAuth] = useState<boolean>(false);
-
-  // Website generator modal state
 
   // Shared loading state
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -117,6 +116,7 @@ export default function StreamPage({
         streams={streams}
         apiBaseUrl={apiBaseUrl}
         discordAvatar={session.user.discordAccount.avatar!}
+        crudUrl={crudUrl}
       />
 
       {/* Stream table */}

@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +19,14 @@ import { downloadWebsiteZip } from "@/utils/zipUtils";
 import { generateHTML } from "./HtmlGenerator";
 import { generateCSS } from "./CssGenerator";
 import { generateJS } from "./JsGenerator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // load font awesome dynamically cuz we have no head
 function FontAwesomeLoader() {
@@ -49,6 +55,14 @@ function FontAwesomeLoader() {
   return null;
 }
 
+// Gradient direction options
+const gradientDirections = [
+  { value: "to bottom", label: "Top to Bottom" },
+  { value: "to right", label: "Left to Right" },
+  { value: "to bottom right", label: "Top Left to Bottom Right" },
+  { value: "to bottom left", label: "Top Right to Bottom Left" },
+];
+
 // add any new icons here
 const socialMediaIcons = [
   { value: "fab fa-brands fa-twitch", label: "Twitch" },
@@ -66,7 +80,7 @@ const socialMediaIcons = [
   { value: "fab fa-brands fa-tumblr", label: "Tumblr" },
   { value: "fab fa-brands fa-soundcloud", label: "SoundCloud" },
   { value: "fab fa-brands fa-bandcamp", label: "Bandcamp" },
-  { value: "fab fa-brands fa-x-twitter", label: "X (cringe)" },
+  { value: "fab fa-brands fa-x-twitter", label: "X" },
   { value: "fab fa-brands fa-bluesky", label: "Bluesky" },
   { value: "fa-solid fa-bag-shopping", label: "Store" },
   { value: "fa-solid fa-crown", label: "Throne" },
@@ -148,6 +162,10 @@ type SocialLink = {
 
 type WebsiteConfig = {
   backgroundColor: string;
+  useGradient: boolean;
+  gradientStartColor: string;
+  gradientEndColor: string;
+  gradientDirection: string;
   name: string;
   socialLinks: SocialLink[];
 };
@@ -157,21 +175,26 @@ interface WebsiteGeneratorProps {
   streams: Stream[];
   apiBaseUrl: string;
   discordAvatar: string;
+  crudUrl: string;
 }
 
 export function WebsiteGenerator({
-
   streamer,
   streams,
   apiBaseUrl,
   discordAvatar,
+  crudUrl,
 }: WebsiteGeneratorProps) {
   let defaultConfig = {
     backgroundColor: "#414141",
+    useGradient: false,
+    gradientStartColor: "#414141",
+    gradientEndColor: "#232323",
+    gradientDirection: "to bottom",
     name: streamer.streamer_name,
     socialLinks: [
       {
-        icon: "fa-twitch",
+        icon: "fab fa-brands fa-twitch",
         url: `https://www.twitch.tv/${streamer.streamer_name}`,
         tooltip: "Twitch",
       },
@@ -180,7 +203,7 @@ export function WebsiteGenerator({
 
   const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<WebsiteConfig>(defaultConfig);
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [generatedHTML, setGeneratedHTML] = useState("");
   const [generatedCSS, setGeneratedCSS] = useState("");
@@ -192,8 +215,8 @@ export function WebsiteGenerator({
       socialLinks: [
         ...config.socialLinks,
         {
-          icon: "fa-brands fa-twitch",
-          url: "https://www.twitch.tv/",
+          icon: "fab fa-brands fa-twitch",
+          url: "",
           tooltip: "Twitch",
         },
       ],
@@ -211,9 +234,15 @@ export function WebsiteGenerator({
 
   const generateWebsite = async () => {
     // Generate HTML, CSS, and JS code
-    const html = generateHTML(config, streams, streamer, discordAvatar);
+    const html = generateHTML(
+      config,
+      streams,
+      streamer,
+      discordAvatar,
+      crudUrl
+    );
     const css = generateCSS(config);
-    const js = generateJS(config, streamer);
+    const js = generateJS(config, streamer, crudUrl);
 
     setGeneratedHTML(html);
     setGeneratedCSS(css);
@@ -233,6 +262,18 @@ export function WebsiteGenerator({
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
+  };
+
+  // Get the current background style for preview
+  const getBackgroundStyle = () => {
+    if (config.useGradient) {
+      return {
+        background: `linear-gradient(${config.gradientDirection}, ${config.gradientStartColor}, ${config.gradientEndColor})`,
+      };
+    }
+    return {
+      backgroundColor: config.backgroundColor,
+    };
   };
 
   return (
@@ -272,36 +313,205 @@ export function WebsiteGenerator({
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="backgroundColor">Background Color</Label>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-10 h-10 rounded-md border cursor-pointer"
-                          style={{ backgroundColor: config.backgroundColor }}
-                          onClick={() => setShowColorPicker(!showColorPicker)}
-                        ></div>
-                        <Input
-                          id="backgroundColor"
-                          value={config.backgroundColor}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              backgroundColor: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      {showColorPicker && (
-                        <div className="mt-2">
-                          <HexColorPicker
-                            color={config.backgroundColor}
-                            onChange={(color) =>
-                              setConfig({ ...config, backgroundColor: color })
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Checkbox
+                        id="useGradient"
+                        checked={config.useGradient}
+                        onCheckedChange={(checked) =>
+                          setConfig({
+                            ...config,
+                            useGradient: checked === true,
+                          })
+                        }
+                      />
+                      <Label
+                        htmlFor="useGradient"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Use Gradient Background
+                      </Label>
+                    </div>
+
+                    {!config.useGradient ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="backgroundColor">
+                          Background Color
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-10 h-10 rounded-md border cursor-pointer"
+                            style={{ backgroundColor: config.backgroundColor }}
+                            onClick={() => setShowColorPicker("background")}
+                          ></div>
+                          <Input
+                            id="backgroundColor"
+                            value={config.backgroundColor}
+                            onChange={(e) =>
+                              setConfig({
+                                ...config,
+                                backgroundColor: e.target.value,
+                              })
                             }
                           />
                         </div>
-                      )}
-                    </div>
+                        {showColorPicker === "background" && (
+                          <div className="mt-2">
+                            <HexColorPicker
+                              color={config.backgroundColor}
+                              onChange={(color) =>
+                                setConfig({ ...config, backgroundColor: color })
+                              }
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowColorPicker(null)}
+                              className="mt-2"
+                              type="button"
+                            >
+                              Close Picker
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="gradientDirection">
+                            Gradient Direction
+                          </Label>
+                          <Select
+                            value={config.gradientDirection}
+                            onValueChange={(value) =>
+                              setConfig({
+                                ...config,
+                                gradientDirection: value,
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-full mt-1">
+                              <SelectValue placeholder="Select direction" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {gradientDirections.map((direction) => (
+                                <SelectItem
+                                  key={direction.value}
+                                  value={direction.value}
+                                >
+                                  {direction.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="gradientStartColor">
+                              Start Color
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-10 h-10 rounded-md border cursor-pointer"
+                                style={{
+                                  backgroundColor: config.gradientStartColor,
+                                }}
+                                onClick={() => setShowColorPicker("start")}
+                              ></div>
+                              <Input
+                                id="gradientStartColor"
+                                value={config.gradientStartColor}
+                                onChange={(e) =>
+                                  setConfig({
+                                    ...config,
+                                    gradientStartColor: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            {showColorPicker === "start" && (
+                              <div className="mt-2">
+                                <HexColorPicker
+                                  color={config.gradientStartColor}
+                                  onChange={(color) =>
+                                    setConfig({
+                                      ...config,
+                                      gradientStartColor: color,
+                                    })
+                                  }
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setShowColorPicker(null)}
+                                  className="mt-2"
+                                  type="button"
+                                >
+                                  Close Picker
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="gradientEndColor">End Color</Label>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-10 h-10 rounded-md border cursor-pointer"
+                                style={{
+                                  backgroundColor: config.gradientEndColor,
+                                }}
+                                onClick={() => setShowColorPicker("end")}
+                              ></div>
+                              <Input
+                                id="gradientEndColor"
+                                value={config.gradientEndColor}
+                                onChange={(e) =>
+                                  setConfig({
+                                    ...config,
+                                    gradientEndColor: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            {showColorPicker === "end" && (
+                              <div className="mt-2">
+                                <HexColorPicker
+                                  color={config.gradientEndColor}
+                                  onChange={(color) =>
+                                    setConfig({
+                                      ...config,
+                                      gradientEndColor: color,
+                                    })
+                                  }
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setShowColorPicker(null)}
+                                  className="mt-2"
+                                  type="button"
+                                >
+                                  Close Picker
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="relative h-12 border rounded-md mt-4 overflow-hidden">
+                          <div
+                            className="absolute inset-0 w-full h-full"
+                            style={getBackgroundStyle()}
+                          ></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-white text-sm font-medium drop-shadow-md">
+                              Gradient Preview
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -421,7 +631,7 @@ export function WebsiteGenerator({
 
               <div className="border rounded-md overflow-hidden">
                 <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 px-4 py-2">
-                  <h3 className="font-medium">Preview</h3>
+                  <h3 className="font-medium">Mock Preview</h3>
                 </div>
                 <div className="h-96 overflow-auto border-t">
                   <WebsitePreview

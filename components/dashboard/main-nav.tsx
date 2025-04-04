@@ -30,7 +30,13 @@ export function MainNav({
         href="/howto"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        How To!
+        Tutorial
+      </Link>
+      <Link
+        href="/howto"
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        Credits!
       </Link>
     </nav>
   );

@@ -10,8 +10,9 @@ const nextConfig = {
       {
         hostname: "cdn.discordapp.com",
       },
+      { hostname: "eri.bot" },
+      { hostname: "stage.eri.bot" },
     ],
-    domains: ["eri.bot", "stage.eri.bot"],
   },
 
   experimental: {
