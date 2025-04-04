@@ -20,7 +20,9 @@ export default function WebsitePreview({ html, css, js }: WebsitePreviewProps) {
           <style>${css}</style>
         </head>
         <body>
-          ${html.replace(/<link.*?>/g, "").replace(/<script.*?<\/script>/g, "")}
+          ${html
+            .replace(/<link.*?>/g, "")
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/g, "")}
           <script>${js}</script>
         </body>
       </html>

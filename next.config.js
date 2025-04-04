@@ -44,5 +44,4 @@ console.log(
   process.env.NEXT_PUBLIC_ASSET_PREFIX || "(none)"
 );
 
-
 module.exports = nextConfig;
