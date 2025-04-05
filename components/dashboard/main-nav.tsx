@@ -24,7 +24,7 @@ export function MainNav({
         href="/guilds"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        Streams
+        Manage
       </Link>
       <Link
         href="/howto"
@@ -34,14 +34,12 @@ export function MainNav({
       </Link>
       <Link
         href="/credits"
-
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         Credits!
       </Link>
       <Link
         href="/donate"
-
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         Donate

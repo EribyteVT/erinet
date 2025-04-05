@@ -37,8 +37,9 @@ export function DeleteConfirmationModal({
             <Trash2 className="h-5 w-5" /> Delete Stream
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete the stream &quo;{stream.stream_name}
-            &quo;?
+            Are you sure you want to delete the stream &quot;
+            {stream.stream_name}
+            &quot;?
           </DialogDescription>
         </DialogHeader>
 
