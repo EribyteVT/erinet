@@ -630,14 +630,14 @@ export default async function HowToPage() {
                   <div className="flex items-center gap-2">
                     <FileQuestion className="h-5 w-5 text-primary" />
                     <h4 className="font-medium">
-                      What happens if I edit a stream?
+                      Will there be youtube support soon?
                     </h4>
                   </div>
                   <p className="text-muted-foreground text-sm pl-7">
-                    When you edit a stream, any connected Discord events and
-                    Twitch schedule segments should also be updated
-                    automatically with the new information. If this doesn&apos;t
-                    happen contact Eribyte
+                    not for a long while, I&apos;ve looked into it and with the
+                    free api from youtube I could make 3 live streams per day,
+                    which isn&apos;t enough to support more than 0.75 users.
+                    Maybe in the future or if the youtube api changes
                   </p>
                 </div>
               </div>
