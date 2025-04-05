@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { isAllowedGuild } from "@/app/lib/auth";
-import { getValidAccessToken } from "@/app/lib/tokenService";
+import { getValidAccessToken } from "@/app/lib/twitchTokenService";
 
 export async function POST(request: Request) {
   try {

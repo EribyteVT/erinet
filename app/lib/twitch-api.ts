@@ -1,4 +1,4 @@
-import { getValidAccessToken } from "./tokenService";
+import { getValidAccessToken } from "./twitchTokenService";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;

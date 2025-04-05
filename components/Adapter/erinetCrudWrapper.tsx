@@ -195,7 +195,7 @@ export default function createStreamApiClient(baseUrlClient?: string) {
     },
 
     async getBotGuilds(): Promise<Array<GuildData>> {
-      let url = `${baseUrl}/discord/guilds`;
+      let url = `${baseUrl}/discord/botGuilds`;
       console.log(url);
       const response = await fetch(url, {
         method: "GET",
@@ -294,6 +294,18 @@ export default function createStreamApiClient(baseUrlClient?: string) {
       });
 
       return (await response.json()).data;
+    },
+
+    async getUsersGuildNOAUTHTOKEN(): Promise<GuildData[]> {
+      const response = await fetch(`${baseUrl}/discord/guilds`, {
+        method: "GET",
+      });
+
+      console.log(response);
+
+      const response_data = await response.json();
+
+      return response_data;
     },
   };
 }

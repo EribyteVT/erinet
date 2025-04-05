@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import DiscordApi from "@/components/Adapter/discord_funcs";
+// import DiscordApi from "@/components/Adapter/discord_funcs";
 import { redirect } from "next/navigation";
 import OnboardingProcess from "@/components/onboarding/OnboardingProcess";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
@@ -17,7 +17,7 @@ export default async function OnboardingPage({
 
   const api = DiscordApi("https://discord.com/api/v10/");
 
-  const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`
+  const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`;
 
   // Check authentication first
   if (

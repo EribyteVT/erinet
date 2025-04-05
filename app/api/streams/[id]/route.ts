@@ -7,7 +7,7 @@ import {
   updateTwitchSegment,
   deleteTwitchSegment,
 } from "@/app/lib/eventServices";
-import { getValidAccessToken } from "@/app/lib/tokenService";
+import { getValidAccessToken } from "@/app/lib/twitchTokenService";
 
 export async function PUT(
   request: Request,

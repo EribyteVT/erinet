@@ -1,8 +1,9 @@
 import { auth } from "@/auth";
-import DiscordApi from "@/components/Adapter/discord_funcs";
+// import DiscordApi from "@/components/Adapter/discord_funcs";
 import { redirect } from "next/navigation";
 import StreamPage from "@/components/Streams/StreamPage";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
+import { fetchSpecificUserGuild } from "@/app/actions/discordActions";
 
 export default async function Page({
   params,
@@ -15,19 +16,11 @@ export default async function Page({
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const crudUrl = process.env.NEXT_PUBLIC_CRUD_URL!;
 
-  const api = DiscordApi("https://discord.com/api/v10/");
+  // const api = DiscordApi("https://discord.com/api/v10/");
 
-  if (
-    !session ||
-    !session.user.discordAccount ||
-    !session.user.discordAccount.access_token
-  )
-    redirect("/");
+  if (!session) redirect("/");
 
-  const guild = await api.getGuildData(
-    session.user.discordAccount.access_token,
-    guildId
-  );
+  const guild = await fetchSpecificUserGuild(guildId);
 
   let streamer = null;
 
