@@ -57,16 +57,16 @@ export default async function HowToPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-muted-foreground mb-4">
-                        Click the "Login with Discord" button in the top-right
-                        corner of the page. You'll need to authorize Eribot to
-                        access your Discord account.
+                        Click the &quot;Login with Discord&quot; button in the
+                        top-right corner of the page. You&apos;ll need to
+                        authorize Eribot to access your Discord account.
                       </p>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
                           <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             Eribot only requests the permissions it needs to
-                            function, such knowledge of servers you're in.
+                            function, such knowledge of servers you&apos;re in.
                             Eribot uses Encrypted JWT tokens to store Discord
                             Information.
                           </p>
@@ -99,9 +99,9 @@ export default async function HowToPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-muted-foreground mb-4">
-                        Once logged in, click on "Manage" in the navigation bar.
-                        This will show you all the Discord servers where you
-                        have admin permissions.
+                        Once logged in, click on &quot;Manage&quot; in the
+                        navigation bar. This will show you all the Discord
+                        servers where you have admin permissions.
                       </p>
                       <p className="text-muted-foreground">
                         Only servers where users have admin permissions will be
@@ -137,15 +137,16 @@ export default async function HowToPage() {
                       <p className="text-muted-foreground mb-4">
                         Click on the Discord server you want to manage with
                         Eribot. If this is your first time using Eribot with
-                        this server, you'll be taken to the onboarding process.
+                        this server, you&apos;ll be taken to the onboarding
+                        process.
                       </p>
                       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
                         <div className="flex gap-2">
                           <Info className="h-5 w-5 text-amber-500 flex-shrink-0" />
                           <p className="text-sm text-amber-700 dark:text-amber-300">
-                            Servers with a "Setup Needed" badge require you to
-                            complete the onboarding process before you can
-                            manage streams.
+                            Servers with a &quot;Setup Needed&quot; badge
+                            require you to complete the onboarding process
+                            before you can manage streams.
                           </p>
                         </div>
                       </div>
@@ -176,7 +177,7 @@ export default async function HowToPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        For new servers, you'll need to complete a two-step
+                        For new servers, you&apos;ll need to complete a two-step
                         onboarding process:
                       </p>
                       <ol className="list-decimal pl-6 space-y-2">
@@ -184,8 +185,8 @@ export default async function HowToPage() {
                           <span className="font-medium text-foreground">
                             Invite the Eribot:
                           </span>{" "}
-                          Click the "Invite Bot to Server" button to add Eribot
-                          to your Discord server.
+                          Click the &quot;Invite Bot to Server&quot; button to
+                          add Eribot to your Discord server.
                         </li>
                         <li className="text-muted-foreground">
                           <span className="font-medium text-foreground">
@@ -195,8 +196,8 @@ export default async function HowToPage() {
                         </li>
                       </ol>
                       <p className="text-muted-foreground">
-                        After completing these steps, you'll be redirected to
-                        your server's management page.
+                        After completing these steps, you&apos;ll be redirected
+                        to your server&apos;s management page.
                       </p>
                     </div>
                     <Image
@@ -236,7 +237,8 @@ export default async function HowToPage() {
                       </p>
                       <ol className="list-decimal pl-6 space-y-2">
                         <li className="text-muted-foreground">
-                          Enter your stream name in the "Stream Name" field
+                          Enter your stream name in the &quot;Stream Name&quot;
+                          field
                         </li>
                         <li className="text-muted-foreground">
                           Set the date and time using the date picker
@@ -245,16 +247,16 @@ export default async function HowToPage() {
                           Enter the duration in minutes
                         </li>
                         <li className="text-muted-foreground">
-                          Click the green "+" button to add the stream
+                          Click the green &quot;+&quot; button to add the stream
                         </li>
                       </ol>
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                         <div className="flex gap-2">
                           <Info className="h-5 w-5 text-green-500 flex-shrink-0" />
                           <p className="text-sm text-green-700 dark:text-green-300">
-                            If you've enabled auto-publish to Discord or Twitch,
-                            the stream will automatically be added to those
-                            platforms when you create it.
+                            If you&apos;ve enabled auto-publish to Discord or
+                            Twitch, the stream will automatically be added to
+                            those platforms when you create it.
                           </p>
                         </div>
                       </div>
@@ -287,13 +289,13 @@ export default async function HowToPage() {
                           Click the three dots menu at the end of the stream row
                         </li>
                         <li className="text-muted-foreground">
-                          Select "Edit" from the dropdown menu
+                          Select &quot;Edit&quot; from the dropdown menu
                         </li>
                         <li className="text-muted-foreground">
                           Update the stream details in the edit modal
                         </li>
                         <li className="text-muted-foreground">
-                          Click "Save Changes" to update the stream
+                          Click &quot;Save Changes&quot; to update the stream
                         </li>
                       </ol>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -342,7 +344,7 @@ export default async function HowToPage() {
                           Click the three dots menu at the end of the stream row
                         </li>
                         <li className="text-muted-foreground">
-                          Select "Delete" from the dropdown menu
+                          Select &quot;Delete&quot; from the dropdown menu
                         </li>
                         <li className="text-muted-foreground">
                           Confirm deletion in the confirmation dialog
@@ -440,19 +442,19 @@ export default async function HowToPage() {
                       </p>
                       <ol className="list-decimal pl-6 space-y-2">
                         <li className="text-muted-foreground">
-                          Go to the "Twitch Connection" section on your server's
-                          management page
+                          Go to the &quot;Twitch Connection&quot; section on
+                          your server&apos;s management page
                         </li>
                         <li className="text-muted-foreground">
                           Enter your Twitch username in the search box and click
-                          "Search"
+                          &quot;Search&quot;
                         </li>
                         <li className="text-muted-foreground">
                           Select your Twitch account from the results
                         </li>
                         <li className="text-muted-foreground">
-                          Click "Authenticate as this User" and follow the
-                          Twitch authentication process
+                          Click &quot;Authenticate as this User&quot; and follow
+                          the Twitch authentication process
                         </li>
                       </ol>
                       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
@@ -487,8 +489,8 @@ export default async function HowToPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        In the "Guild Options" section, you can configure
-                        auto-publishing:
+                        In the &quot;Guild Options&quot; section, you can
+                        configure auto-publishing:
                       </p>
                       <ul className="space-y-4">
                         <li className="flex items-start gap-2">
@@ -518,7 +520,7 @@ export default async function HowToPage() {
                         </li>
                       </ul>
                       <p className="text-muted-foreground">
-                        Click "Save Settings" after making changes.
+                        Click &quot;Save Settings&quot; after making changes.
                       </p>
                     </div>
                     <Image
@@ -542,21 +544,23 @@ export default async function HowToPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        If you haven't enabled auto-publishing, you can manually
-                        publish streams:
+                        If you haven&apos;t enabled auto-publishing, you can
+                        manually publish streams:
                       </p>
                       <ul className="space-y-2">
                         <li className="text-muted-foreground">
                           <span className="font-medium text-foreground">
                             Discord:
                           </span>{" "}
-                          Click the "Send to Discord" button in the stream row
+                          Click the &quot;Send to Discord&quot; button in the
+                          stream row
                         </li>
                         <li className="text-muted-foreground">
                           <span className="font-medium text-foreground">
                             Twitch:
                           </span>{" "}
-                          Click the "Send to Twitch" button in the stream row
+                          Click the &quot;Send to Twitch&quot; button in the
+                          stream row
                         </li>
                       </ul>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -564,8 +568,8 @@ export default async function HowToPage() {
                           <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             Once a stream has been published to a platform, the
-                            button will change to a checkmark to indicate it's
-                            already been published.
+                            button will change to a checkmark to indicate
+                            it&apos;s already been published.
                           </p>
                         </div>
                       </div>
@@ -598,13 +602,13 @@ export default async function HowToPage() {
                   <div className="flex items-center gap-2">
                     <FileQuestion className="h-5 w-5 text-primary" />
                     <h4 className="font-medium">
-                      Why can't I see my Discord server?
+                      Why can&apos;t I see my Discord server?
                     </h4>
                   </div>
                   <p className="text-muted-foreground text-sm pl-7">
                     You need administrator permissions in a Discord server to
-                    use Eribot with it. If you don't see your server, make sure
-                    you have the administrator permission.
+                    use Eribot with it. If you don&apos;t see your server, make
+                    sure you have the administrator permission.
                   </p>
                 </div>
 
@@ -632,7 +636,7 @@ export default async function HowToPage() {
                   <p className="text-muted-foreground text-sm pl-7">
                     When you edit a stream, any connected Discord events and
                     Twitch schedule segments should also be updated
-                    automatically with the new information. If this doesn't
+                    automatically with the new information. If this doesn&apos;t
                     happen contact Eribyte
                   </p>
                 </div>
@@ -648,9 +652,9 @@ export default async function HowToPage() {
                   </div>
                   <p className="text-muted-foreground text-sm pl-7">
                     Yes! The generated website automatically fetches the latest
-                    schedule data from Eribot, if you don't want this to happen,
-                    don't add a stream to Eribot until you're ready (subject to
-                    change in the future)
+                    schedule data from Eribot, if you don&apos;t want this to
+                    happen, don&apos;t add a stream to Eribot until you&apos;re
+                    ready (subject to change in the future)
                   </p>
                 </div>
 
@@ -661,8 +665,8 @@ export default async function HowToPage() {
                   </div>
                   <p className="text-muted-foreground text-sm pl-7">
                     No, Eribot is a web-based application with one very tired
-                    (back end) dev. Eventually I'll try and make it look okay on
-                    mobile.
+                    (back end) dev. Eventually I&apos;ll try and make it look
+                    okay on mobile.
                   </p>
                 </div>
 

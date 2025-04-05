@@ -32,12 +32,19 @@ export function MainNav({
       >
         Tutorial
       </Link>
+      {/* <Link
+        href="/makeawebsite"
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        Make a Website!
+      </Link> */}
       <Link
         href="/credits"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        Credits!
+        Credits
       </Link>
+
       <Link
         href="/donate"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"

@@ -34,7 +34,7 @@ export default function CreditsPage() {
                   </p>
 
                   <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Currently there's no incentive to donate other than my
+                    Currently there&apos;s no incentive to donate other than my
                     gratitude and the fact I would like you more :3
                   </p>
 
