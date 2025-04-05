@@ -39,6 +39,13 @@ export function MainNav({
       >
         Credits!
       </Link>
+      <Link
+        href="/donate"
+
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        Donate
+      </Link>
     </nav>
   );
 }
