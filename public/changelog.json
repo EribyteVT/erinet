@@ -1,6 +1,11 @@
 {
   "changelog": [
     {
+      "date": "4/05/2025",
+      "version": "0.2.0",
+      "items": ["privacy policy", "Credits page", "main page updgrage", "fix to website generation"]
+    },
+    {
       "date": "4/04/2025",
       "version": "0.2.0",
       "items": ["fixed discord event", "Basic Website generation"]
