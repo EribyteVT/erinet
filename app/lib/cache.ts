@@ -3,7 +3,7 @@ interface CacheItem<T> {
   timestamp: number;
 }
 
-class SimpleCache {
+export class SimpleCache {
   private cache: Map<string, CacheItem<any>> = new Map();
   private timeouts: Map<string, NodeJS.Timeout> = new Map();
 
