@@ -28,13 +28,14 @@ async function sendToDiscord(
                 );
 
     const response = await createDiscordEventAction(
+            stream.stream_id.toString(),
             guild,
             stream.stream_name,
             new Date(stream.stream_date).toISOString(),
             endDate.toISOString(),
             `https://twitch.tv/${twitchName}`,
           );
-    // return response.data.event_id;
+    return response.eventId
   } catch (error) {
     console.error("Error sending to Discord:", error);
     return null;

@@ -5,6 +5,8 @@ import { getDiscordToken } from "@/app/lib/discordTokenService";
 import { GuildData } from "@/components/Streams/types";
 import { isAllowedGuild } from "../lib/auth";
 import  { createDiscordEvent } from "@/app/lib/discord-api";
+import { prisma } from "@/app/lib/db";
+
 
 export async function fetchUserGuilds(): Promise<GuildData[]> {
   const session = await auth();
@@ -114,6 +116,7 @@ export async function checkGuildPermission(guildId: string) {
 
 
 export async function createDiscordEventAction(
+  streamId: string,
   guildId: string,
   name: string,
   startTime: string,
@@ -140,7 +143,7 @@ export async function createDiscordEventAction(
     }
 
     // Check if the user has permission for this guild
-    const hasPermission = await isAllowedGuild(token, guildId);
+    const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
       return { 
         success: false, 
@@ -157,6 +160,15 @@ export async function createDiscordEventAction(
       endTime,
       location
     );
+
+    console.log("DOODILY DOO")
+
+    console.log(eventData)
+
+    const updatedStream = await prisma.stream_table_tied.update({
+        where: { stream_id: parseInt(streamId) },
+        data: { event_id: eventData.id },
+      });
 
     return {
       success: true,

@@ -34,15 +34,16 @@ export const SendStreamDiscordButton = ({
               "minutes"
             );
 
-      const wrapper = ErinetCrudWrapper(apiBaseUrl);
-      // console.log(typeof stream.stream_date)
       const response = await createDiscordEventAction(
+        stream.stream_id.toString(),
         guild,
         stream.stream_name,
         new Date(stream.stream_date).toISOString(),
         endDate.toISOString(),
         `https://twitch.tv/${twitchName}`,
       );
+
+      console.log(response)
 
       if (response.success) {
         setIsSuccess(true);

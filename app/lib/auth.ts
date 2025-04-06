@@ -31,29 +31,38 @@ export async function isAllowedGuild(
 
   // If no authToken provided, check session and use stored token
   try {
+    console.log("Hacking in.")
     // Get the authenticated user
     const session = await auth();
     if (!session?.user?.id) {
+      console.log("NO AUTH")
       return false;
     }
 
     // Get the token from the database
     const token = await getDiscordToken(session.user.id);
     if (!token) {
+      console.log("NO TOKEN?")
       return false;
     }
 
     // Check guild permissions using the token
     const guilds = await getUserGuilds();
 
+    console.log(guildId)
+
+    let can = false
+
     for (const guild of guilds) {
       if (guildId === guild.id) {
+        console.log("found in auth", guildId, guild.id)
         const permissions = BigInt(guild.permissions);
-        return (permissions & BigInt(0x08)) !== BigInt(0);
+        can = (permissions & BigInt(0x08)) !== BigInt(0);
+        console.log(can)
       }
     }
 
-    return false;
+    return can;
   } catch (error) {
     console.error("Error checking guild permissions:", error);
     return false;

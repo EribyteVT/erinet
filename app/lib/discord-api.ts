@@ -26,7 +26,7 @@ export async function createDiscordEvent(
           scheduled_start_time: startTime,
           scheduled_end_time: endTime,
           entity_type: 3, // External event
-          privacy_level: 2, // Guild only
+          privacy_level: 2, // Guild only (only option for now)
           entity_metadata: {
             location,
           },
@@ -142,7 +142,7 @@ export async function getBotGuilds(): Promise<any[]> {
 }
 
 export async function getUserGuilds(): Promise<any[]> {
-  console.log("HERE");
+  // console.log("HERE");
   // Get the authenticated user's session
   const session = await auth();
 
@@ -164,13 +164,13 @@ export async function getUserGuilds(): Promise<any[]> {
     },
   });
 
-  console.log(response);
+  let jsonResponse = await response.json();
 
   if (!response.ok) {
     throw new Error(`Discord API error: ${response.status}`);
   }
 
-  return await response.json();
+  return await jsonResponse;
 }
 
 export async function checkGuildPermission(guildId: string) {

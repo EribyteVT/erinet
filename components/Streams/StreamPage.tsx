@@ -77,7 +77,7 @@ export default function StreamPage({
   }, [guild.id, streamer.twitch_user_id]);
 
 
-  console.log("HERE")
+  // console.log("HERE")
 
   return (
     <PageContainer maxWidth="full">
