@@ -1,7 +1,11 @@
 import { useCallback, useRef } from "react";
-import ErinetCrudWrapper from "../../../Adapter/erinetCrudWrapper";
 import { Stream } from "../../types";
-import { addStreamAction, deleteStreamAction, editStreamAction } from "@/app/actions/streamActions";
+import {
+  addStreamAction,
+  deleteStreamAction,
+  editStreamAction,
+  fetchStreamsAction,
+} from "@/app/actions/streamActions";
 
 interface AddStreamParams {
   name: string;
@@ -14,11 +18,6 @@ export const useStreams = (
   streamerId: number,
   apiBaseUrl: string
 ) => {
-  // Create wrapper instance once and store it in a ref
-  const wrapper = useRef(ErinetCrudWrapper(apiBaseUrl)).current;
-  // Cache streamer ID to avoid repeated API calls
-  const streamerIdRef = useRef<string | null>(null);
-
   // Get streamer ID only once and cache it
   function getStreamerId(): number {
     return streamerId;
@@ -28,17 +27,17 @@ export const useStreams = (
     try {
       if (!streamerId) return null;
 
-      const streamData = await wrapper.getStreams(
-        streamerId,
-        Date.now().toString()
-      );
+      const streamerIdStr = streamerId.toString();
+      const currentDate = new Date();
+
+      const streamData = await fetchStreamsAction(streamerIdStr, currentDate);
 
       return streamData?.data || null;
     } catch (error) {
       console.error("Error fetching streams:", error);
       return null;
     }
-  }, [wrapper, streamerId]);
+  }, [streamerId]);
 
   const fetchStreamsArb = useCallback(
     async (dateStart: Date, dateEnd: Date): Promise<Stream[] | null> => {
@@ -51,19 +50,16 @@ export const useStreams = (
         dateStart.setSeconds(0);
         dateStart.setMilliseconds(0);
 
-        let timestampStart = Math.floor(dateStart.getTime()).toString();
-
         dateEnd.setHours(0);
         dateEnd.setMinutes(0);
         dateEnd.setSeconds(0);
         dateEnd.setMilliseconds(0);
 
-        let timestampEnd = Math.floor(dateEnd.getTime()).toString();
-
-        const streamData = await wrapper.getStreams(
-          streamerId,
-          timestampStart,
-          timestampEnd
+        const streamerIdStr = streamerId.toString();
+        const streamData = await fetchStreamsAction(
+          streamerIdStr,
+          dateStart,
+          dateEnd
         );
 
         return streamData?.data || null;
@@ -72,7 +68,7 @@ export const useStreams = (
         return null;
       }
     },
-    [wrapper, streamerId]
+    [streamerId]
   );
 
   const addStream = useCallback(
@@ -80,7 +76,10 @@ export const useStreams = (
       name,
       time,
       duration,
-    }: AddStreamParams): Promise<{ success: boolean; data?: Stream | null }> => {
+    }: AddStreamParams): Promise<{
+      success: boolean;
+      data?: Stream | null;
+    }> => {
       try {
         console.log(streamerId);
         if (!streamerId) {
@@ -108,16 +107,13 @@ export const useStreams = (
         return { success: false };
       }
     },
-    [guildId, wrapper, streamerId]
+    [guildId, streamerId]
   );
 
   const deleteStream = useCallback(
     async (streamId: string): Promise<boolean> => {
       try {
-        const response = await deleteStreamAction(
-          streamId,
-          guildId
-        );
+        const response = await deleteStreamAction(streamId, guildId);
 
         return response.response === "OKAY";
       } catch (error) {
@@ -125,7 +121,7 @@ export const useStreams = (
         return false;
       }
     },
-    [guildId, wrapper]
+    [guildId]
   );
 
   const updateStream = useCallback(
@@ -168,7 +164,7 @@ export const useStreams = (
         return { success: false };
       }
     },
-    [wrapper]
+    []
   );
 
   return {

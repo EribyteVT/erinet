@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Streamer, TwitchUser } from "../types";
 import { setStreamerTwitchAction } from "@/app/actions/streameractions";
+import { findTwitchNameAction } from "@/app/actions/twitchActions";
 
 export const TwitchUserSearch = ({
   streamer,
@@ -22,7 +22,6 @@ export const TwitchUserSearch = ({
   setError: (error: string | null) => void;
   apiBaseUrl: string;
 }) => {
-  const wrapper = ErinetCrudWrapper(apiBaseUrl);
   const [twitchName, setTwitchName] = useState("");
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
   const [searching, setSearching] = useState(false);
@@ -85,7 +84,7 @@ export const TwitchUserSearch = ({
       setLoadingMessage("Searching for Twitch user...");
       setError(null);
 
-      const response = await wrapper.findTwitchUser(twitchName);
+      const response = await findTwitchNameAction(twitchName);
 
       console.log(response);
 

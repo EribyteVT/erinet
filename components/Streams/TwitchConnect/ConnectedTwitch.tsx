@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Streamer, TwitchUser } from "../types";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
+import { findTwitchIdAction } from "@/app/actions/twitchActions";
 
 interface ConnectedTwitchUserProps {
   streamer: Streamer;
@@ -20,7 +20,6 @@ export const ConnectedTwitchUser: React.FC<ConnectedTwitchUserProps> = ({
   apiBaseUrl,
 }) => {
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
-  const wrapper = ErinetCrudWrapper(apiBaseUrl);
 
   useEffect(() => {
     async function fetchTwitchUserById() {
@@ -31,10 +30,12 @@ export const ConnectedTwitchUser: React.FC<ConnectedTwitchUserProps> = ({
         setLoadingMessage("Loading Twitch account information...");
         setError(null);
 
-        const result = await wrapper.findTwitchId(streamer.twitch_user_id);
+        const result = await findTwitchIdAction(streamer.twitch_user_id);
 
-        if (result.status === "OKAY" && result.data?.data?.length > 0) {
-          setTwitchUser(result.data.data[0]);
+        console.log(result);
+
+        if (result.data?.length > 0) {
+          setTwitchUser(result.data[0]);
         } else {
           setError("Could not retrieve Twitch user information");
         }

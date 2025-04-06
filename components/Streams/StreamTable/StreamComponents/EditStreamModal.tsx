@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,13 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Stream } from "../../types";
 import dayjs from "dayjs";
 import { DateTimePicker } from "../../../ui/DateTimePicker";
-import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { editStreamAction } from "@/app/actions/streamActions";
+import { toast } from "sonner";
 
 interface EditStreamModalProps {
   isOpen: boolean;
   onClose: () => void;
   stream: Stream | null;
   onSave: (updatedStream: Stream) => void;
+  guildId: string;
 }
 
 export function EditStreamModal({
@@ -24,18 +29,27 @@ export function EditStreamModal({
   onClose,
   stream,
   onSave,
+  guildId,
 }: EditStreamModalProps) {
-  const [date, setDate] = React.useState(new Date(stream?.stream_date || ""));
+  const [date, setDate] = useState(new Date());
+  const [time, setTime] = useState(dayjs());
+  const [name, setName] = useState("");
+  const [duration, setDuration] = useState<string | number>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [time, setTime] = React.useState(
-    dayjs(parseInt(stream?.stream_date || "") * 1000)
-  );
-  const [name, setName] = React.useState(stream?.stream_name || "");
-  const [duration, setDuration] = React.useState(stream?.duration || "");
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (stream) {
-      let streamDate = new Date(stream.stream_date);
+      // Convert the stream date to a proper Date object
+      // Check if stream_date is a string or Date object
+      let streamDate: Date;
+      if (typeof stream.stream_date === "string") {
+        // Handle both timestamp string and ISO date string
+        streamDate = /^\d+$/.test(stream.stream_date)
+          ? new Date(parseInt(stream.stream_date) * 1000)
+          : new Date(stream.stream_date);
+      } else {
+        streamDate = new Date(stream.stream_date);
+      }
 
       setDate(streamDate);
       setTime(dayjs(streamDate));
@@ -44,31 +58,53 @@ export function EditStreamModal({
     }
   }, [stream]);
 
-  const handleSave = () => {
-    if (stream) {
-      //date only uses date, there is probably a better type for this, fuck you.
-      date.setHours(0);
-      date.setMinutes(0);
-      date.setSeconds(0);
-      date.setMilliseconds(0);
+  const handleSave = async () => {
+    if (!stream) return;
 
+    try {
+      setIsSubmitting(true);
+
+      const dateOnly = new Date(date);
+      dateOnly.setHours(0);
+      dateOnly.setMinutes(0);
+      dateOnly.setSeconds(0);
+      dateOnly.setMilliseconds(0);
+
+      // Calculate full timestamp
       const fullTime =
-        Math.floor(date.getTime() / 1000) +
+        Math.floor(dateOnly.getTime() / 1000) +
         time.hour() * 3600 +
         time.minute() * 60;
 
-      console.log(fullTime);
+      console.log(`fulltime: ${fullTime}`);
 
-      const updatedStream: Stream = {
-        ...stream,
-        stream_date: fullTime.toString(),
-        stream_name: name,
-        duration: Number.parseInt(
-          duration == undefined ? "" : duration.toString()
-        ),
-      };
-      onSave(updatedStream);
-      onClose();
+      // Parse duration to a number
+      const durationValue =
+        typeof duration === "string" ? parseInt(duration || "150") : duration;
+
+      // Call the server action directly
+      const result = await editStreamAction(
+        stream.stream_id.toString(),
+        guildId,
+        name,
+        fullTime.toString(),
+        durationValue
+      );
+
+      // Handle the response
+      if (result.response === "OKAY" && result.data) {
+        // Call the original onSave for backward compatibility
+        onSave(result.data as Stream);
+        onClose();
+        toast.success("Stream updated successfully");
+      } else {
+        toast.error(result.message || "Failed to update stream");
+      }
+    } catch (error) {
+      console.error("Error saving stream:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -77,7 +113,7 @@ export function EditStreamModal({
   const hasExternalServices = stream.event_id || stream.twitch_segment_id;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={isSubmitting ? undefined : onClose}>
       <DialogContent className="overflow-visible">
         <DialogHeader>
           <DialogTitle>Edit Stream</DialogTitle>
@@ -91,6 +127,7 @@ export function EditStreamModal({
               id="title"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -113,6 +150,7 @@ export function EditStreamModal({
               value={duration}
               type="number"
               onChange={(e) => setDuration(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -152,10 +190,19 @@ export function EditStreamModal({
           )}
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -91,25 +91,15 @@ export function StreamTable({
     setIsLoading(true);
     setLoadingMessage("Updating stream...");
     try {
-      const success = await updateStream(
-        updatedStream.stream_id.toString(),
-        guild,
-        updatedStream.stream_name,
-        updatedStream.stream_date.toString(),
-        updatedStream.duration!
+      setData((prevData) =>
+        prevData.map((value) => {
+          if (value.stream_id == updatedStream.stream_id) {
+            return updatedStream;
+          } else {
+            return value;
+          }
+        })
       );
-
-      if (success.success) {
-        setData((prevData) =>
-          prevData.map((value) => {
-            if (value.stream_id == updatedStream.stream_id) {
-              return success.data!;
-            } else {
-              return value;
-            }
-          })
-        );
-      }
     } finally {
       setIsLoading(false);
     }
@@ -189,6 +179,7 @@ export function StreamTable({
         onClose={() => setEditingStream(null)}
         stream={editingStream}
         onSave={handleSaveEdit}
+        guildId={guild}
       />
 
       <DeleteConfirmationModal

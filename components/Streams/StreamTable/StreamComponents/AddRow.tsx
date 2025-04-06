@@ -8,7 +8,6 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Stream, Streamer } from "../../types";
 import { Button } from "../../../ui/button";
 import { Plus } from "lucide-react";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { createDiscordEventAction } from "@/app/actions/discordActions";
 import { addEventToTwitchAction } from "@/app/actions/twitchActions";
 
@@ -48,7 +47,6 @@ async function sendToTwitch(
   apiBaseUrl: string
 ) {
   try {
-    const wrapper = ErinetCrudWrapper(apiBaseUrl);
     const response = await addEventToTwitchAction(stream, broadcasterId, guild);
     return response.data!.twitch_segment_id;
   } catch (error) {

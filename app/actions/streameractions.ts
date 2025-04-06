@@ -17,20 +17,12 @@ export async function setAutosAction(
     const session = await auth();
     if (!session?.user?.id) {
       return null;
-      // return {
-      //   response: "ERROR",
-      //   message: "Unauthorized: User not authenticated"
-      // };
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
       return null;
-      // return {
-      //   response: "ERROR",
-      //   message: "Unauthorized: Discord token not found"
-      // };
     }
 
     // Check if the user has permission for this guild
@@ -38,10 +30,6 @@ export async function setAutosAction(
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
       return null;
-      // return {
-      //   response: "FORBIDDEN",
-      //   message: "User does not have admin permission for this guild"
-      // };
     }
 
     // Update streamer auto settings
@@ -183,6 +171,25 @@ export async function createStreamerAction(
     return {
       response: "OKAY",
       data: newStreamer,
+    };
+  } catch (error) {
+    console.error("Error adding Twitch to streamer:", error);
+    return {
+      response: "ERROR",
+      message: "An error occurred while updating the streamer",
+    };
+  }
+}
+
+export async function getStreamerByGuildAction(guildId: string) {
+  try {
+    let streamer = await prisma.streamer_lookup.findFirst({
+      where: { guild: guildId },
+    });
+
+    return {
+      response: "OKAY",
+      data: streamer,
     };
   } catch (error) {
     console.error("Error adding Twitch to streamer:", error);

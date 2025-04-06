@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Button } from "../../../ui/button";
 import { Stream } from "../../types";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Check, AlertCircle, Loader2 } from "lucide-react";
 import {
   Tooltip,
@@ -84,9 +83,6 @@ export const SendStreamTwitchButton = ({
   async function sendToTwitch() {
     setIsLoading(true);
     try {
-      const wrapper = ErinetCrudWrapper(apiBaseUrl);
-
-      // We don't need to pass the twitchAuthToken anymore - it will be retrieved server-side
       const response = await addEventToTwitchAction(
         stream,
         broadcasterId!,
