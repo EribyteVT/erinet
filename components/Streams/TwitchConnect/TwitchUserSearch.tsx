@@ -6,10 +6,10 @@ import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Streamer, TwitchUser } from "../types";
 import { Session } from "next-auth";
+import { setStreamerTwitchAction } from "@/app/actions/streameractions";
 
 export const TwitchUserSearch = ({
   streamer,
-  session,
   setIsLoading,
   setLoadingMessage,
   onTwitchConnected,
@@ -17,7 +17,6 @@ export const TwitchUserSearch = ({
   apiBaseUrl,
 }: {
   streamer: Streamer;
-  session: Session;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
   onTwitchConnected: (twitchId: string) => void;
@@ -36,11 +35,10 @@ export const TwitchUserSearch = ({
       setLoadingMessage("Authenticating with Twitch...");
       setAuthenticating(true);
 
-      await wrapper.setStreamerTwitch(
+      await setStreamerTwitchAction(
         streamer.streamer_id,
         twitchUser?.id!,
         streamer.guild,
-        session.user.discordAccount?.access_token!
       );
 
       const state =

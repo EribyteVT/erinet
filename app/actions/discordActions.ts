@@ -3,6 +3,8 @@
 import { auth } from "@/auth";
 import { getDiscordToken } from "@/app/lib/discordTokenService";
 import { GuildData } from "@/components/Streams/types";
+import { isAllowedGuild } from "../lib/auth";
+import  { createDiscordEvent } from "@/app/lib/discord-api";
 
 export async function fetchUserGuilds(): Promise<GuildData[]> {
   const session = await auth();
@@ -32,7 +34,7 @@ export async function fetchUserGuilds(): Promise<GuildData[]> {
 
 export async function fetchSpecificUserGuild(
   guildId: string
-): Promise<GuildData[]> {
+): Promise<GuildData | null> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -53,12 +55,11 @@ export async function fetchSpecificUserGuild(
 
   let guilds = await response.json();
 
-  //   console.log(guilds);
+  let guild = null;
 
   guilds.forEach((element: GuildData) => {
     if (guildId == element.id) {
-      console.log("FOUND");
-      return element;
+      guild = element;
     }
   });
 
@@ -66,7 +67,8 @@ export async function fetchSpecificUserGuild(
     throw new Error(`Discord API error: ${response.status}`);
   }
 
-  console.log("JERE");
+
+  return guild;
 
   //   return await response.json();
 }
@@ -106,5 +108,65 @@ export async function checkGuildPermission(guildId: string) {
   } catch (error) {
     console.error("Error checking guild permissions:", error);
     return { hasPermission: false, error: "Failed to check permissions" };
+  }
+}
+
+
+
+export async function createDiscordEventAction(
+  guildId: string,
+  name: string,
+  startTime: string,
+  endTime: string,
+  location: string = "https://twitch.tv/EribyteVT"
+): Promise<{ success: boolean; eventId?: string; message?: string }> {
+  try {
+    // Get the current user session
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { 
+        success: false, 
+        message: "Unauthorized: User not authenticated" 
+      };
+    }
+
+    // Get the Discord token from server-side storage
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      return { 
+        success: false, 
+        message: "Unauthorized: Discord token not found" 
+      };
+    }
+
+    // Check if the user has permission for this guild
+    const hasPermission = await isAllowedGuild(token, guildId);
+    if (!hasPermission) {
+      return { 
+        success: false, 
+        message: "User does not have admin permission for this guild" 
+      };
+    }
+
+    // Call the Discord API to create the event
+    
+    const eventData = await createDiscordEvent(
+      guildId,
+      name,
+      startTime,
+      endTime,
+      location
+    );
+
+    return {
+      success: true,
+      eventId: eventData.id
+    };
+  } catch (error) {
+    console.error("Error creating Discord event:", error);
+    return { 
+      success: false, 
+      message: "An error occurred while creating the Discord event" 
+    };
   }
 }

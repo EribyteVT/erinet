@@ -48,7 +48,6 @@ export async function isAllowedGuild(
 
     for (const guild of guilds) {
       if (guildId === guild.id) {
-        console.log("FOUND");
         const permissions = BigInt(guild.permissions);
         return (permissions & BigInt(0x08)) !== BigInt(0);
       }

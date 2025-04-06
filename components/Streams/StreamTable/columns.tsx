@@ -26,7 +26,6 @@ export const initialSortingState: SortingState = [
 export const columns = ({
   onDelete,
   onEdit,
-  discordAuthToken,
   broadcasterId,
   guild,
   hasTwitchAuth,
@@ -35,7 +34,6 @@ export const columns = ({
 }: {
   onDelete: (stream: Stream) => void;
   onEdit: (stream: Stream) => void;
-  discordAuthToken: string;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
@@ -90,7 +88,6 @@ export const columns = ({
         {
           <SendStreamDiscordButton
             stream={row.original}
-            authToken={discordAuthToken}
             guild={guild}
             apiBaseUrl={apiBaseUrl}
             twitchName={twitchName}
@@ -107,7 +104,6 @@ export const columns = ({
         {
           <SendStreamTwitchButton
             stream={row.original}
-            discordAuthToken={discordAuthToken}
             broadcasterId={broadcasterId}
             guild={guild}
             hasTwitchAuth={hasTwitchAuth}

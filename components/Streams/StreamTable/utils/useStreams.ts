@@ -1,12 +1,12 @@
 import { useCallback, useRef } from "react";
 import ErinetCrudWrapper from "../../../Adapter/erinetCrudWrapper";
 import { Stream } from "../../types";
+import { addStreamAction, deleteStreamAction, editStreamAction } from "@/app/actions/streamActions";
 
 interface AddStreamParams {
   name: string;
   time: string;
   duration: string;
-  accessToken: string;
 }
 
 export const useStreams = (
@@ -80,20 +80,18 @@ export const useStreams = (
       name,
       time,
       duration,
-      accessToken,
-    }: AddStreamParams): Promise<{ success: boolean; data?: Stream }> => {
+    }: AddStreamParams): Promise<{ success: boolean; data?: Stream | null }> => {
       try {
         console.log(streamerId);
         if (!streamerId) {
           throw new Error("Failed to get streamer ID");
         }
 
-        const streamData = await wrapper.addStream(
+        const streamData = await addStreamAction(
           streamerId,
           time,
           name,
           duration,
-          accessToken,
           guildId
         );
 
@@ -114,11 +112,10 @@ export const useStreams = (
   );
 
   const deleteStream = useCallback(
-    async (streamId: string, accessToken: string): Promise<boolean> => {
+    async (streamId: string): Promise<boolean> => {
       try {
-        const response = await wrapper.deleteStream(
+        const response = await deleteStreamAction(
           streamId,
-          accessToken,
           guildId
         );
 
@@ -134,12 +131,11 @@ export const useStreams = (
   const updateStream = useCallback(
     async (
       streamId: string,
-      authToken: string,
       guildId: string,
       newName: string,
       newTime: string,
       newDuration: number
-    ): Promise<{ success: boolean; data?: Stream }> => {
+    ): Promise<{ success: boolean; data?: Stream | null }> => {
       try {
         console.log("Updating stream with new data:", {
           streamId,
@@ -149,9 +145,8 @@ export const useStreams = (
           newDuration,
         });
 
-        const response = await wrapper.editStream(
+        const response = await editStreamAction(
           streamId,
-          authToken,
           guildId,
           newName,
           newTime,

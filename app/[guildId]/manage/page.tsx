@@ -33,17 +33,21 @@ export default async function Page({
     console.error("Error fetching streamer ID:", error);
   }
 
+  // console.log("HERE", streamer)
+
   if (!streamer) redirect("/");
+
+  // console.log("there", guild);
 
   if (guild == null) redirect("/");
 
   return (
     <StreamPage
-      session={session}
       guild={guild}
       streamer_pass={streamer}
       apiBaseUrl={apiBaseUrl}
       crudUrl={crudUrl}
+      avatarUrl={session.user.discordAccount?.avatar}
     ></StreamPage>
   );
 }

@@ -10,17 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { addEventToTwitchAction } from "@/app/actions/twitchActions";
 
 export const SendStreamTwitchButton = ({
   stream,
-  discordAuthToken,
   broadcasterId,
   guild,
   hasTwitchAuth,
   apiBaseUrl,
 }: {
   stream: Stream;
-  discordAuthToken: string;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
@@ -88,9 +87,8 @@ export const SendStreamTwitchButton = ({
       const wrapper = ErinetCrudWrapper(apiBaseUrl);
 
       // We don't need to pass the twitchAuthToken anymore - it will be retrieved server-side
-      const response = await wrapper.addEventToTwitch(
+      const response = await addEventToTwitchAction(
         stream,
-        discordAuthToken,
         broadcasterId!,
         guild
       );
