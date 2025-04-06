@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import { Button } from "../../../ui/button";
 import { Stream } from "../../types";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Check, Loader2 } from "lucide-react";
-import {  createDiscordEventAction } from "@/app/actions/discordActions";
+import { createDiscordEventAction } from "@/app/actions/discordActions";
 import dayjs from "dayjs";
 
 export const SendStreamDiscordButton = ({
@@ -30,9 +29,9 @@ export const SendStreamDiscordButton = ({
     setIsLoading(true);
     try {
       const endDate = dayjs(new Date(stream.stream_date)).add(
-              stream.duration!,
-              "minutes"
-            );
+        stream.duration!,
+        "minutes"
+      );
 
       const response = await createDiscordEventAction(
         stream.stream_id.toString(),
@@ -40,10 +39,10 @@ export const SendStreamDiscordButton = ({
         stream.stream_name,
         new Date(stream.stream_date).toISOString(),
         endDate.toISOString(),
-        `https://twitch.tv/${twitchName}`,
+        `https://twitch.tv/${twitchName}`
       );
 
-      console.log(response)
+      console.log(response);
 
       if (response.success) {
         setIsSuccess(true);

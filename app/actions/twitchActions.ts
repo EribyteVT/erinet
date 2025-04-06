@@ -1,5 +1,5 @@
 // app/actions/twitchActions.ts
-"use server"
+"use server";
 
 import { auth } from "@/auth";
 import { getDiscordToken } from "@/app/lib/discordTokenService";
@@ -21,20 +21,20 @@ export async function addEventToTwitchAction(
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: "Unauthorized: User not authenticated",
-        data: null
+        data: null,
       };
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: "Unauthorized: Discord token not found",
-        data: null
+        data: null,
       };
     }
 
@@ -42,10 +42,10 @@ export async function addEventToTwitchAction(
     const { isAllowedGuild } = await import("@/app/lib/auth");
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return { 
-        response: "FORBIDDEN", 
+      return {
+        response: "FORBIDDEN",
         message: "User does not have admin permission for this guild",
-        data: null
+        data: null,
       };
     }
 
@@ -55,16 +55,16 @@ export async function addEventToTwitchAction(
       twitchAccessToken = (await getDecryptedTokens(guildId)).accessToken;
     } catch (error) {
       console.error("Failed to get valid Twitch access token:", error);
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: "Twitch authentication not available",
-        data: null
+        data: null,
       };
     }
 
     // Convert stream date to Date object if it's a string timestamp
     let streamStartTime: string;
-    if (typeof stream.stream_date === 'string') {
+    if (typeof stream.stream_date === "string") {
       // Check if it's a timestamp
       if (/^\d+$/.test(stream.stream_date)) {
         const date = new Date(parseInt(stream.stream_date) * 1000);
@@ -100,10 +100,10 @@ export async function addEventToTwitchAction(
     if (!twitchResponse.ok) {
       const errorData = await twitchResponse.json();
       console.error("Error from Twitch API:", errorData);
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: errorData,
-        data: null
+        data: null,
       };
     }
 
@@ -126,10 +126,10 @@ export async function addEventToTwitchAction(
     };
   } catch (error) {
     console.error("Error creating Twitch event:", error);
-    return { 
-      response: "ERROR", 
+    return {
+      response: "ERROR",
       message: "An unexpected error occurred",
-      data: null
+      data: null,
     };
   }
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Session } from "next-auth";
 import { GuildData } from "@/components/Streams/types";
 import {
   Card,
@@ -31,7 +30,7 @@ import { createStreamerAction } from "@/app/actions/streameractions";
 interface OnboardingProcessProps {
   guild: GuildData;
   apiBaseUrl: string;
-  botInviteBase: string
+  botInviteBase: string;
 }
 
 export default function OnboardingProcess({
@@ -66,9 +65,14 @@ export default function OnboardingProcess({
 
     try {
       let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const response = await createStreamerAction(streamerName, levelSystem,  timezone, guild.id);
+      const response = await createStreamerAction(
+        streamerName,
+        levelSystem,
+        timezone,
+        guild.id
+      );
 
-      const result = await response
+      const result = await response;
 
       if (result.response === "OKAY") {
         // Success - redirect to the new streamer management page

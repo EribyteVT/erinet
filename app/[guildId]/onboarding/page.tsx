@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 import OnboardingProcess from "@/components/onboarding/OnboardingProcess";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { notFound } from "next/navigation";
-import { fetchSpecificUserGuild, fetchUserGuilds } from "@/app/actions/discordActions";
+import {
+  fetchSpecificUserGuild,
+  fetchUserGuilds,
+} from "@/app/actions/discordActions";
 
 export default async function OnboardingPage({
   params,
@@ -20,17 +23,13 @@ export default async function OnboardingPage({
   const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`;
 
   // Check authentication first
-  if (
-    !session 
-  ) {
+  if (!session) {
     // Use return here to avoid multiple redirects
     redirect("/");
   }
 
   // Get the guild data
-  const guild = await fetchSpecificUserGuild(
-    guildId
-  );
+  const guild = await fetchSpecificUserGuild(guildId);
 
   // If guild not found, show 404 instead of redirect
   if (!guild) {

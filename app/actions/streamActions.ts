@@ -1,5 +1,5 @@
 // app/actions/streamActions.ts
-"use server"
+"use server";
 
 import { auth } from "@/auth";
 import { getDiscordToken } from "@/app/lib/discordTokenService";
@@ -8,9 +8,11 @@ import { prisma } from "@/app/lib/db";
 import { isAllowedGuild } from "@/app/lib/auth";
 import { revalidatePath } from "next/cache";
 import { getDecryptedTokens } from "../lib/twitchTokenService";
-import { deleteTwitchSegment, updateTwitchSegment } from "@/app/lib/eventServices";
+import {
+  deleteTwitchSegment,
+  updateTwitchSegment,
+} from "@/app/lib/eventServices";
 import { deleteDiscordEvent } from "../lib/discord-api";
-
 
 /**
  * Server action to add a stream with server-side authentication
@@ -26,30 +28,30 @@ export async function addStreamAction(
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: "Unauthorized: User not authenticated",
-        data: null
+        data: null,
       };
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return { 
-        response: "ERROR", 
+      return {
+        response: "ERROR",
         message: "Unauthorized: Discord token not found",
-        data: null
+        data: null,
       };
     }
 
     // Check if the user has permission for this guild
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return { 
-        response: "FORBIDDEN", 
+      return {
+        response: "FORBIDDEN",
         message: "User does not have admin permission for this guild",
-        data: null
+        data: null,
       };
     }
 
@@ -66,247 +68,250 @@ export async function addStreamAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return { 
-      response: "OKAY", 
+    return {
+      response: "OKAY",
       message: "OKAY",
-      data: newStream 
+      data: newStream,
     };
   } catch (error) {
     console.error("Error adding stream:", error);
-    return { 
-      response: "ERROR", 
-      message: "An error occurred while adding the stream" ,
-      data: null
+    return {
+      response: "ERROR",
+      message: "An error occurred while adding the stream",
+      data: null,
     };
   }
 }
 
-
 export async function deleteStreamAction(
-    streamId: string,
-    guildId: string
-  ): Promise<StreamDataResponse> {
-    try {
-      // Get the current user session
-      const session = await auth();
-      if (!session?.user?.id) {
-        return { 
-          response: "ERROR", 
-          message: "Unauthorized: User not authenticated",
-          data: null
-        };
-      }
-  
-      // Get the Discord token from server-side storage
-      const token = await getDiscordToken(session.user.id);
-      if (!token) {
-        return { 
-          response: "ERROR", 
-          message: "Unauthorized: Discord token not found",
-          data: null
-        };
-      }
-  
-      // Check if user has permission for this guild
-      const hasPermission = await isAllowedGuild(token, guildId);
-      if (!hasPermission) {
-        return { 
-          response: "FORBIDDEN", 
-          message: "User does not have admin permission for this guild",
-          data: null
-        };
-      }
-  
-      // Check if stream exists and get its event IDs
-      const existingStream = await prisma.stream_table_tied.findUnique({
-        where: { stream_id: parseInt(streamId) },
-      });
-  
-      if (!existingStream) {
-        return { 
-          response: "NOT_FOUND", 
-          message: "Stream not found",
-          data: null
-        };
-      }
-  
-      // Delete associated Discord event if it exists
-      if (existingStream.event_id) {
-        // Import and use your Discord API function
-        await deleteDiscordEvent(guildId, existingStream.event_id);
-      }
-  
-      // Delete associated Twitch segment if it exists
-      if (existingStream.twitch_segment_id) {
-        // Get the streamer info to find the Twitch user ID
-        const streamer = await prisma.streamer_lookup.findFirst({
-          where: { streamer_id: parseInt(existingStream.streamer_id) },
-        });
-        
-        if (streamer?.twitch_user_id) {
-          // Import and use your Twitch API function
-          
-          try {
-            // Get a valid Twitch access token
-            const twitchAccessToken = await getDecryptedTokens(guildId);
-            await deleteTwitchSegment(
-              streamer.twitch_user_id,
-              existingStream.twitch_segment_id,
-              twitchAccessToken.accessToken
-            );
-          } catch (error) {
-            console.error("Failed to delete Twitch segment:", error);
-            // Continue with stream deletion even if Twitch deletion fails
-          }
-        }
-      }
-  
-      // Delete the stream
-      await prisma.stream_table_tied.delete({
-        where: { stream_id: parseInt(streamId) },
-      });
-  
-      // Revalidate the streams page to refresh data
-      revalidatePath(`/${guildId}/manage`);
-  
-      return { response: "OKAY", data: null, message: "Stream deleted successfully" };
-    } catch (error) {
-      console.error("Error deleting stream:", error);
-      return { 
-        response: "ERROR", 
-        message: "An error occurred while deleting the stream" , data: null
-      };
-    }
-  }
-
-  export async function editStreamAction(
-    streamId: string,
-    guildId: string,
-    newName: string,
-    newTime: string,
-    newDuration: number
-  ): Promise<StreamDataResponse> {
-    try {
-      // Get the current user session
-      const session = await auth();
-      if (!session?.user?.id) {
-        return { 
-          response: "ERROR", 
-          message: "Unauthorized: User not authenticated",
-          data: null
-        };
-      }
-  
-      // Get the Discord token from server-side storage
-      const token = await getDiscordToken(session.user.id);
-      if (!token) {
-        return { 
-          response: "ERROR", 
-          message: "Unauthorized: Discord token not found",
-          data: null
-        };
-      }
-  
-      // Check if the user has permission for this guild
-      const hasPermission = await isAllowedGuild(token, guildId);
-      if (!hasPermission) {
-        return { 
-          response: "FORBIDDEN", 
-          message: "User does not have admin permission for this guild",
-          data: null
-        };
-      }
-  
-      // Check if stream exists
-      const existingStream = await prisma.stream_table_tied.findUnique({
-        where: { stream_id: parseInt(streamId) },
-      });
-  
-      if (!existingStream) {
-        return { 
-          response: "NOT_FOUND", 
-          message: "Stream not found" ,
-          data: null
-        };
-      }
-  
-      // Convert timestamp to Date object for database and event updates
-      const streamDate = new Date(parseInt(newTime) * 1000);
-  
-      // Update stream in database
-      const updatedStream = await prisma.stream_table_tied.update({
-        where: { stream_id: parseInt(streamId) },
-        data: {
-          stream_date: streamDate,
-          stream_name: newName,
-          duration: newDuration,
-        },
-      });
-  
-      // Get the streamer info for Twitch updates if needed
-      let twitchUserId = null;
-      if (existingStream.twitch_segment_id) {
-        const streamer = await prisma.streamer_lookup.findFirst({
-          where: { streamer_id: parseInt(existingStream.streamer_id) },
-        });
-        twitchUserId = streamer?.twitch_user_id;
-      }
-  
-      // Calculate end time for Discord event (in ISO format)
-      const endTime = new Date(streamDate);
-      endTime.setMinutes(endTime.getMinutes() + newDuration);
-  
-      // Update associated Discord event if it exists
-      if (existingStream.event_id) {
-        try {
-          const { updateDiscordEvent } = await import("@/app/lib/eventServices");
-          await updateDiscordEvent(
-            guildId,
-            existingStream.event_id,
-            newName,
-            streamDate.toISOString(),
-            endTime.toISOString()
-          );
-        } catch (error) {
-          console.error("Failed to update Discord event:", error);
-          // Continue with response even if Discord update fails
-        }
-      }
-  
-      // Update associated Twitch segment if it exists
-      if (existingStream.twitch_segment_id && twitchUserId) {
-        try {
-          
-          
-          const twitchAccessToken = (await getDecryptedTokens(guildId)).accessToken;
-          await updateTwitchSegment(
-            twitchUserId,
-            existingStream.twitch_segment_id,
-            newName,
-            streamDate.toISOString(),
-            newDuration,
-            twitchAccessToken
-          );
-        } catch (error) {
-          console.error("Failed to update Twitch segment:", error);
-          // Continue with response even if Twitch update fails
-        }
-      }
-  
-      // Revalidate the streams page to refresh data
-      revalidatePath(`/${guildId}/manage`);
-  
+  streamId: string,
+  guildId: string
+): Promise<StreamDataResponse> {
+  try {
+    // Get the current user session
+    const session = await auth();
+    if (!session?.user?.id) {
       return {
-        response: "OKAY",
-        data: updatedStream,
-        message: "Stream updated successfully",
-      };
-    } catch (error) {
-      console.error("Error updating stream:", error);
-      return { 
-        response: "ERROR", 
-        message: "An error occurred while updating the stream" ,
-        data: null
+        response: "ERROR",
+        message: "Unauthorized: User not authenticated",
+        data: null,
       };
     }
+
+    // Get the Discord token from server-side storage
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      return {
+        response: "ERROR",
+        message: "Unauthorized: Discord token not found",
+        data: null,
+      };
+    }
+
+    // Check if user has permission for this guild
+    const hasPermission = await isAllowedGuild(token, guildId);
+    if (!hasPermission) {
+      return {
+        response: "FORBIDDEN",
+        message: "User does not have admin permission for this guild",
+        data: null,
+      };
+    }
+
+    // Check if stream exists and get its event IDs
+    const existingStream = await prisma.stream_table_tied.findUnique({
+      where: { stream_id: parseInt(streamId) },
+    });
+
+    if (!existingStream) {
+      return {
+        response: "NOT_FOUND",
+        message: "Stream not found",
+        data: null,
+      };
+    }
+
+    // Delete associated Discord event if it exists
+    if (existingStream.event_id) {
+      // Import and use your Discord API function
+      await deleteDiscordEvent(guildId, existingStream.event_id);
+    }
+
+    // Delete associated Twitch segment if it exists
+    if (existingStream.twitch_segment_id) {
+      // Get the streamer info to find the Twitch user ID
+      const streamer = await prisma.streamer_lookup.findFirst({
+        where: { streamer_id: parseInt(existingStream.streamer_id) },
+      });
+
+      if (streamer?.twitch_user_id) {
+        // Import and use your Twitch API function
+
+        try {
+          // Get a valid Twitch access token
+          const twitchAccessToken = await getDecryptedTokens(guildId);
+          await deleteTwitchSegment(
+            streamer.twitch_user_id,
+            existingStream.twitch_segment_id,
+            twitchAccessToken.accessToken
+          );
+        } catch (error) {
+          console.error("Failed to delete Twitch segment:", error);
+          // Continue with stream deletion even if Twitch deletion fails
+        }
+      }
+    }
+
+    // Delete the stream
+    await prisma.stream_table_tied.delete({
+      where: { stream_id: parseInt(streamId) },
+    });
+
+    // Revalidate the streams page to refresh data
+    revalidatePath(`/${guildId}/manage`);
+
+    return {
+      response: "OKAY",
+      data: null,
+      message: "Stream deleted successfully",
+    };
+  } catch (error) {
+    console.error("Error deleting stream:", error);
+    return {
+      response: "ERROR",
+      message: "An error occurred while deleting the stream",
+      data: null,
+    };
   }
+}
+
+export async function editStreamAction(
+  streamId: string,
+  guildId: string,
+  newName: string,
+  newTime: string,
+  newDuration: number
+): Promise<StreamDataResponse> {
+  try {
+    // Get the current user session
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        response: "ERROR",
+        message: "Unauthorized: User not authenticated",
+        data: null,
+      };
+    }
+
+    // Get the Discord token from server-side storage
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      return {
+        response: "ERROR",
+        message: "Unauthorized: Discord token not found",
+        data: null,
+      };
+    }
+
+    // Check if the user has permission for this guild
+    const hasPermission = await isAllowedGuild(token, guildId);
+    if (!hasPermission) {
+      return {
+        response: "FORBIDDEN",
+        message: "User does not have admin permission for this guild",
+        data: null,
+      };
+    }
+
+    // Check if stream exists
+    const existingStream = await prisma.stream_table_tied.findUnique({
+      where: { stream_id: parseInt(streamId) },
+    });
+
+    if (!existingStream) {
+      return {
+        response: "NOT_FOUND",
+        message: "Stream not found",
+        data: null,
+      };
+    }
+
+    // Convert timestamp to Date object for database and event updates
+    const streamDate = new Date(parseInt(newTime) * 1000);
+
+    // Update stream in database
+    const updatedStream = await prisma.stream_table_tied.update({
+      where: { stream_id: parseInt(streamId) },
+      data: {
+        stream_date: streamDate,
+        stream_name: newName,
+        duration: newDuration,
+      },
+    });
+
+    // Get the streamer info for Twitch updates if needed
+    let twitchUserId = null;
+    if (existingStream.twitch_segment_id) {
+      const streamer = await prisma.streamer_lookup.findFirst({
+        where: { streamer_id: parseInt(existingStream.streamer_id) },
+      });
+      twitchUserId = streamer?.twitch_user_id;
+    }
+
+    // Calculate end time for Discord event (in ISO format)
+    const endTime = new Date(streamDate);
+    endTime.setMinutes(endTime.getMinutes() + newDuration);
+
+    // Update associated Discord event if it exists
+    if (existingStream.event_id) {
+      try {
+        const { updateDiscordEvent } = await import("@/app/lib/eventServices");
+        await updateDiscordEvent(
+          guildId,
+          existingStream.event_id,
+          newName,
+          streamDate.toISOString(),
+          endTime.toISOString()
+        );
+      } catch (error) {
+        console.error("Failed to update Discord event:", error);
+        // Continue with response even if Discord update fails
+      }
+    }
+
+    // Update associated Twitch segment if it exists
+    if (existingStream.twitch_segment_id && twitchUserId) {
+      try {
+        const twitchAccessToken = (await getDecryptedTokens(guildId))
+          .accessToken;
+        await updateTwitchSegment(
+          twitchUserId,
+          existingStream.twitch_segment_id,
+          newName,
+          streamDate.toISOString(),
+          newDuration,
+          twitchAccessToken
+        );
+      } catch (error) {
+        console.error("Failed to update Twitch segment:", error);
+        // Continue with response even if Twitch update fails
+      }
+    }
+
+    // Revalidate the streams page to refresh data
+    revalidatePath(`/${guildId}/manage`);
+
+    return {
+      response: "OKAY",
+      data: updatedStream,
+      message: "Stream updated successfully",
+    };
+  } catch (error) {
+    console.error("Error updating stream:", error);
+    return {
+      response: "ERROR",
+      message: "An error occurred while updating the stream",
+      data: null,
+    };
+  }
+}

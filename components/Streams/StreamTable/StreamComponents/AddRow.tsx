@@ -8,7 +8,6 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Stream, Streamer } from "../../types";
 import { Button } from "../../../ui/button";
 import { Plus } from "lucide-react";
-import type { Session } from "next-auth";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { createDiscordEventAction } from "@/app/actions/discordActions";
 import { addEventToTwitchAction } from "@/app/actions/twitchActions";
@@ -21,21 +20,20 @@ async function sendToDiscord(
   twitchName: string
 ) {
   try {
-
     const endDate = dayjs(new Date(stream.stream_date)).add(
-                  stream.duration!,
-                  "minutes"
-                );
+      stream.duration!,
+      "minutes"
+    );
 
     const response = await createDiscordEventAction(
-            stream.stream_id.toString(),
-            guild,
-            stream.stream_name,
-            new Date(stream.stream_date).toISOString(),
-            endDate.toISOString(),
-            `https://twitch.tv/${twitchName}`,
-          );
-    return response.eventId
+      stream.stream_id.toString(),
+      guild,
+      stream.stream_name,
+      new Date(stream.stream_date).toISOString(),
+      endDate.toISOString(),
+      `https://twitch.tv/${twitchName}`
+    );
+    return response.eventId;
   } catch (error) {
     console.error("Error sending to Discord:", error);
     return null;
@@ -51,11 +49,7 @@ async function sendToTwitch(
 ) {
   try {
     const wrapper = ErinetCrudWrapper(apiBaseUrl);
-    const response = await addEventToTwitchAction(
-      stream,
-      broadcasterId,
-      guild
-    );
+    const response = await addEventToTwitchAction(stream, broadcasterId, guild);
     return response.data!.twitch_segment_id;
   } catch (error) {
     console.error("Error sending to Twitch:", error);

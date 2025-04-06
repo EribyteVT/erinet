@@ -21,13 +21,13 @@ export default function StreamPage({
   streamer_pass,
   apiBaseUrl,
   crudUrl,
-  avatarUrl
+  avatarUrl,
 }: {
   guild: GuildData;
   streamer_pass: Streamer;
   apiBaseUrl: string;
   crudUrl: string;
-  avatarUrl: string | undefined
+  avatarUrl: string | undefined;
 }) {
   // Main state
   const [streamer, setStreamer] = useState<Streamer>(streamer_pass);
@@ -75,7 +75,6 @@ export default function StreamPage({
 
     checkTwitchIntegration();
   }, [guild.id, streamer.twitch_user_id]);
-
 
   // console.log("HERE")
 

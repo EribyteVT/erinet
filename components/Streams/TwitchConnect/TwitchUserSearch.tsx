@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Streamer, TwitchUser } from "../types";
-import { Session } from "next-auth";
 import { setStreamerTwitchAction } from "@/app/actions/streameractions";
 
 export const TwitchUserSearch = ({
@@ -38,7 +37,7 @@ export const TwitchUserSearch = ({
       await setStreamerTwitchAction(
         streamer.streamer_id,
         twitchUser?.id!,
-        streamer.guild,
+        streamer.guild
       );
 
       const state =

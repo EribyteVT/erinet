@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Session } from "next-auth";
 import { Streamer, TwitchUser } from "../types";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";

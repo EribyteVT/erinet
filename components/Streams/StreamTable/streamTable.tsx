@@ -25,7 +25,6 @@ import { AddRow } from "./StreamComponents/AddRow";
 import { Button } from "@/components/ui/button";
 import { EditStreamModal } from "./StreamComponents/EditStreamModal";
 import { DeleteConfirmationModal } from "./StreamComponents/DeleteConfirmationModal";
-import type { Session } from "next-auth";
 import { addWeeks, format } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import {
@@ -136,10 +135,7 @@ export function StreamTable({
     setLoadingMessage("Deleting stream...");
     try {
       const streamId = streamToDelete.stream_id.toString();
-      const success = await deleteStreamAction(
-        streamId,
-        guild
-      );
+      const success = await deleteStreamAction(streamId, guild);
       if (success) {
         setData((prevData) =>
           prevData.filter((stream) => stream.stream_id.toString() !== streamId)

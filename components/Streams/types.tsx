@@ -6,7 +6,7 @@ export type Stream = {
   event_id?: string | null;
   twitch_segment_id?: string | null;
   duration?: number | null;
-  category_id?: string | null ;
+  category_id?: string | null;
 };
 
 export type Streamer = {
@@ -25,19 +25,19 @@ export type Streamer = {
 export type StreamDataResponse = {
   response: string;
   data: Stream | null;
-  message: string
+  message: string;
 };
 
 export type StreamsDataResponse = {
   response: string;
   data: Stream[] | null;
-  message:string
+  message: string;
 };
 
 export type StreamerDataResponse = {
   response: string;
   data: Streamer | null;
-  message:string
+  message: string;
 };
 
 export type GuildData = {

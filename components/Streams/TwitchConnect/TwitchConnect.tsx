@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Streamer } from "../types";
 import { TwitchUserSearch } from "./TwitchUserSearch";
-import { Session } from "next-auth";
 import ConnectedTwitchUser from "./ConnectedTwitch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
