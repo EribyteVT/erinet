@@ -20,12 +20,17 @@ export async function fetchUserGuilds(): Promise<GuildData[]> {
   // Create a cache key based on the user ID
   const cacheKey = `user_guilds:${session.user.id}`;
 
+  console.log(cacheKey);
+
   // Check if we have cached data for this user
   const cachedGuilds = cache.get<GuildData[]>(cacheKey);
 
   if (cachedGuilds) {
+    console.log(`cache hit for ${cacheKey}`);
     return cachedGuilds;
   }
+
+  console.log(`cache miss for ${cacheKey}`);
 
   // If not in cache, fetch from Discord API
   const token = await getDiscordToken(session.user.id);
