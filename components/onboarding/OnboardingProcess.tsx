@@ -26,17 +26,16 @@ import { PageContainer } from "@/components/ui/page-container";
 import { SectionHeader } from "@/components/ui/selection-header";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { AlertCircle, Bot, UserCircle, ChevronRight } from "lucide-react";
+import { createStreamerAction } from "@/app/actions/streameractions";
 
 interface OnboardingProcessProps {
   guild: GuildData;
-  session: Session;
   apiBaseUrl: string;
   botInviteBase: string
 }
 
 export default function OnboardingProcess({
   guild,
-  session,
   apiBaseUrl,
   botInviteBase,
 }: OnboardingProcessProps) {
@@ -67,21 +66,9 @@ export default function OnboardingProcess({
 
     try {
       let timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const response = await fetch(`${apiBaseUrl}/streamers/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          streamerName,
-          levelSystem,
-          timezone,
-          guildId: guild.id,
-          authToken: session.user.discordAccount?.access_token,
-        }),
-      });
+      const response = await createStreamerAction(streamerName, levelSystem,  timezone, guild.id);
 
-      const result = await response.json();
+      const result = await response
 
       if (result.response === "OKAY") {
         // Success - redirect to the new streamer management page

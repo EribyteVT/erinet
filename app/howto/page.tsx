@@ -706,11 +706,10 @@ export default async function HowToPage() {
                     Get help from our community and team members, share feature
                     requests, and stay updated.
                   </p>
-                  <Button variant="outline" size="sm" disabled>
-                    {/* TODO: setup discord server */}
-                    {/* <Link href="" target="_blank" rel="noopener noreferrer" > */}
-                    Coming soon
-                    {/* </Link> */}
+                  <Button variant="outline" size="sm" >
+                    <Link href="https://discord.gg/CmWhF5Jyqf" target="_blank" rel="noopener noreferrer" >
+                    Join Server!
+                    </Link>
                   </Button>
                 </div>
               </div>

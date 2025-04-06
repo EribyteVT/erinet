@@ -6,73 +6,110 @@ import { GuildData } from "@/components/Streams/types";
 import { isAllowedGuild } from "../lib/auth";
 import  { createDiscordEvent } from "@/app/lib/discord-api";
 import { prisma } from "@/app/lib/db";
+import { cache } from "@/app/lib/cache"; // Import the singleton cache instance
 
+
+// Cache duration for Discord guilds (5 minutes)
+const GUILD_CACHE_DURATION = 5 * 60 * 1000;
 
 export async function fetchUserGuilds(): Promise<GuildData[]> {
   const session = await auth();
-
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
   }
-
+  
+  // Create a cache key based on the user ID
+  const cacheKey = `user_guilds:${session.user.id}`;
+  
+  // Check if we have cached data for this user
+  const cachedGuilds = cache.get<GuildData[]>(cacheKey);
+  if (cachedGuilds) {
+    return cachedGuilds;
+  }
+  
+  // If not in cache, fetch from Discord API
   const token = await getDiscordToken(session.user.id);
   if (!token) {
     throw new Error("Discord token not found or expired");
   }
-
+  
   const response = await fetch("https://discord.com/api/v10/users/@me/guilds", {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
-
+  
   if (!response.ok) {
     throw new Error(`Discord API error: ${response.status}`);
   }
-
-  return await response.json();
+  
+  // Get the guilds data
+  const guilds: GuildData[] = await response.json();
+  
+  // Store in cache for future use
+  cache.set(cacheKey, guilds, GUILD_CACHE_DURATION);
+  
+  return guilds;
 }
 
 export async function fetchSpecificUserGuild(
   guildId: string
 ): Promise<GuildData | null> {
   const session = await auth();
-
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
   }
-
-  const token = await getDiscordToken(session.user.id);
-  if (!token) {
-    throw new Error("Discord token not found or expired");
+  
+  // Create cache keys
+  const specificGuildCacheKey = `specific_guild:${session.user.id}:${guildId}`;
+  const allGuildsCacheKey = `user_guilds:${session.user.id}`;
+  
+  // Check if we have the specific guild cached
+  const cachedGuild = cache.get<GuildData | null>(specificGuildCacheKey);
+  if (cachedGuild !== null) {
+    return cachedGuild;
   }
-
-  const response = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  let guilds = await response.json();
-
+  
+  // Check if we have all guilds cached
+  let guilds = cache.get<GuildData[]>(allGuildsCacheKey);
+  
+  // If not in cache, fetch from Discord API
+  if (!guilds) {
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      throw new Error("Discord token not found or expired");
+    }
+    
+    const response = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Discord API error: ${response.status}`);
+    }
+    
+    guilds = await response.json();
+    
+    // Cache all guilds
+    cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
+  }
+  
   let guild = null;
 
-  guilds.forEach((element: GuildData) => {
+  guilds!.forEach((element: GuildData) => {
     if (guildId == element.id) {
       guild = element;
     }
   });
-
-  if (!response.ok) {
-    throw new Error(`Discord API error: ${response.status}`);
-  }
-
-
+  
+  // Cache the result for this specific guild (even if null)
+  cache.set(specificGuildCacheKey, guild, GUILD_CACHE_DURATION);
+  
   return guild;
-
-  //   return await response.json();
 }
 
 export async function checkGuildPermission(guildId: string) {
