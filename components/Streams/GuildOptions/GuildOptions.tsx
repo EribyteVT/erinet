@@ -7,10 +7,10 @@ import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Session } from "next-auth";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { setAutosAction } from "@/app/actions/streameractions";
 
 export const GuildOptions = ({
   streamer,
-  session,
   setStreamer,
   hasTwitchAuth,
   setIsLoading,
@@ -18,7 +18,6 @@ export const GuildOptions = ({
   apiBaseUrl,
 }: {
   streamer: Streamer;
-  session: Session;
   setStreamer: (streamer: Streamer) => void;
   hasTwitchAuth: boolean;
   setIsLoading: (isLoading: boolean) => void;
@@ -45,16 +44,17 @@ export const GuildOptions = ({
     setSaveStatus({ type: null, message: "" });
 
     try {
-      const wrapper = ErinetCrudWrapper(apiBaseUrl);
-      const updatedStreamer = await wrapper.setAutos(
+      
+      const updatedStreamer = await setAutosAction(
         streamer.streamer_id,
-        session.user.discordAccount!.access_token!,
         streamer.guild,
         isDiscordAuto ? "Y" : "N",
         isTwitchAuto ? "Y" : "N"
       );
 
-      setStreamer(updatedStreamer);
+      setStreamer(updatedStreamer!);
+
+
       setSaveStatus({
         type: "success",
         message: "Settings saved successfully!",

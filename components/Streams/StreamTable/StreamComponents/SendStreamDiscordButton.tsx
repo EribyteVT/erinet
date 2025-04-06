@@ -2,18 +2,17 @@
 import React, { useState } from "react";
 import { Button } from "../../../ui/button";
 import { Stream } from "../../types";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Check, Loader2 } from "lucide-react";
+import { createDiscordEventAction } from "@/app/actions/discordActions";
+import dayjs from "dayjs";
 
 export const SendStreamDiscordButton = ({
   stream,
-  authToken,
   guild,
   apiBaseUrl,
   twitchName,
 }: {
   stream: Stream;
-  authToken: string;
   guild: string;
   apiBaseUrl: string;
   twitchName: string;
@@ -29,15 +28,23 @@ export const SendStreamDiscordButton = ({
   async function sendToDiscord() {
     setIsLoading(true);
     try {
-      const wrapper = ErinetCrudWrapper(apiBaseUrl);
-      const response = await wrapper.addEventToGuild(
-        stream,
-        authToken,
-        guild,
-        twitchName
+      const endDate = dayjs(new Date(stream.stream_date)).add(
+        stream.duration!,
+        "minutes"
       );
 
-      if (response.response === "OKAY") {
+      const response = await createDiscordEventAction(
+        stream.stream_id.toString(),
+        guild,
+        stream.stream_name,
+        new Date(stream.stream_date).toISOString(),
+        endDate.toISOString(),
+        `https://twitch.tv/${twitchName}`
+      );
+
+      console.log(response);
+
+      if (response.success) {
         setIsSuccess(true);
       }
     } catch (error) {

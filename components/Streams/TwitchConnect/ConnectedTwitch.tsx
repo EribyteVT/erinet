@@ -1,13 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Session } from "next-auth";
 import { Streamer, TwitchUser } from "../types";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ConnectedTwitchUserProps {
   streamer: Streamer;
-  session: Session;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
   setError: (error: string | null) => void;
@@ -16,7 +14,6 @@ interface ConnectedTwitchUserProps {
 
 export const ConnectedTwitchUser: React.FC<ConnectedTwitchUserProps> = ({
   streamer,
-  session,
   setIsLoading,
   setLoadingMessage,
   setError,

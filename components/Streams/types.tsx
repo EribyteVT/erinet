@@ -1,12 +1,12 @@
 export type Stream = {
   stream_id: number;
-  stream_date: string;
+  stream_date: Date;
   streamer_id: string;
   stream_name: string;
-  event_id?: string;
-  twitch_segment_id?: string;
-  duration?: number;
-  category_id?: null;
+  event_id?: string | null;
+  twitch_segment_id?: string | null;
+  duration?: number | null;
+  category_id?: string | null;
 };
 
 export type Streamer = {
@@ -14,27 +14,30 @@ export type Streamer = {
   streamer_name: string;
   timezone: string;
   guild: string;
-  level_system?: string;
-  level_ping_role?: string;
-  level_channel?: number;
-  twitch_user_id?: null;
-  auto_discord_event?: string;
-  auto_twitch_schedule?: string;
+  level_system?: string | null;
+  level_ping_role?: string | null;
+  level_channel?: string | null;
+  twitch_user_id?: string | null;
+  auto_discord_event?: string | null;
+  auto_twitch_schedule?: string | null;
 };
 
 export type StreamDataResponse = {
   response: string;
-  data: Stream;
+  data: Stream | null;
+  message: string;
 };
 
 export type StreamsDataResponse = {
   response: string;
-  data: Stream[];
+  data: Stream[] | null;
+  message: string;
 };
 
 export type StreamerDataResponse = {
   response: string;
-  data: Streamer;
+  data: Streamer | null;
+  message: string;
 };
 
 export type GuildData = {

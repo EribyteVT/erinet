@@ -1,20 +1,11 @@
 import Guild from "@/components/guild/Guild";
-import DiscordApi from "../Adapter/discord_funcs";
-import type { Session } from "next-auth";
 import ErinetCrudWrapper from "../Adapter/erinetCrudWrapper";
+import { fetchUserGuilds } from "@/app/actions/discordActions";
 
-async function GuildData({ session }: { session: Session }) {
+async function GuildData({}: {}) {
   const wrapper = ErinetCrudWrapper();
 
-  const api = DiscordApi("https://discord.com/api/v10/");
-
-  if (session.user.discordAccount == undefined) {
-    return;
-  }
-
-  const guilds = await api.getUsersGuildFromAuthToken(
-    session.user.discordAccount?.access_token!
-  );
+  const guilds = await fetchUserGuilds();
 
   const botGuilds = await wrapper.getBotGuilds();
 
@@ -49,10 +40,10 @@ async function GuildData({ session }: { session: Session }) {
   );
 }
 
-export default async function GuildSelector({ session }: { session: Session }) {
+export default async function GuildSelector({}: {}) {
   return (
     <div className="md:grids-col-2 grid md:gap-4 lg:grid-cols-3 xl:grid-cols-4 xl:gap-4 center sm:grids-col-1">
-      <GuildData session={session} />
+      <GuildData />
     </div>
   );
 }

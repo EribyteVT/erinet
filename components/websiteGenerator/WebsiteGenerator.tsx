@@ -174,7 +174,7 @@ interface WebsiteGeneratorProps {
   streamer: Streamer;
   streams: Stream[];
   apiBaseUrl: string;
-  discordAvatar: string;
+  discordAvatar: string | undefined;
   crudUrl: string;
 }
 
@@ -238,7 +238,7 @@ export function WebsiteGenerator({
       config,
       streams,
       streamer,
-      discordAvatar,
+      discordAvatar!,
       crudUrl
     );
     const css = generateCSS(config);

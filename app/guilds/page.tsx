@@ -45,7 +45,7 @@ export default async function DashboardPage() {
     );
   return (
     <>
-      <GuildSelector session={session} />
+      <GuildSelector />
     </>
   );
 }

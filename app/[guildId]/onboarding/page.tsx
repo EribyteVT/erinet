@@ -1,9 +1,12 @@
 import { auth } from "@/auth";
-import DiscordApi from "@/components/Adapter/discord_funcs";
 import { redirect } from "next/navigation";
 import OnboardingProcess from "@/components/onboarding/OnboardingProcess";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { notFound } from "next/navigation";
+import {
+  fetchSpecificUserGuild,
+  fetchUserGuilds,
+} from "@/app/actions/discordActions";
 
 export default async function OnboardingPage({
   params,
@@ -15,25 +18,18 @@ export default async function OnboardingPage({
   const session = await auth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
-  const api = DiscordApi("https://discord.com/api/v10/");
+  // const api = DiscordApi("https://discord.com/api/v10/");
 
-  const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`
+  const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`;
 
   // Check authentication first
-  if (
-    !session ||
-    !session.user.discordAccount ||
-    !session.user.discordAccount.access_token
-  ) {
+  if (!session) {
     // Use return here to avoid multiple redirects
     redirect("/");
   }
 
   // Get the guild data
-  const guild = await api.getGuildData(
-    session.user.discordAccount.access_token,
-    guildId
-  );
+  const guild = await fetchSpecificUserGuild(guildId);
 
   // If guild not found, show 404 instead of redirect
   if (!guild) {
@@ -41,9 +37,7 @@ export default async function OnboardingPage({
   }
 
   // Check if the user has admin permissions in the guild
-  const guilds = await api.getUsersGuildFromAuthToken(
-    session.user.discordAccount.access_token
-  );
+  const guilds = await fetchUserGuilds();
 
   const userHasPermission = guilds.some(
     (g) => g.id === guildId && (parseInt(g.permissions) & 0x8) !== 0
@@ -76,7 +70,6 @@ export default async function OnboardingPage({
   return (
     <OnboardingProcess
       guild={guild}
-      session={session}
       apiBaseUrl={apiBaseUrl}
       botInviteBase={botInviteBase}
     />

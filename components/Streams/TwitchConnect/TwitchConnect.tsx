@@ -2,14 +2,12 @@
 import React, { useState } from "react";
 import { Streamer } from "../types";
 import { TwitchUserSearch } from "./TwitchUserSearch";
-import { Session } from "next-auth";
 import ConnectedTwitchUser from "./ConnectedTwitch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 export const TwitchConnect = ({
   streamer,
-  session,
   hasTwitchAuth,
   setHasTwitchAuth,
   setTwitchBroadcasterId,
@@ -18,7 +16,6 @@ export const TwitchConnect = ({
   apiBaseUrl,
 }: {
   streamer: Streamer;
-  session: Session;
   hasTwitchAuth: boolean;
   setHasTwitchAuth: (hasAuth: boolean) => void;
   setTwitchBroadcasterId: (id: string | undefined) => void;
@@ -48,7 +45,6 @@ export const TwitchConnect = ({
         <div>
           <ConnectedTwitchUser
             streamer={streamer}
-            session={session}
             setIsLoading={setIsLoading}
             setLoadingMessage={setLoadingMessage}
             setError={setError}
@@ -75,7 +71,6 @@ export const TwitchConnect = ({
 
           <TwitchUserSearch
             streamer={streamer}
-            session={session}
             setIsLoading={setIsLoading}
             setLoadingMessage={setLoadingMessage}
             onTwitchConnected={handleTwitchConnected}

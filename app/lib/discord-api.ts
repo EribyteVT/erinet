@@ -1,3 +1,8 @@
+"use server";
+
+import { auth } from "@/auth";
+import { getDiscordToken } from "./discordTokenService";
+
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
 export async function createDiscordEvent(
@@ -21,7 +26,7 @@ export async function createDiscordEvent(
           scheduled_start_time: startTime,
           scheduled_end_time: endTime,
           entity_type: 3, // External event
-          privacy_level: 2, // Guild only
+          privacy_level: 2, // Guild only (only option for now)
           entity_metadata: {
             location,
           },
@@ -136,37 +141,84 @@ export async function getBotGuilds(): Promise<any[]> {
   }
 }
 
-export async function getUserGuilds(authToken: string): Promise<any[]> {
-  try {
-    const response = await fetch(
-      "https://discord.com/api/v10/users/@me/guilds",
-      {
-        headers: {
-          Authorization: authToken,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+export async function getUserGuilds(): Promise<any[]> {
+  // console.log("HERE");
+  // Get the authenticated user's session
+  const session = await auth();
 
-    if (!response.ok) {
-      throw new Error(`Discord API error: ${response.status}`);
+  if (!session?.user?.id) {
+    throw new Error("User not authenticated");
+  }
+
+  // Get the token from the database
+  const token = await getDiscordToken(session.user.id);
+  if (!token) {
+    throw new Error("Discord token not found or expired");
+  }
+
+  // Perform the API call
+  const response = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  let jsonResponse = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`Discord API error: ${response.status}`);
+  }
+
+  return await jsonResponse;
+}
+
+export async function checkGuildPermission(guildId: string) {
+  // Get the authenticated user's session
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { hasPermission: false };
+  }
+
+  // Get the token from the database
+  const token = await getDiscordToken(session.user.id);
+  if (!token) {
+    return { hasPermission: false };
+  }
+
+  try {
+    const guilds = await fetch("https://discord.com/api/v10/users/@me/guilds", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((res) => res.json());
+
+    for (const guild of guilds) {
+      if (guildId === guild.id) {
+        // Check for ADMINISTRATOR permission (0x08)
+        const permissions = BigInt(guild.permissions);
+        return {
+          hasPermission: (permissions & BigInt(0x08)) !== BigInt(0),
+        };
+      }
     }
 
-    return await response.json();
+    return { hasPermission: false };
   } catch (error) {
-    console.error("Error fetching user guilds:", error);
-    throw error;
+    console.error("Error checking guild permissions:", error);
+    return { hasPermission: false, error: "Failed to check permissions" };
   }
 }
 
-export function formatApiResponse(data: any, status: string = "OK") {
+export async function formatApiResponse(data: any, status: string = "OK") {
   return {
     response: status,
     data,
   };
 }
 
-export function formatApiError(message: string, status: number = 500) {
+export async function formatApiError(message: string, status: number = 500) {
   return {
     response: "ERROR",
     message,

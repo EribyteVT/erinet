@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
-import { storeEncryptedTokens } from "@/app/lib/tokenService";
+import { storeEncryptedTokens } from "@/app/lib/twitchTokenService";
 import { redirect } from "next/navigation";
 
 // Set these in your environment variables

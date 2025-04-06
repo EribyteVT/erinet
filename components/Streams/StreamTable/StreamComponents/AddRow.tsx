@@ -8,26 +8,32 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Stream, Streamer } from "../../types";
 import { Button } from "../../../ui/button";
 import { Plus } from "lucide-react";
-import type { Session } from "next-auth";
 import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
+import { createDiscordEventAction } from "@/app/actions/discordActions";
+import { addEventToTwitchAction } from "@/app/actions/twitchActions";
 
 // Helper function to send stream to Discord
 async function sendToDiscord(
   stream: Stream,
-  authToken: string,
   guild: string,
   apiBaseUrl: string,
   twitchName: string
 ) {
   try {
-    const wrapper = ErinetCrudWrapper(apiBaseUrl);
-    const response = await wrapper.addEventToGuild(
-      stream,
-      authToken,
-      guild,
-      twitchName
+    const endDate = dayjs(new Date(stream.stream_date)).add(
+      stream.duration!,
+      "minutes"
     );
-    return response.data.event_id;
+
+    const response = await createDiscordEventAction(
+      stream.stream_id.toString(),
+      guild,
+      stream.stream_name,
+      new Date(stream.stream_date).toISOString(),
+      endDate.toISOString(),
+      `https://twitch.tv/${twitchName}`
+    );
+    return response.eventId;
   } catch (error) {
     console.error("Error sending to Discord:", error);
     return null;
@@ -37,20 +43,14 @@ async function sendToDiscord(
 // Helper function to send stream to Twitch
 async function sendToTwitch(
   stream: Stream,
-  discordAuthToken: string,
   broadcasterId: string,
   guild: string,
   apiBaseUrl: string
 ) {
   try {
     const wrapper = ErinetCrudWrapper(apiBaseUrl);
-    const response = await wrapper.addEventToTwitch(
-      stream,
-      discordAuthToken,
-      broadcasterId,
-      guild
-    );
-    return response.data.twitch_segment_id;
+    const response = await addEventToTwitchAction(stream, broadcasterId, guild);
+    return response.data!.twitch_segment_id;
   } catch (error) {
     console.error("Error sending to Twitch:", error);
     return null;
@@ -59,7 +59,6 @@ async function sendToTwitch(
 
 export const AddRow: React.FC<{
   guild: string;
-  session: Session;
   onStreamAdded: (stream: Stream) => void;
   setIsLoading: (loading: boolean) => void;
   streamer: Streamer;
@@ -68,7 +67,6 @@ export const AddRow: React.FC<{
   twitchName: string;
 }> = ({
   guild,
-  session,
   onStreamAdded,
   setIsLoading,
   streamer,
@@ -106,7 +104,6 @@ export const AddRow: React.FC<{
         name,
         time: fullTime.toString(),
         duration,
-        accessToken: session.user.discordAccount?.access_token!,
       });
 
       if (result.success && result.data) {
@@ -116,7 +113,6 @@ export const AddRow: React.FC<{
         if (streamer.auto_discord_event === "Y") {
           const eventId = await sendToDiscord(
             updatedStream,
-            session.user.discordAccount?.access_token!,
             guild,
             apiBaseUrl,
             twitchName
@@ -134,7 +130,6 @@ export const AddRow: React.FC<{
         ) {
           const segmentId = await sendToTwitch(
             updatedStream,
-            session.user.discordAccount?.access_token!,
             streamer.twitch_user_id,
             guild,
             apiBaseUrl

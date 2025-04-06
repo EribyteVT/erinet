@@ -4,6 +4,7 @@ import DiscordProvider from "next-auth/providers/discord";
 
 import type { JWT } from "next-auth/jwt";
 import type { Session } from "next-auth";
+import { storeDiscordToken } from "./app/lib/discordTokenService";
 
 const getCallbackUrl = () => {
   // Use environment variable if available (production)
@@ -79,14 +80,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
-        // Add the account information to the token
         if (account.provider === "discord") {
+          if (account.access_token) {
+            await storeDiscordToken(
+              user.id!,
+              account.access_token,
+              account.expires_in || 604800 // 1 week default
+            );
+          }
+
+          // Store user info
           token.discordAccount = {
             id: user.id,
             username: user.name || "",
             email: user.email || "",
             avatar: user.image,
-            access_token: account.access_token,
           };
         }
       }
@@ -102,17 +110,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           discordAccount?: {
             id: string;
             username: string;
-
             email: string;
             avatar?: string;
-            access_token?: string;
           };
         };
       };
 
       if (extendedToken.discordAccount) {
-        typedSession.user.discordAccount = extendedToken.discordAccount;
+        typedSession.user.discordAccount = {
+          id: extendedToken.discordAccount.id,
+          username: extendedToken.discordAccount.username,
+          email: extendedToken.discordAccount.email,
+          avatar: extendedToken.discordAccount.avatar,
+        };
       }
+
       typedSession.user.id = extendedToken.sub || "";
 
       return typedSession;

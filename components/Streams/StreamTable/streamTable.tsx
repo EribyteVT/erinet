@@ -25,7 +25,6 @@ import { AddRow } from "./StreamComponents/AddRow";
 import { Button } from "@/components/ui/button";
 import { EditStreamModal } from "./StreamComponents/EditStreamModal";
 import { DeleteConfirmationModal } from "./StreamComponents/DeleteConfirmationModal";
-import type { Session } from "next-auth";
 import { addWeeks, format } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import {
@@ -37,10 +36,10 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { PageContainer } from "@/components/ui/page-container";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
+import { deleteStreamAction } from "@/app/actions/streamActions";
 
 export function StreamTable({
   guild,
-  session,
   streamer,
   hasTwitchAuth,
   twitchBroadcasterId,
@@ -51,7 +50,6 @@ export function StreamTable({
   apiBaseUrl,
 }: {
   guild: string;
-  session: Session;
   streamer: Streamer;
   hasTwitchAuth: boolean;
   twitchBroadcasterId: string | null | undefined;
@@ -95,10 +93,9 @@ export function StreamTable({
     try {
       const success = await updateStream(
         updatedStream.stream_id.toString(),
-        session.user.discordAccount?.access_token!,
         guild,
         updatedStream.stream_name,
-        updatedStream.stream_date,
+        updatedStream.stream_date.toString(),
         updatedStream.duration!
       );
 
@@ -138,10 +135,7 @@ export function StreamTable({
     setLoadingMessage("Deleting stream...");
     try {
       const streamId = streamToDelete.stream_id.toString();
-      const success = await deleteStream(
-        streamId,
-        session.user.discordAccount?.access_token!
-      );
+      const success = await deleteStreamAction(streamId, guild);
       if (success) {
         setData((prevData) =>
           prevData.filter((stream) => stream.stream_id.toString() !== streamId)
@@ -165,7 +159,6 @@ export function StreamTable({
     columns: columns({
       onDelete: (stream) => setStreamToDelete(stream),
       onEdit: setEditingStream,
-      discordAuthToken: session.user.discordAccount?.access_token!,
       broadcasterId: twitchBroadcasterId,
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
@@ -282,7 +275,6 @@ export function StreamTable({
               <TableBody>
                 <AddRow
                   guild={guild}
-                  session={session}
                   onStreamAdded={(stream) =>
                     setData((prev) => [...prev, stream])
                   }

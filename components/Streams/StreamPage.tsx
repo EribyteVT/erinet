@@ -1,7 +1,5 @@
 "use client";
 
-import { Session } from "next-auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Globe, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -19,17 +17,17 @@ import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WebsiteGenerator } from "@/components/websiteGenerator/WebsiteGenerator";
 
 export default function StreamPage({
-  session,
   guild,
   streamer_pass,
   apiBaseUrl,
   crudUrl,
+  avatarUrl,
 }: {
-  session: Session;
   guild: GuildData;
   streamer_pass: Streamer;
   apiBaseUrl: string;
   crudUrl: string;
+  avatarUrl: string | undefined;
 }) {
   // Main state
   const [streamer, setStreamer] = useState<Streamer>(streamer_pass);
@@ -78,9 +76,7 @@ export default function StreamPage({
     checkTwitchIntegration();
   }, [guild.id, streamer.twitch_user_id]);
 
-  // Redirect if not authenticated or no guild
-  if (!session?.user?.discordAccount?.access_token) redirect("/");
-  if (!guild) redirect("/");
+  // console.log("HERE")
 
   return (
     <PageContainer maxWidth="full">
@@ -115,14 +111,13 @@ export default function StreamPage({
         streamer={streamer}
         streams={streams}
         apiBaseUrl={apiBaseUrl}
-        discordAvatar={session.user.discordAccount.avatar!}
+        discordAvatar={avatarUrl}
         crudUrl={crudUrl}
       />
 
       {/* Stream table */}
       <div className="mb-8">
         <StreamTable
-          session={session}
           guild={guild.id}
           streamer={streamer}
           hasTwitchAuth={hasTwitchAuth}
@@ -145,7 +140,6 @@ export default function StreamPage({
           <div className="bg-background border border-border rounded-lg p-4">
             <TwitchConnect
               streamer={streamer}
-              session={session}
               hasTwitchAuth={hasTwitchAuth}
               setHasTwitchAuth={setHasTwitchAuth}
               setTwitchBroadcasterId={setTwitchBroadcasterId}
@@ -164,7 +158,6 @@ export default function StreamPage({
           <div className="bg-background border border-border rounded-lg p-4">
             <GuildOptions
               streamer={streamer}
-              session={session}
               setStreamer={setStreamer}
               hasTwitchAuth={hasTwitchAuth}
               setIsLoading={setIsLoading}
