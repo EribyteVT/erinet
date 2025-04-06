@@ -1,9 +1,24 @@
 {
   "changelog": [
     {
+      "date": "4/06/2025",
+      "version": "0.2.0",
+      "items": [
+        "privacy policy updated",
+        "security improved with server side sessions",
+        "added caches for several endpoints to reduce the risk for 429's",
+        "added discord server link"
+      ]
+    },
+    {
       "date": "4/05/2025",
       "version": "0.2.0",
-      "items": ["privacy policy", "Credits page", "main page updgrage", "fix to website generation"]
+      "items": [
+        "privacy policy",
+        "Credits page",
+        "main page updgrage",
+        "fix to website generation"
+      ]
     },
     {
       "date": "4/04/2025",

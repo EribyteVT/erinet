@@ -1,5 +1,6 @@
 import Guild from "@/components/guild/Guild";
 import { fetchUserGuilds, getBotGuilds } from "@/app/actions/discordActions";
+import { signOutAndCleanupAction } from "@/app/actions/authActions";
 
 async function GuildData({}: {}) {
   const guilds = await fetchUserGuilds();
@@ -27,7 +28,6 @@ async function GuildData({}: {}) {
 
     return val_a - val_b;
   });
-
   return (
     <>
       {admin_guilds.map((data) => (

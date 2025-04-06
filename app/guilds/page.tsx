@@ -1,5 +1,4 @@
-import { Metadata } from "next";
-
+"use server";
 import {
   Card,
   CardDescription,
@@ -8,11 +7,10 @@ import {
 } from "@/components/ui/card";
 import { auth } from "@/auth";
 import GuildSelector from "@/components/guild/GuildSelector";
-
-export const metadata: Metadata = {
-  title: "Eribot",
-  description: "Example dashboard app built using the components.",
-};
+import { signOutAndCleanupAction } from "../actions/authActions";
+import { redirect } from "next/navigation";
+import { fetchUserGuilds } from "@/app/actions/discordActions";
+import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -43,9 +41,39 @@ export default async function DashboardPage() {
         </div>
       </>
     );
-  return (
-    <>
-      <GuildSelector />
-    </>
-  );
+
+  try {
+    // Attempt to fetch guilds - if this fails, it will throw an error
+    await fetchUserGuilds();
+
+    // If successful, render the GuildSelector
+    return (
+      <>
+        <GuildSelector />
+      </>
+    );
+  } catch (error) {
+    console.error("Error fetching guilds:", error);
+
+    // If there's an error fetching guilds, attempt to sign out the user (patch updated auth, need this now ICE)
+    try {
+      redirect("/api/force-signout");
+    } catch (signOutError) {
+      console.error("Error during forced sign out:", signOutError);
+
+      // Fallback UI if redirect fails
+      return (
+        <div className="p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Session Error</h2>
+          <p className="mb-4">
+            There was a problem with your session. Please try signing out and
+            back in.
+          </p>
+          <form action={signOutAndCleanupAction}>
+            <Button type="submit">Sign Out</Button>
+          </form>
+        </div>
+      );
+    }
+  }
 }
