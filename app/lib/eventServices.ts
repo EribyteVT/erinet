@@ -1,67 +1,9 @@
-export async function deleteDiscordEvent(
-  guildId: string,
-  eventId: string
-): Promise<boolean> {
-  try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+import {
+  updateDiscordEvent,
+  deleteDiscordEvent,
+} from "@/app/actions/discordActions";
 
-    return response.ok;
-  } catch (error) {
-    console.error("Error deleting Discord event:", error);
-    return false;
-  }
-}
-
-export async function updateDiscordEvent(
-  guildId: string,
-  eventId: string,
-  name: string,
-  startTime: string,
-  endTime: string
-): Promise<boolean> {
-  try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          scheduled_start_time: startTime,
-          scheduled_end_time: endTime,
-          entity_type: 3, // External event
-          privacy_level: 2, // Guild only
-          entity_metadata: {
-            location: "https://twitch.tv/EribyteVT",
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Discord API error:", errorData);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("Error updating Discord event:", error);
-    return false;
-  }
-}
+export { updateDiscordEvent, deleteDiscordEvent };
 
 export async function deleteTwitchSegment(
   broadcasterId: string,

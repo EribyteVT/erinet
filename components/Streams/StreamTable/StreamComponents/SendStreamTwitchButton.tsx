@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { Button } from "../../../ui/button";
 import { Stream } from "../../types";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Check, AlertCircle, Loader2 } from "lucide-react";
 import {
   Tooltip,
@@ -17,13 +16,13 @@ export const SendStreamTwitchButton = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
-  apiBaseUrl,
+  onUpdate,
 }: {
   stream: Stream;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
-  apiBaseUrl: string;
+  onUpdate: (updatedStream: Stream) => void;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -84,17 +83,18 @@ export const SendStreamTwitchButton = ({
   async function sendToTwitch() {
     setIsLoading(true);
     try {
-      const wrapper = ErinetCrudWrapper(apiBaseUrl);
-
-      // We don't need to pass the twitchAuthToken anymore - it will be retrieved server-side
       const response = await addEventToTwitchAction(
         stream,
         broadcasterId!,
         guild
       );
 
-      if (response.response === "OKAY") {
+      if (response.response === "OKAY" && response.data) {
+        // Update the stream in the parent component with the new data
+        // This would require adding an onUpdate prop to the component
         setIsSuccess(true);
+
+        onUpdate(response.data);
       }
     } catch (error) {
       console.error("Error sending to Twitch:", error);

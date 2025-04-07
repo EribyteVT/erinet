@@ -9,7 +9,7 @@ export default function PrivacyPolicyPage() {
       <div className="space-y-6 py-10">
         <SectionHeader
           title="Privacy Policy"
-          description="Last Updated: April 4, 2025"
+          description="Last Updated: April 6, 2025"
         />
 
         <Card className="border shadow-sm">
@@ -101,7 +101,11 @@ export default function PrivacyPolicyPage() {
                 <h3 className="text-xl font-medium mt-6 mb-3">
                   4.1 Storage Methods
                 </h3>
-                <p>Your data is stored in our PostgreSQL database.</p>
+                <p>
+                  Your data is stored in our PostgreSQL database. any access and
+                  refresh tokens to third party apps are stored encrypted at
+                  rest
+                </p>
 
                 <h3 className="text-xl font-medium mt-6 mb-3">
                   4.2 What we Store
@@ -109,6 +113,7 @@ export default function PrivacyPolicyPage() {
                 <p>We store the following about you and your accounts:</p>
                 <ul className="list-disc ml-6 space-y-1">
                   <li>Encrypted twitch access and refresh tokens</li>
+                  <li>Encrypted discord access and refresh tokens</li>
                   <li>Your name on twitch</li>
                   <li>The id of any Discord servers Eribot is enabled in</li>
                   <li>Your timezone</li>

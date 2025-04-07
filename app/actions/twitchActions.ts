@@ -1,4 +1,3 @@
-// app/actions/twitchActions.ts
 "use server";
 
 import { auth } from "@/auth";
@@ -8,10 +7,104 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/app/lib/db";
 import { getDecryptedTokens } from "../lib/twitchTokenService";
 
-/**
- * Server action to add a stream event to Twitch
- * Uses server-side authentication and token management
- */
+const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
+const TWITCH_REDIRECT_URI = process.env.TWITCH_REDIRECT_URI!;
+
+async function getBotAuthToken() {
+  try {
+    const params = new URLSearchParams({
+      client_id: TWITCH_CLIENT_ID || "",
+      client_secret: TWITCH_CLIENT_SECRET || "",
+      grant_type: "client_credentials",
+    });
+
+    const response = await fetch("https://id.twitch.tv/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.access_token;
+    } else {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error(
+        `Failed to get auth token. Status code: ${response.status}`
+      );
+    }
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+    throw error;
+  }
+}
+
+export async function findTwitchIdAction(twitchUserId: string) {
+  try {
+    let token = await getBotAuthToken();
+
+    const response = await fetch(
+      `https://api.twitch.tv/helix/users?id=${twitchUserId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Client-Id": TWITCH_CLIENT_ID || "",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error(
+        `Failed to get Twitch user. Status code: ${response.status}`
+      );
+    }
+  } catch (error) {
+    console.error("Error getting Twitch user by ID:", error);
+    throw error;
+  }
+}
+
+export async function findTwitchNameAction(twitchUserName: string) {
+  try {
+    let token = await getBotAuthToken();
+
+    const response = await fetch(
+      `https://api.twitch.tv/helix/users?login=${twitchUserName}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Client-Id": TWITCH_CLIENT_ID || "",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error(
+        `Failed to get Twitch user. Status code: ${response.status}`
+      );
+    }
+  } catch (error) {
+    console.error("Error getting Twitch user by ID:", error);
+    throw error;
+  }
+}
+
 export async function addEventToTwitchAction(
   stream: Stream,
   broadcastId: string,
@@ -131,5 +224,49 @@ export async function addEventToTwitchAction(
       message: "An unexpected error occurred",
       data: null,
     };
+  }
+}
+
+export async function guildHasAuthTokens(guildId: string) {
+  try {
+    const authTokenCount = await prisma.encryptedToken.count({
+      where: { guildId: guildId },
+    });
+
+    return authTokenCount >= 2;
+  } catch (error) {
+    console.error("Error getting Twitch user by ID:", error);
+    throw error;
+  }
+}
+
+export async function getAuthUrl(state: string, guildId: string) {
+  try {
+    // Define the scopes you need
+    const scopes = [
+      "user:read:email",
+      "channel:manage:schedule",
+      // Add other required scopes here
+    ].join(" ");
+
+    // Build the authorization URL
+    const authUrl = new URL("https://id.twitch.tv/oauth2/authorize");
+    authUrl.searchParams.append("client_id", TWITCH_CLIENT_ID!);
+    authUrl.searchParams.append("redirect_uri", TWITCH_REDIRECT_URI);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("scope", scopes);
+    authUrl.searchParams.append("state", state);
+
+    await prisma.auth_state.create({
+      data: {
+        state: state,
+        guild_id: guildId || "", // Store empty string if no guildId provided
+        expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
+    });
+
+    return authUrl.toString();
+  } catch (error) {
+    console.error("Error generating auth URL:", error);
   }
 }

@@ -47,7 +47,6 @@ export function StreamTable({
   isLoading,
   setLoadingMessage,
   loadingMessage,
-  apiBaseUrl,
 }: {
   guild: string;
   streamer: Streamer;
@@ -57,7 +56,6 @@ export function StreamTable({
   isLoading: boolean;
   setLoadingMessage: Dispatch<SetStateAction<string>>;
   loadingMessage: string;
-  apiBaseUrl: string;
 }) {
   // State management
   const [data, setData] = React.useState<Stream[]>([]);
@@ -77,8 +75,7 @@ export function StreamTable({
 
   const { fetchStreamsArb, deleteStream, updateStream } = useStreams(
     guild,
-    sid,
-    apiBaseUrl
+    sid
   );
 
   // Stream operations handlers
@@ -91,25 +88,15 @@ export function StreamTable({
     setIsLoading(true);
     setLoadingMessage("Updating stream...");
     try {
-      const success = await updateStream(
-        updatedStream.stream_id.toString(),
-        guild,
-        updatedStream.stream_name,
-        updatedStream.stream_date.toString(),
-        updatedStream.duration!
+      setData((prevData) =>
+        prevData.map((value) => {
+          if (value.stream_id == updatedStream.stream_id) {
+            return updatedStream;
+          } else {
+            return value;
+          }
+        })
       );
-
-      if (success.success) {
-        setData((prevData) =>
-          prevData.map((value) => {
-            if (value.stream_id == updatedStream.stream_id) {
-              return success.data!;
-            } else {
-              return value;
-            }
-          })
-        );
-      }
     } finally {
       setIsLoading(false);
     }
@@ -159,10 +146,10 @@ export function StreamTable({
     columns: columns({
       onDelete: (stream) => setStreamToDelete(stream),
       onEdit: setEditingStream,
+      onUpdateStream: handleSaveEdit,
       broadcasterId: twitchBroadcasterId,
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
-      apiBaseUrl: apiBaseUrl,
       twitchName: streamer.streamer_name,
     }),
     state: { sorting },
@@ -189,6 +176,7 @@ export function StreamTable({
         onClose={() => setEditingStream(null)}
         stream={editingStream}
         onSave={handleSaveEdit}
+        guildId={guild}
       />
 
       <DeleteConfirmationModal
@@ -284,7 +272,6 @@ export function StreamTable({
                   }}
                   streamer={streamer}
                   hasTwitchAuth={hasTwitchAuth}
-                  apiBaseUrl={apiBaseUrl}
                   twitchName={streamer.streamer_name}
                 />
                 {table.getRowModel().rows?.length ? (

@@ -85,7 +85,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             await storeDiscordToken(
               user.id!,
               account.access_token,
-              account.expires_in || 604800 // 1 week default
+              account.expires_in || 604800, // 1 week default,
+              "access"
+            );
+          }
+
+          if (account.refresh_token) {
+            await storeDiscordToken(
+              user.id!,
+              account.refresh_token,
+              account.expires_in,
+              "refresh"
             );
           }
 

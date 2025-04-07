@@ -1,13 +1,11 @@
 import Guild from "@/components/guild/Guild";
-import ErinetCrudWrapper from "../Adapter/erinetCrudWrapper";
-import { fetchUserGuilds } from "@/app/actions/discordActions";
+import { fetchUserGuilds, getBotGuilds } from "@/app/actions/discordActions";
+import { signOutAndCleanupAction } from "@/app/actions/authActions";
 
 async function GuildData({}: {}) {
-  const wrapper = ErinetCrudWrapper();
-
   const guilds = await fetchUserGuilds();
 
-  const botGuilds = await wrapper.getBotGuilds();
+  const botGuilds = await getBotGuilds();
 
   const botGuildIds = botGuilds.map((value) => {
     return value.id;
@@ -30,7 +28,6 @@ async function GuildData({}: {}) {
 
     return val_a - val_b;
   });
-
   return (
     <>
       {admin_guilds.map((data) => (

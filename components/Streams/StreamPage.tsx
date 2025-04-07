@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Globe, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 
 import { StreamTable } from "@/components/Streams/StreamTable/streamTable";
 import { TwitchConnect } from "@/components/Streams/TwitchConnect/TwitchConnect";
@@ -15,17 +14,19 @@ import { SectionHeader } from "@/components/ui/selection-header";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
 import { WebsiteGenerator } from "@/components/websiteGenerator/WebsiteGenerator";
+import { fetchStreamsAction } from "@/app/actions/streamActions";
+import { guildHasAuthTokens } from "@/app/actions/twitchActions";
 
 export default function StreamPage({
   guild,
   streamer_pass,
-  apiBaseUrl,
+  apiTwitchUrl,
   crudUrl,
   avatarUrl,
 }: {
   guild: GuildData;
   streamer_pass: Streamer;
-  apiBaseUrl: string;
+  apiTwitchUrl: string;
   crudUrl: string;
   avatarUrl: string | undefined;
 }) {
@@ -42,8 +43,6 @@ export default function StreamPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingMessage, setLoadingMessage] = useState<string>("Loading...");
 
-  const wrapper = ErinetCrudWrapper(apiBaseUrl);
-
   // Fetch Twitch auth status once, share with child components
   useEffect(() => {
     const checkTwitchIntegration = async () => {
@@ -51,19 +50,19 @@ export default function StreamPage({
         setIsLoading(true);
         setLoadingMessage("Checking Twitch integration...");
 
-        const hasAuth = await wrapper.guildHasAuthTokens(guild.id);
+        const hasAuth = await guildHasAuthTokens(guild.id);
         setHasTwitchAuth(hasAuth);
 
         if (streamer.twitch_user_id) {
           setTwitchBroadcasterId(streamer.twitch_user_id);
         }
 
-        const streamData = await wrapper.getStreams(
-          streamer.streamer_id,
-          Date.now().toString()
+        const streamData = await fetchStreamsAction(
+          streamer.streamer_id.toString(),
+          new Date()
         );
 
-        if (streamData?.data) {
+        if (streamData.data) {
           setStreams(streamData.data);
         }
       } catch (error) {
@@ -110,7 +109,6 @@ export default function StreamPage({
       <WebsiteGenerator
         streamer={streamer}
         streams={streams}
-        apiBaseUrl={apiBaseUrl}
         discordAvatar={avatarUrl}
         crudUrl={crudUrl}
       />
@@ -126,7 +124,6 @@ export default function StreamPage({
           isLoading={isLoading}
           setLoadingMessage={setLoadingMessage}
           loadingMessage={loadingMessage}
-          apiBaseUrl={apiBaseUrl}
         />
       </div>
 
@@ -145,7 +142,7 @@ export default function StreamPage({
               setTwitchBroadcasterId={setTwitchBroadcasterId}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
-              apiBaseUrl={apiBaseUrl}
+              apiTwitchUrl={apiTwitchUrl}
             />
           </div>
         </div>
@@ -162,7 +159,6 @@ export default function StreamPage({
               hasTwitchAuth={hasTwitchAuth}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
-              apiBaseUrl={apiBaseUrl}
             />
           </div>
         </div>

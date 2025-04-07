@@ -3,8 +3,6 @@ import React, { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Streamer } from "../types";
 import { Button } from "@/components/ui/button";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
-import { Session } from "next-auth";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { setAutosAction } from "@/app/actions/streameractions";
@@ -15,14 +13,12 @@ export const GuildOptions = ({
   hasTwitchAuth,
   setIsLoading,
   setLoadingMessage,
-  apiBaseUrl,
 }: {
   streamer: Streamer;
   setStreamer: (streamer: Streamer) => void;
   hasTwitchAuth: boolean;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
-  apiBaseUrl: string;
 }) => {
   const [isDiscordAuto, setIsDiscordAuto] = useState<CheckedState>(
     streamer.auto_discord_event === "Y"
@@ -44,7 +40,6 @@ export const GuildOptions = ({
     setSaveStatus({ type: null, message: "" });
 
     try {
-      
       const updatedStreamer = await setAutosAction(
         streamer.streamer_id,
         streamer.guild,
@@ -53,7 +48,6 @@ export const GuildOptions = ({
       );
 
       setStreamer(updatedStreamer!);
-
 
       setSaveStatus({
         type: "success",

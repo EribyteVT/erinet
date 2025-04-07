@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { Card, CardContent } from "@/components/ui/card";
 import { Streamer, TwitchUser } from "../types";
 import { setStreamerTwitchAction } from "@/app/actions/streameractions";
+import { findTwitchNameAction, getAuthUrl } from "@/app/actions/twitchActions";
 
 export const TwitchUserSearch = ({
   streamer,
@@ -13,16 +13,15 @@ export const TwitchUserSearch = ({
   setLoadingMessage,
   onTwitchConnected,
   setError,
-  apiBaseUrl,
+  apiTwitchUrl,
 }: {
   streamer: Streamer;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
   onTwitchConnected: (twitchId: string) => void;
   setError: (error: string | null) => void;
-  apiBaseUrl: string;
+  apiTwitchUrl: string;
 }) => {
-  const wrapper = ErinetCrudWrapper(apiBaseUrl);
   const [twitchName, setTwitchName] = useState("");
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
   const [searching, setSearching] = useState(false);
@@ -53,20 +52,13 @@ export const TwitchUserSearch = ({
 
       const guildId = streamer.guild;
 
-      // Get the OAuth URL from our backend
-      const response = await fetch("/api/twitch/auth-url", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ state, guildId }),
-      });
+      const authUrl = await getAuthUrl(state, guildId);
 
-      const data = await response.json();
+      console.log(authUrl);
 
-      if (data.url) {
+      if (authUrl) {
         // Redirect to Twitch for authentication
-        window.location.href = data.url;
+        window.location.href = authUrl;
       } else {
         throw new Error("Failed to get authorization URL");
       }
@@ -85,12 +77,12 @@ export const TwitchUserSearch = ({
       setLoadingMessage("Searching for Twitch user...");
       setError(null);
 
-      const response = await wrapper.findTwitchUser(twitchName);
+      const response = await findTwitchNameAction(twitchName);
 
       console.log(response);
 
-      if (response.data.data && response.data.data.length > 0) {
-        setTwitchUser(response.data.data[0]);
+      if (response.data && response.data.length > 0) {
+        setTwitchUser(response.data[0]);
       } else {
         setTwitchUser(null);
         setError(`No Twitch user found with name "${twitchName}"`);

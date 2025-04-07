@@ -1,9 +1,12 @@
-// app/actions/streamActions.ts
 "use server";
 
 import { auth } from "@/auth";
 import { getDiscordToken } from "@/app/lib/discordTokenService";
-import { StreamDataResponse } from "@/components/Streams/types";
+import {
+  Stream,
+  StreamDataResponse,
+  StreamsDataResponse,
+} from "@/components/Streams/types";
 import { prisma } from "@/app/lib/db";
 import { isAllowedGuild } from "@/app/lib/auth";
 import { revalidatePath } from "next/cache";
@@ -12,7 +15,10 @@ import {
   deleteTwitchSegment,
   updateTwitchSegment,
 } from "@/app/lib/eventServices";
-import { deleteDiscordEvent } from "../lib/discord-api";
+import {
+  deleteDiscordEvent,
+  updateDiscordEvent,
+} from "../actions/discordActions";
 
 /**
  * Server action to add a stream with server-side authentication
@@ -133,7 +139,6 @@ export async function deleteStreamAction(
 
     // Delete associated Discord event if it exists
     if (existingStream.event_id) {
-      // Import and use your Discord API function
       await deleteDiscordEvent(guildId, existingStream.event_id);
     }
 
@@ -145,8 +150,6 @@ export async function deleteStreamAction(
       });
 
       if (streamer?.twitch_user_id) {
-        // Import and use your Twitch API function
-
         try {
           // Get a valid Twitch access token
           const twitchAccessToken = await getDecryptedTokens(guildId);
@@ -180,6 +183,52 @@ export async function deleteStreamAction(
     return {
       response: "ERROR",
       message: "An error occurred while deleting the stream",
+      data: null,
+    };
+  }
+}
+
+export async function fetchStreamsAction(
+  streamerId: string,
+  dateStart: Date,
+  dateEnd?: Date
+): Promise<StreamsDataResponse> {
+  try {
+    // Create start date from timestamp
+    const date1 = dateStart;
+
+    // Handle the case where dateEnd is provided vs. calculating a week
+    let date2;
+    if (dateEnd) {
+      // If dateEnd is provided, use it directly
+      date2 = dateEnd;
+    } else {
+      // If not, default to one week from dateStart
+      const oneWeek = 604800000; // One week in milliseconds
+      date2 = new Date(date1.getTime() + oneWeek);
+    }
+
+    // Query streams within the date range for the specific streamer
+    const streams = await prisma.stream_table_tied.findMany({
+      where: {
+        streamer_id: streamerId,
+        stream_date: {
+          gte: date1,
+          lt: date2,
+        },
+      },
+    });
+
+    return {
+      response: "OKAY",
+      data: streams,
+      message: "Streams fetched successfully",
+    };
+  } catch (error) {
+    console.error("Error fetching streams:", error);
+    return {
+      response: "ERROR",
+      message: "An error occurred while fetching streams",
       data: null,
     };
   }
@@ -236,6 +285,8 @@ export async function editStreamAction(
       };
     }
 
+    console.log(`NEW TIME: ${newTime}`);
+
     // Convert timestamp to Date object for database and event updates
     const streamDate = new Date(parseInt(newTime) * 1000);
 
@@ -265,7 +316,6 @@ export async function editStreamAction(
     // Update associated Discord event if it exists
     if (existingStream.event_id) {
       try {
-        const { updateDiscordEvent } = await import("@/app/lib/eventServices");
         await updateDiscordEvent(
           guildId,
           existingStream.event_id,

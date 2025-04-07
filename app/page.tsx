@@ -1,4 +1,3 @@
-import { Metadata } from "next";
 import Image from "next/image";
 
 import {
@@ -8,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { auth } from "@/auth";
 import ChangeLog from "@/components/home-screen/ChangeLog";
 
 import { promises as fs } from "fs";
@@ -21,7 +19,6 @@ const myReadFile = async (path: string) => {
   const data = JSON.parse(file);
   return data;
 };
-
 
 export default async function DashboardPage() {
   return (
@@ -114,7 +111,6 @@ export default async function DashboardPage() {
             </Card>
           </div>
         </div>
-
       </div>
       <Card className=" dark:black shadow-xl  mx-8">
         <div className=" px-3">

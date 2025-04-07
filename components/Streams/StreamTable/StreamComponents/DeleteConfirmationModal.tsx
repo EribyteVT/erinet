@@ -1,4 +1,3 @@
-// components/Streams/StreamTable/StreamComponents/DeleteConfirmationModal.tsx
 import React from "react";
 import {
   Dialog,

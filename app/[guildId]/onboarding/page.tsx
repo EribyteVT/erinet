@@ -1,30 +1,26 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import OnboardingProcess from "@/components/onboarding/OnboardingProcess";
-import ErinetCrudWrapper from "@/components/Adapter/erinetCrudWrapper";
 import { notFound } from "next/navigation";
 import {
   fetchSpecificUserGuild,
   fetchUserGuilds,
+  getBotGuilds,
 } from "@/app/actions/discordActions";
+import { getStreamerByGuildAction } from "@/app/actions/streameractions";
 
 export default async function OnboardingPage({
   params,
 }: {
   params: Promise<{ guildId: string }>;
 }) {
-  const wrapper = ErinetCrudWrapper();
   const guildId = (await params).guildId;
   const session = await auth();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
-  // const api = DiscordApi("https://discord.com/api/v10/");
-
   const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`;
 
-  // Check authentication first
   if (!session) {
-    // Use return here to avoid multiple redirects
     redirect("/");
   }
 
@@ -50,21 +46,20 @@ export default async function OnboardingPage({
 
   // Check if a streamer already exists for this guild
   try {
-    const streamerResponse = await wrapper.getStreamerByGuildId(guildId);
+    const streamerResponse = await getStreamerByGuildAction(guildId);
     if (streamerResponse?.data) {
       // If a streamer already exists, redirect to the manage page
       redirect(`/${guildId}/manage`);
     }
   } catch (error) {
-    // An error likely means no streamer exists, which is expected
     console.error("Error fetching streamer:", error);
   }
 
   // Get the bot guilds to check if the bot is already in this guild
-  const botGuilds = await wrapper.getBotGuilds();
+  const botGuilds = await getBotGuilds();
   const botInGuild = botGuilds.some((g) => g.id === guildId);
 
-  // If the bot is already in this guild but no streamer exists,
+  // todo: If the bot is already in this guild but no streamer exists,
   // we'll still show the onboarding to create the streamer
 
   return (

@@ -1,9 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { FontAwesomeLoader } from "@/components/ui/FontAwesomeLoader";
 import { PageContainer } from "@/components/ui/page-container";
-import { SectionHeader } from "@/components/ui/selection-header";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import React from "react";
 
