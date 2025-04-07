@@ -92,7 +92,7 @@ export function EditStreamModal({
       );
 
       // Handle the response
-      if (result.response === "OKAY" && result.data) {
+      if (result.success && result.data) {
         // Call the original onSave for backward compatibility
         onSave(result.data as Stream);
         onClose();
