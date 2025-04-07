@@ -135,18 +135,18 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ${APPLICATION_NAME}-ingress
+  name: erinet-stage-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
-    - host: stage.eri.bot
+    - host: ${HOST_NAME}
       http:
         paths:
-          - path: /(.*)
+          - path: /
             pathType: Prefix
             backend:
               service:
-                name: ${APPLICATION_NAME}
+                name: erinet-stage
                 port:
                   number: 8085
