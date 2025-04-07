@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { getDiscordToken } from "@/app/lib/discordTokenService";
-import { GuildData } from "@/components/Streams/types";
+import { GuildData, Stream } from "@/components/Streams/types";
 import { isAllowedGuild } from "../lib/auth";
 import { prisma } from "@/app/lib/db";
 import { cache } from "@/app/lib/cache";
@@ -315,7 +315,7 @@ export async function createDiscordEventAction(
   startTime: string,
   endTime: string,
   location: string = "https://twitch.tv/EribyteVT"
-): Promise<{ success: boolean; eventId?: string; message?: string }> {
+): Promise<{ success: boolean; stream?: Stream; message?: string }> {
   try {
     // Get the current user session
     const session = await auth();
@@ -360,7 +360,7 @@ export async function createDiscordEventAction(
 
     return {
       success: true,
-      eventId: eventData.id,
+      stream: updatedStream,
     };
   } catch (error) {
     console.error("Error creating Discord event:", error);

@@ -90,6 +90,9 @@ export const columns = ({
             stream={row.original}
             guild={guild}
             twitchName={twitchName}
+            onUpdate={(updatedStream) => {
+              onUpdateStream(updatedStream);
+            }}
           />
         }
       </div>
@@ -107,7 +110,6 @@ export const columns = ({
             guild={guild}
             hasTwitchAuth={hasTwitchAuth}
             onUpdate={(updatedStream) => {
-              // This will update the data in the table
               onUpdateStream(updatedStream);
             }}
           />

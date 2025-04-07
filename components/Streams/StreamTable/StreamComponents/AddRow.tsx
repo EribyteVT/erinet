@@ -31,7 +31,7 @@ async function sendToDiscord(
       endDate.toISOString(),
       `https://twitch.tv/${twitchName}`
     );
-    return response.eventId;
+    return response.stream?.event_id;
   } catch (error) {
     console.error("Error sending to Discord:", error);
     return null;
