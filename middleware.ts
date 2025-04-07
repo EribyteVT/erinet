@@ -1,4 +1,3 @@
-// middleware.ts (at the root of your project)
 import { NextResponse, NextRequest } from "next/server";
 import { cache } from "@/app/lib/cache";
 
@@ -8,15 +7,9 @@ type RateLimitConfig = {
   maxRequests: number; // Maximum requests per window
 };
 
-// Define different rate limits for different API routes
 const apiRateLimits: Record<string, RateLimitConfig> = {
-  // our database
-  "api/streams": { windowMs: 60 * 1000, maxRequests: 20 },
-  "api/streamers": { windowMs: 60 * 1000, maxRequests: 10 },
-
   // Third-party integrations
   "api/twitch": { windowMs: 60 * 1000, maxRequests: 15 },
-  "api/discord": { windowMs: 60 * 1000, maxRequests: 15 },
 
   // Default fallback
   default: { windowMs: 60 * 1000, maxRequests: 30 },

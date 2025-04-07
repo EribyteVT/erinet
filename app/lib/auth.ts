@@ -23,9 +23,9 @@ export async function isAllowedGuild(
     }
 
     // Check guild permissions using the token
-    const guilds = await fetchUserGuilds();
+    const guilds = (await fetchUserGuilds()).data;
 
-    console.log(guildId);
+    console.log(`GUILD: ${guildId}`);
 
     let can = false;
 

@@ -1,36 +1,25 @@
 import { NextResponse } from "next/server";
 
-export function successResponse(data: any, status: number = 200) {
-  return NextResponse.json(
-    {
-      response: "OKAY",
-      data,
-    },
-    { status }
-  );
+export interface NormalizedResponse<T = any> {
+  success: boolean;
+  data: T | null;
+  message: string;
 }
 
-export function errorResponse(
-  message: string = "An error occurred",
-  status: number = 500
-) {
-  return NextResponse.json(
-    {
-      response: "ERROR",
-      message,
-    },
-    { status }
-  );
+export function successResponse(data: any, message: string) {
+  return {
+    success: true,
+    data,
+    message,
+  };
 }
 
-export function forbiddenResponse(message: string = "Access denied") {
-  return NextResponse.json(
-    {
-      response: "FORBIDDEN",
-      message,
-    },
-    { status: 403 }
-  );
+export function errorResponse(message: string = "An error occurred") {
+  return {
+    success: false,
+    data: null,
+    message,
+  };
 }
 
 export function notFoundResponse(message: string = "Resource not found") {

@@ -30,7 +30,7 @@ export const columns = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
-  twitchName,
+  streamLink,
 }: {
   onDelete: (stream: Stream) => void;
   onEdit: (stream: Stream) => void;
@@ -38,7 +38,7 @@ export const columns = ({
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
-  twitchName: string;
+  streamLink: string;
 }): ColumnDef<Stream>[] => [
   {
     accessorKey: "stream_id",
@@ -89,7 +89,7 @@ export const columns = ({
           <SendStreamDiscordButton
             stream={row.original}
             guild={guild}
-            twitchName={twitchName}
+            streamLink={streamLink}
             onUpdate={(updatedStream) => {
               onUpdateStream(updatedStream);
             }}

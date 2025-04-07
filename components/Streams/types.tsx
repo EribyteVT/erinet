@@ -20,6 +20,7 @@ export type Streamer = {
   twitch_user_id?: string | null;
   auto_discord_event?: string | null;
   auto_twitch_schedule?: string | null;
+  streamer_link?: string | null;
 };
 
 export type StreamDataResponse = {

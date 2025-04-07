@@ -8,6 +8,7 @@ import {
   getBotGuilds,
 } from "@/app/actions/discordActions";
 import { getStreamerByGuildAction } from "@/app/actions/streameractions";
+import { GuildData } from "@/components/Streams/types";
 
 export default async function OnboardingPage({
   params,
@@ -16,7 +17,6 @@ export default async function OnboardingPage({
 }) {
   const guildId = (await params).guildId;
   const session = await auth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
   const botInviteBase = `https://discord.com/api/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&permissions=17600775979008&integration_type=0&scope=bot+applications.commands&guild_id=`;
 
@@ -25,7 +25,7 @@ export default async function OnboardingPage({
   }
 
   // Get the guild data
-  const guild = await fetchSpecificUserGuild(guildId);
+  const guild = (await fetchSpecificUserGuild(guildId)).data;
 
   // If guild not found, show 404 instead of redirect
   if (!guild) {
@@ -33,10 +33,10 @@ export default async function OnboardingPage({
   }
 
   // Check if the user has admin permissions in the guild
-  const guilds = await fetchUserGuilds();
+  const guilds = (await fetchUserGuilds()).data;
 
   const userHasPermission = guilds.some(
-    (g) => g.id === guildId && (parseInt(g.permissions) & 0x8) !== 0
+    (g: GuildData) => g.id === guildId && (parseInt(g.permissions) & 0x8) !== 0
   );
 
   if (!userHasPermission) {
@@ -57,16 +57,10 @@ export default async function OnboardingPage({
 
   // Get the bot guilds to check if the bot is already in this guild
   const botGuilds = await getBotGuilds();
-  const botInGuild = botGuilds.some((g) => g.id === guildId);
+  const botInGuild = botGuilds.data.some((g: GuildData) => g.id === guildId);
 
   // todo: If the bot is already in this guild but no streamer exists,
   // we'll still show the onboarding to create the streamer
 
-  return (
-    <OnboardingProcess
-      guild={guild}
-      apiBaseUrl={apiBaseUrl}
-      botInviteBase={botInviteBase}
-    />
-  );
+  return <OnboardingProcess guild={guild} botInviteBase={botInviteBase} />;
 }

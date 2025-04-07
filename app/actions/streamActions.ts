@@ -19,46 +19,39 @@ import {
   deleteDiscordEvent,
   updateDiscordEvent,
 } from "../actions/discordActions";
+import { createRateLimitedStructuredAction } from "../lib/actionRegistry";
+import {
+  errorResponse,
+  NormalizedResponse,
+  successResponse,
+} from "../lib/api-utils";
 
-/**
- * Server action to add a stream with server-side authentication
- */
-export async function addStreamAction(
+async function addStreamActionImpl(
   streamerId: number,
   timestamp: string,
   streamName: string,
   duration: string,
   guildId: string
-): Promise<StreamDataResponse> {
+): Promise<NormalizedResponse<Stream>> {
   try {
+    console.log(`DURATION: ${duration}`);
+    console.log(`GUILD: ${guildId}`);
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: User not authenticated",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: Discord token not found",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if the user has permission for this guild
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return {
-        response: "FORBIDDEN",
-        message: "User does not have admin permission for this guild",
-        data: null,
-      };
+      return errorResponse("FORBIDDEN");
     }
 
     // Create a new stream entry
@@ -74,54 +67,40 @@ export async function addStreamAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return {
-      response: "OKAY",
-      message: "OKAY",
-      data: newStream,
-    };
+    return successResponse(newStream, "OKAY");
   } catch (error) {
     console.error("Error adding stream:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while adding the stream",
-      data: null,
-    };
+    return errorResponse("ERROR");
   }
 }
 
-export async function deleteStreamAction(
+export const addStreamAction = createRateLimitedStructuredAction(
+  "addStream",
+  addStreamActionImpl,
+  "stream"
+);
+
+async function deleteStreamActionImpl(
   streamId: string,
   guildId: string
-): Promise<StreamDataResponse> {
+): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: User not authenticated",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: Discord token not found",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if user has permission for this guild
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return {
-        response: "FORBIDDEN",
-        message: "User does not have admin permission for this guild",
-        data: null,
-      };
+      return errorResponse("FORBIDDEN");
     }
 
     // Check if stream exists and get its event IDs
@@ -130,11 +109,7 @@ export async function deleteStreamAction(
     });
 
     if (!existingStream) {
-      return {
-        response: "NOT_FOUND",
-        message: "Stream not found",
-        data: null,
-      };
+      return errorResponse("NOT FOUND");
     }
 
     // Delete associated Discord event if it exists
@@ -160,7 +135,6 @@ export async function deleteStreamAction(
           );
         } catch (error) {
           console.error("Failed to delete Twitch segment:", error);
-          // Continue with stream deletion even if Twitch deletion fails
         }
       }
     }
@@ -173,26 +147,24 @@ export async function deleteStreamAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return {
-      response: "OKAY",
-      data: null,
-      message: "Stream deleted successfully",
-    };
+    return successResponse(null, "UNAUTHORIZED");
   } catch (error) {
     console.error("Error deleting stream:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while deleting the stream",
-      data: null,
-    };
+    return errorResponse("ERROR");
   }
 }
 
-export async function fetchStreamsAction(
+export const deleteStreamAction = createRateLimitedStructuredAction(
+  "deleteStream",
+  deleteStreamActionImpl,
+  "stream"
+);
+
+async function fetchStreamsActionImpl(
   streamerId: string,
   dateStart: Date,
   dateEnd?: Date
-): Promise<StreamsDataResponse> {
+): Promise<NormalizedResponse<Stream[]>> {
   try {
     // Create start date from timestamp
     const date1 = dateStart;
@@ -219,57 +191,43 @@ export async function fetchStreamsAction(
       },
     });
 
-    return {
-      response: "OKAY",
-      data: streams,
-      message: "Streams fetched successfully",
-    };
+    return successResponse(streams, "OKAY");
   } catch (error) {
     console.error("Error fetching streams:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while fetching streams",
-      data: null,
-    };
+    return errorResponse("ERROR");
   }
 }
 
-export async function editStreamAction(
+export const fetchStreamsAction = createRateLimitedStructuredAction(
+  "fetchStreams",
+  fetchStreamsActionImpl,
+  "stream"
+);
+
+async function editStreamActionImpl(
   streamId: string,
   guildId: string,
   newName: string,
   newTime: string,
   newDuration: number
-): Promise<StreamDataResponse> {
+): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: User not authenticated",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: Discord token not found",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if the user has permission for this guild
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return {
-        response: "FORBIDDEN",
-        message: "User does not have admin permission for this guild",
-        data: null,
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if stream exists
@@ -278,14 +236,8 @@ export async function editStreamAction(
     });
 
     if (!existingStream) {
-      return {
-        response: "NOT_FOUND",
-        message: "Stream not found",
-        data: null,
-      };
+      return errorResponse("NOT FOUND");
     }
-
-    console.log(`NEW TIME: ${newTime}`);
 
     // Convert timestamp to Date object for database and event updates
     const streamDate = new Date(parseInt(newTime) * 1000);
@@ -351,17 +303,15 @@ export async function editStreamAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return {
-      response: "OKAY",
-      data: updatedStream,
-      message: "Stream updated successfully",
-    };
+    return successResponse(updatedStream, "OKAY");
   } catch (error) {
     console.error("Error updating stream:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while updating the stream",
-      data: null,
-    };
+    return errorResponse("UNAUTHORIZED");
   }
 }
+
+export const editStreamAction = createRateLimitedStructuredAction(
+  "editStream",
+  editStreamActionImpl,
+  "stream"
+);

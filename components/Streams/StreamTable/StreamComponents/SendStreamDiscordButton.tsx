@@ -9,12 +9,12 @@ import dayjs from "dayjs";
 export const SendStreamDiscordButton = ({
   stream,
   guild,
-  twitchName,
+  streamLink,
   onUpdate,
 }: {
   stream: Stream;
   guild: string;
-  twitchName: string;
+  streamLink: string;
   onUpdate: (updatedStream: Stream) => void;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,7 @@ export const SendStreamDiscordButton = ({
         stream.stream_name,
         new Date(stream.stream_date).toISOString(),
         endDate.toISOString(),
-        `https://twitch.tv/${twitchName}`
+        streamLink
       );
 
       console.log(response);
@@ -48,7 +48,7 @@ export const SendStreamDiscordButton = ({
         setIsSuccess(true);
       }
 
-      onUpdate(response.stream!);
+      onUpdate(response.data!);
     } catch (error) {
       console.error("Error sending to Discord:", error);
     } finally {
