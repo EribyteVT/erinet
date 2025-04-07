@@ -13,7 +13,7 @@ export const TwitchConnect = ({
   setTwitchBroadcasterId,
   setIsLoading,
   setLoadingMessage,
-  apiBaseUrl,
+  apiTwitchUrl,
 }: {
   streamer: Streamer;
   hasTwitchAuth: boolean;
@@ -21,7 +21,7 @@ export const TwitchConnect = ({
   setTwitchBroadcasterId: (id: string | undefined) => void;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
-  apiBaseUrl: string;
+  apiTwitchUrl: string;
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +48,6 @@ export const TwitchConnect = ({
             setIsLoading={setIsLoading}
             setLoadingMessage={setLoadingMessage}
             setError={setError}
-            apiBaseUrl={apiBaseUrl}
           />
         </div>
       ) : (
@@ -75,7 +74,7 @@ export const TwitchConnect = ({
             setLoadingMessage={setLoadingMessage}
             onTwitchConnected={handleTwitchConnected}
             setError={setError}
-            apiBaseUrl={apiBaseUrl}
+            apiTwitchUrl={apiTwitchUrl}
           />
         </div>
       )}

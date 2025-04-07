@@ -9,12 +9,10 @@ import dayjs from "dayjs";
 export const SendStreamDiscordButton = ({
   stream,
   guild,
-  apiBaseUrl,
   twitchName,
 }: {
   stream: Stream;
   guild: string;
-  apiBaseUrl: string;
   twitchName: string;
 }) => {
   const [isLoading, setIsLoading] = useState(false);

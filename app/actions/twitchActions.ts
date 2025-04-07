@@ -9,6 +9,7 @@ import { getDecryptedTokens } from "../lib/twitchTokenService";
 
 const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
+const TWITCH_REDIRECT_URI = process.env.TWITCH_REDIRECT_URI!;
 
 async function getBotAuthToken() {
   try {
@@ -236,5 +237,36 @@ export async function guildHasAuthTokens(guildId: string) {
   } catch (error) {
     console.error("Error getting Twitch user by ID:", error);
     throw error;
+  }
+}
+
+export async function getAuthUrl(state: string, guildId: string) {
+  try {
+    // Define the scopes you need
+    const scopes = [
+      "user:read:email",
+      "channel:manage:schedule",
+      // Add other required scopes here
+    ].join(" ");
+
+    // Build the authorization URL
+    const authUrl = new URL("https://id.twitch.tv/oauth2/authorize");
+    authUrl.searchParams.append("client_id", TWITCH_CLIENT_ID!);
+    authUrl.searchParams.append("redirect_uri", TWITCH_REDIRECT_URI);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("scope", scopes);
+    authUrl.searchParams.append("state", state);
+
+    await prisma.auth_state.create({
+      data: {
+        state: state,
+        guild_id: guildId || "", // Store empty string if no guildId provided
+        expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
+    });
+
+    return authUrl.toString();
+  } catch (error) {
+    console.error("Error generating auth URL:", error);
   }
 }

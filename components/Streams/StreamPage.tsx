@@ -20,13 +20,13 @@ import { guildHasAuthTokens } from "@/app/actions/twitchActions";
 export default function StreamPage({
   guild,
   streamer_pass,
-  apiBaseUrl,
+  apiTwitchUrl,
   crudUrl,
   avatarUrl,
 }: {
   guild: GuildData;
   streamer_pass: Streamer;
-  apiBaseUrl: string;
+  apiTwitchUrl: string;
   crudUrl: string;
   avatarUrl: string | undefined;
 }) {
@@ -109,7 +109,6 @@ export default function StreamPage({
       <WebsiteGenerator
         streamer={streamer}
         streams={streams}
-        apiBaseUrl={apiBaseUrl}
         discordAvatar={avatarUrl}
         crudUrl={crudUrl}
       />
@@ -125,7 +124,6 @@ export default function StreamPage({
           isLoading={isLoading}
           setLoadingMessage={setLoadingMessage}
           loadingMessage={loadingMessage}
-          apiBaseUrl={apiBaseUrl}
         />
       </div>
 
@@ -144,7 +142,7 @@ export default function StreamPage({
               setTwitchBroadcasterId={setTwitchBroadcasterId}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
-              apiBaseUrl={apiBaseUrl}
+              apiTwitchUrl={apiTwitchUrl}
             />
           </div>
         </div>
@@ -161,7 +159,6 @@ export default function StreamPage({
               hasTwitchAuth={hasTwitchAuth}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
-              apiBaseUrl={apiBaseUrl}
             />
           </div>
         </div>

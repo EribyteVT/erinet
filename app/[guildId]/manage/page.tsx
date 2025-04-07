@@ -11,7 +11,7 @@ export default async function Page({
 }) {
   const guildId = (await params).guildId;
   const session = await auth();
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const apiTwitchUrl = process.env.TWITCH_REDIRECT_URI!;
   const crudUrl = process.env.NEXT_PUBLIC_CRUD_URL!;
 
   if (!session) redirect("/");
@@ -37,7 +37,7 @@ export default async function Page({
     <StreamPage
       guild={guild}
       streamer_pass={streamer}
-      apiBaseUrl={apiBaseUrl}
+      apiTwitchUrl={apiTwitchUrl}
       crudUrl={crudUrl}
       avatarUrl={session.user.discordAccount?.avatar}
     ></StreamPage>

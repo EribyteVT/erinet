@@ -9,7 +9,6 @@ interface ConnectedTwitchUserProps {
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
   setError: (error: string | null) => void;
-  apiBaseUrl: string;
 }
 
 export const ConnectedTwitchUser: React.FC<ConnectedTwitchUserProps> = ({
@@ -17,7 +16,6 @@ export const ConnectedTwitchUser: React.FC<ConnectedTwitchUserProps> = ({
   setIsLoading,
   setLoadingMessage,
   setError,
-  apiBaseUrl,
 }) => {
   const [twitchUser, setTwitchUser] = useState<TwitchUser | null>(null);
 

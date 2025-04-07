@@ -13,14 +13,12 @@ export const GuildOptions = ({
   hasTwitchAuth,
   setIsLoading,
   setLoadingMessage,
-  apiBaseUrl,
 }: {
   streamer: Streamer;
   setStreamer: (streamer: Streamer) => void;
   hasTwitchAuth: boolean;
   setIsLoading: (isLoading: boolean) => void;
   setLoadingMessage: (message: string) => void;
-  apiBaseUrl: string;
 }) => {
   const [isDiscordAuto, setIsDiscordAuto] = useState<CheckedState>(
     streamer.auto_discord_event === "Y"

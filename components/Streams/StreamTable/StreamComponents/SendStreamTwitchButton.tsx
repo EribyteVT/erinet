@@ -16,13 +16,11 @@ export const SendStreamTwitchButton = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
-  apiBaseUrl,
 }: {
   stream: Stream;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
-  apiBaseUrl: string;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);

@@ -173,7 +173,6 @@ type WebsiteConfig = {
 interface WebsiteGeneratorProps {
   streamer: Streamer;
   streams: Stream[];
-  apiBaseUrl: string;
   discordAvatar: string | undefined;
   crudUrl: string;
 }
@@ -181,7 +180,6 @@ interface WebsiteGeneratorProps {
 export function WebsiteGenerator({
   streamer,
   streams,
-  apiBaseUrl,
   discordAvatar,
   crudUrl,
 }: WebsiteGeneratorProps) {

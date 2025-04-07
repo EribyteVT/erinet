@@ -13,11 +13,7 @@ interface AddStreamParams {
   duration: string;
 }
 
-export const useStreams = (
-  guildId: string,
-  streamerId: number,
-  apiBaseUrl: string
-) => {
+export const useStreams = (guildId: string, streamerId: number) => {
   // Get streamer ID only once and cache it
   function getStreamerId(): number {
     return streamerId;
