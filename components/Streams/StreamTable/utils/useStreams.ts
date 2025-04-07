@@ -11,6 +11,7 @@ interface AddStreamParams {
   name: string;
   time: string;
   duration: string;
+  guild: string;
 }
 
 export const useStreams = (guildId: string, streamerId: number) => {
@@ -72,6 +73,7 @@ export const useStreams = (guildId: string, streamerId: number) => {
       name,
       time,
       duration,
+      guild,
     }: AddStreamParams): Promise<{
       success: boolean;
       data?: Stream | null;
@@ -90,11 +92,8 @@ export const useStreams = (guildId: string, streamerId: number) => {
           guildId
         );
 
-        if (streamData?.response === "OKAY") {
-          return {
-            success: true,
-            data: streamData.data,
-          };
+        if (streamData?.success === true) {
+          return streamData;
         }
 
         throw new Error("Failed to add stream");
@@ -111,7 +110,7 @@ export const useStreams = (guildId: string, streamerId: number) => {
       try {
         const response = await deleteStreamAction(streamId, guildId);
 
-        return response.response === "OKAY";
+        return response.success;
       } catch (error) {
         console.error("Error deleting stream:", error);
         return false;
@@ -147,11 +146,8 @@ export const useStreams = (guildId: string, streamerId: number) => {
 
         console.log("Stream update response:", response);
 
-        if (response.response === "OKAY") {
-          return {
-            success: true,
-            data: response.data,
-          };
+        if (response.success) {
+          return response;
         }
 
         throw new Error("Failed to update stream");

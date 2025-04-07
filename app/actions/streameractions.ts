@@ -5,31 +5,37 @@ import { getDiscordToken } from "@/app/lib/discordTokenService";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/app/lib/db";
 import { Streamer } from "@/components/Streams/types";
+import { createRateLimitedStructuredAction } from "../lib/actionRegistry";
+import {
+  errorResponse,
+  NormalizedResponse,
+  successResponse,
+} from "../lib/api-utils";
 
-export async function setAutosAction(
+async function setAutosActionImpl(
   streamerId: number,
   guildId: string,
   setDiscord: string,
   setTwitch: string
-): Promise<Streamer | null> {
+): Promise<NormalizedResponse<Streamer | null>> {
   try {
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return null;
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return null;
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if the user has permission for this guild
     const { isAllowedGuild } = await import("@/app/lib/auth");
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return null;
+      return errorResponse("FORBIDDEN");
     }
 
     // Update streamer auto settings
@@ -44,14 +50,20 @@ export async function setAutosAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return streamer;
+    return successResponse(streamer, "OKAY");
   } catch (error) {
     console.error("Error updating streamer auto settings:", error);
     throw new Error("Failed to update auto settings");
   }
 }
 
-export async function setStreamerTwitchAction(
+export const setAutosAction = createRateLimitedStructuredAction(
+  "setAutosAction",
+  setAutosActionImpl,
+  "stream"
+);
+
+async function setStreamerTwitchActionImpl(
   streamerId: number,
   twitchId: string,
   guildId: string
@@ -60,29 +72,20 @@ export async function setStreamerTwitchAction(
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: User not authenticated",
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: Discord token not found",
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if the user has permission for this guild
     const { isAllowedGuild } = await import("@/app/lib/auth");
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return {
-        response: "FORBIDDEN",
-        message: "User does not have admin permission for this guild",
-      };
+      return errorResponse("FORBIDDEN");
     }
 
     // Update streamer with Twitch ID
@@ -96,52 +99,44 @@ export async function setStreamerTwitchAction(
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/manage`);
 
-    return {
-      response: "OK",
-      data: streamer,
-    };
+    return successResponse(streamer, "OKAY");
   } catch (error) {
     console.error("Error adding Twitch to streamer:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while updating the streamer",
-    };
+    return errorResponse("ERROR: " + error);
   }
 }
 
-export async function createStreamerAction(
+export const setStreamerTwitchAction = createRateLimitedStructuredAction(
+  "setStreamerTwitchAction",
+  setStreamerTwitchActionImpl,
+  "stream"
+);
+
+async function createStreamerActionImpl(
   streamerName: string,
   levelSystem: string,
   timezone: string,
-  guildId: string
+  guildId: string,
+  streamerLink: string
 ) {
   try {
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: User not authenticated",
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        response: "ERROR",
-        message: "Unauthorized: Discord token not found",
-      };
+      return errorResponse("UNAUTHORIZED");
     }
 
     // Check if the user has permission for this guild
     const { isAllowedGuild } = await import("@/app/lib/auth");
     const hasPermission = await isAllowedGuild(token, guildId);
     if (!hasPermission) {
-      return {
-        response: "FORBIDDEN",
-        message: "User does not have admin permission for this guild",
-      };
+      return errorResponse("FORBIDDEN");
     }
 
     const existingStreamer = await prisma.streamer_lookup.findFirst({
@@ -149,10 +144,7 @@ export async function createStreamerAction(
     });
 
     if (existingStreamer) {
-      return {
-        response: "ERROR",
-        message: "A streamer already exists for this guild",
-      };
+      return errorResponse("DUPLICATE");
     }
 
     // Create the new streamer
@@ -162,40 +154,41 @@ export async function createStreamerAction(
         timezone: timezone || "UTC", // Use provided timezone or fall back to UTC
         guild: guildId,
         level_system: levelSystem || "N",
+        streamer_link: streamerLink,
       },
     });
 
     // Revalidate the streams page to refresh data
     revalidatePath(`/${guildId}/onboarding`);
 
-    return {
-      response: "OKAY",
-      data: newStreamer,
-    };
+    return successResponse(newStreamer, "OKAY");
   } catch (error) {
     console.error("Error adding Twitch to streamer:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while updating the streamer",
-    };
+    return errorResponse("ERROR");
   }
 }
 
-export async function getStreamerByGuildAction(guildId: string) {
+export const createStreamerAction = createRateLimitedStructuredAction(
+  "createStreamerAction",
+  createStreamerActionImpl,
+  "stream"
+);
+
+async function getStreamerByGuildActionImpl(guildId: string) {
   try {
     let streamer = await prisma.streamer_lookup.findFirst({
       where: { guild: guildId },
     });
 
-    return {
-      response: "OKAY",
-      data: streamer,
-    };
+    return successResponse(streamer, "OKAY");
   } catch (error) {
     console.error("Error adding Twitch to streamer:", error);
-    return {
-      response: "ERROR",
-      message: "An error occurred while updating the streamer",
-    };
+    return errorResponse("ERROR");
   }
 }
+
+export const getStreamerByGuildAction = createRateLimitedStructuredAction(
+  "getStreamerByGuildAction",
+  getStreamerByGuildActionImpl,
+  "stream"
+);

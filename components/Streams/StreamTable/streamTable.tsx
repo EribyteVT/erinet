@@ -150,7 +150,7 @@ export function StreamTable({
       broadcasterId: twitchBroadcasterId,
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
-      twitchName: streamer.streamer_name,
+      streamLink: streamer.streamer_link!,
     }),
     state: { sorting },
     onSortingChange: setSorting,

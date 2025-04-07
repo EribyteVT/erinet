@@ -29,13 +29,11 @@ import { createStreamerAction } from "@/app/actions/streameractions";
 
 interface OnboardingProcessProps {
   guild: GuildData;
-  apiBaseUrl: string;
   botInviteBase: string;
 }
 
 export default function OnboardingProcess({
   guild,
-  apiBaseUrl,
   botInviteBase,
 }: OnboardingProcessProps) {
   const router = useRouter();
@@ -43,6 +41,7 @@ export default function OnboardingProcess({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamerName, setStreamerName] = useState("");
+  const [streamerLink, setStreamerLink] = useState("");
   const [levelSystem, setLevelSystem] = useState("N");
   const [botInvited, setBotInvited] = useState(false);
 
@@ -69,12 +68,13 @@ export default function OnboardingProcess({
         streamerName,
         levelSystem,
         timezone,
-        guild.id
+        guild.id,
+        streamerLink
       );
 
       const result = await response;
 
-      if (result.response === "OKAY") {
+      if (result.success) {
         // Success - redirect to the new streamer management page
         router.push(`/${guild.id}/manage`);
       } else {
@@ -178,25 +178,34 @@ export default function OnboardingProcess({
                   <Label htmlFor="streamer-name">Streamer Name</Label>
                   <Input
                     id="streamer-name"
-                    placeholder="Enter the streamer's name"
+                    placeholder="Enter your name"
                     value={streamerName}
                     onChange={(e) => setStreamerName(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="streamer-name">Streamer Link</Label>
+                  <Input
+                    id="streamer-link"
+                    placeholder="Enter your live link"
+                    value={streamerLink}
+                    onChange={(e) => setStreamerLink(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="level-system">Level System</Label>
                   <Select value={levelSystem} onValueChange={setLevelSystem}>
-                    <SelectTrigger>
+                    <SelectTrigger disabled>
                       <SelectValue placeholder="Select level system option" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Y">Enabled (Y)</SelectItem>
                       <SelectItem value="N">Disabled (N)</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Enable or disable level system integration.
+                    Enable or disable level system integration. (coming soon)
                   </p>
                 </div>
               </div>

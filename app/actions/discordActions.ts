@@ -6,6 +6,12 @@ import { GuildData, Stream } from "@/components/Streams/types";
 import { isAllowedGuild } from "../lib/auth";
 import { prisma } from "@/app/lib/db";
 import { cache } from "@/app/lib/cache";
+import {
+  errorResponse,
+  NormalizedResponse,
+  successResponse,
+} from "../lib/api-utils";
+import { createRateLimitedStructuredAction } from "../lib/actionRegistry";
 
 // Configuration
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -14,7 +20,7 @@ const BOT_GUILDS_CACHE_KEY = "botGuilds";
 const BOT_GUILDS_CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutes
 
 // Discord Event Management
-export async function createDiscordEvent(
+async function createDiscordEvent(
   guildId: string,
   name: string,
   startTime: string,
@@ -125,7 +131,7 @@ export async function deleteDiscordEvent(
 }
 
 // Guild Management
-export async function getBotGuilds(): Promise<any[]> {
+async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
   try {
     // Try to get from cache first
     let guilds: any[] | null = cache.get(BOT_GUILDS_CACHE_KEY);
@@ -155,14 +161,20 @@ export async function getBotGuilds(): Promise<any[]> {
       console.log("Cache hit for botGuilds");
     }
 
-    return guilds!;
+    return successResponse(guilds, "OKAY");
   } catch (error) {
     console.error("Error fetching bot guilds:", error);
     throw error;
   }
 }
 
-export async function fetchUserGuilds(): Promise<GuildData[]> {
+export const getBotGuilds = createRateLimitedStructuredAction(
+  "getBotGuilds",
+  getBotGuildsImpl,
+  "discord"
+);
+
+async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
@@ -176,7 +188,7 @@ export async function fetchUserGuilds(): Promise<GuildData[]> {
 
   if (cachedGuilds) {
     console.log(`cache hit for ${cacheKey}`);
-    return cachedGuilds;
+    return successResponse(cachedGuilds, "OKAY");
   }
 
   console.log(`cache miss for ${cacheKey}`);
@@ -204,12 +216,18 @@ export async function fetchUserGuilds(): Promise<GuildData[]> {
   // Store in cache for future use
   cache.set(cacheKey, guilds, GUILD_CACHE_DURATION);
 
-  return guilds;
+  return successResponse(guilds, "OKAY");
 }
 
-export async function fetchSpecificUserGuild(
+export const fetchUserGuilds = createRateLimitedStructuredAction(
+  "fetchUserGuilds",
+  fetchUserGuildsImpl,
+  "discord"
+);
+
+async function fetchSpecificUserGuildImpl(
   guildId: string
-): Promise<GuildData | null> {
+): Promise<NormalizedResponse<GuildData | null>> {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
@@ -223,7 +241,7 @@ export async function fetchSpecificUserGuild(
   const cachedGuild = cache.get<GuildData | null>(specificGuildCacheKey);
   if (cachedGuild !== null) {
     console.log("CACHED GUILD");
-    return cachedGuild;
+    return successResponse(cachedGuild, "OKAY");
   }
 
   // Check if we have all guilds cached
@@ -267,81 +285,40 @@ export async function fetchSpecificUserGuild(
   // Cache the result for this specific guild (even if null)
   cache.set(specificGuildCacheKey, guild, GUILD_CACHE_DURATION);
 
-  return guild;
+  return successResponse(guild, "OKAY");
 }
 
-export async function checkGuildPermission(guildId: string) {
-  // Get the authenticated user's session
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { hasPermission: false };
-  }
+export const fetchSpecificUserGuild = createRateLimitedStructuredAction(
+  "fetchSpecificUserGuild",
+  fetchSpecificUserGuildImpl,
+  "discord"
+);
 
-  // Get the token from the database
-  const token = await getDiscordToken(session.user.id);
-  if (!token) {
-    return { hasPermission: false };
-  }
-
-  try {
-    const guilds = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    }).then((res) => res.json());
-
-    for (const guild of guilds) {
-      if (guildId === guild.id) {
-        // Check for ADMINISTRATOR permission (0x08)
-        const permissions = BigInt(guild.permissions);
-        return {
-          hasPermission: (permissions & BigInt(0x08)) !== BigInt(0),
-        };
-      }
-    }
-
-    return { hasPermission: false };
-  } catch (error) {
-    console.error("Error checking guild permissions:", error);
-    return { hasPermission: false, error: "Failed to check permissions" };
-  }
-}
-
-export async function createDiscordEventAction(
+async function createDiscordEventActionImpl(
   streamId: string,
   guildId: string,
   name: string,
   startTime: string,
   endTime: string,
   location: string = "https://twitch.tv/EribyteVT"
-): Promise<{ success: boolean; stream?: Stream; message?: string }> {
+): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
     const session = await auth();
     if (!session?.user?.id) {
-      return {
-        success: false,
-        message: "Unauthorized: User not authenticated",
-      };
+      return errorResponse("ERROR");
     }
 
     // Get the Discord token from server-side storage
     const token = await getDiscordToken(session.user.id);
     if (!token) {
-      return {
-        success: false,
-        message: "Unauthorized: Discord token not found",
-      };
+      return errorResponse("ERROR");
     }
 
     // Check if the user has permission for this guild
     const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
-      return {
-        success: false,
-        message: "User does not have admin permission for this guild",
-      };
+      return errorResponse("FORBIDDEN");
     }
 
     // Call the Discord API to create the event
@@ -358,31 +335,15 @@ export async function createDiscordEventAction(
       data: { event_id: eventData.id },
     });
 
-    return {
-      success: true,
-      stream: updatedStream,
-    };
+    return successResponse(updatedStream, "OKAY");
   } catch (error) {
     console.error("Error creating Discord event:", error);
-    return {
-      success: false,
-      message: "An error occurred while creating the Discord event",
-    };
+    return errorResponse("ERROR");
   }
 }
 
-// Helper functions for API responses
-export async function formatApiResponse(data: any, status: string = "OK") {
-  return {
-    response: status,
-    data,
-  };
-}
-
-export async function formatApiError(message: string, status: number = 500) {
-  return {
-    response: "ERROR",
-    message,
-    status,
-  };
-}
+export const createDiscordEventAction = createRateLimitedStructuredAction(
+  "createDiscordEventAction",
+  createDiscordEventActionImpl,
+  "discord"
+);

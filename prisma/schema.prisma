@@ -60,6 +60,7 @@ model streamer_lookup {
   schedule_message_id  String? @db.VarChar
   auto_change_schedule String? @db.VarChar
   image_message_id     String? @db.VarChar
+  streamer_link        String? @db.VarChar
 }
 
 model streamer_refresh_tokens {

@@ -16,7 +16,7 @@ export default async function Page({
 
   if (!session) redirect("/");
 
-  const guild = await fetchSpecificUserGuild(guildId);
+  const guild = (await fetchSpecificUserGuild(guildId)).data;
 
   let streamer = null;
 

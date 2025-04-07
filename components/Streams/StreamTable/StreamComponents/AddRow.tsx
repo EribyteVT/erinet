@@ -15,7 +15,7 @@ import { addEventToTwitchAction } from "@/app/actions/twitchActions";
 async function sendToDiscord(
   stream: Stream,
   guild: string,
-  twitchName: string
+  streamerLink: string
 ) {
   try {
     const endDate = dayjs(new Date(stream.stream_date)).add(
@@ -29,9 +29,9 @@ async function sendToDiscord(
       stream.stream_name,
       new Date(stream.stream_date).toISOString(),
       endDate.toISOString(),
-      `https://twitch.tv/${twitchName}`
+      streamerLink
     );
-    return response.stream?.event_id;
+    return response.data?.event_id;
   } catch (error) {
     console.error("Error sending to Discord:", error);
     return null;
@@ -98,6 +98,7 @@ export const AddRow: React.FC<{
         name,
         time: fullTime.toString(),
         duration,
+        guild,
       });
 
       if (result.success && result.data) {
@@ -105,7 +106,11 @@ export const AddRow: React.FC<{
 
         // Auto-create Discord event if enabled
         if (streamer.auto_discord_event === "Y") {
-          const eventId = await sendToDiscord(updatedStream, guild, twitchName);
+          const eventId = await sendToDiscord(
+            updatedStream,
+            guild,
+            streamer.streamer_link!
+          );
           if (eventId) {
             updatedStream.event_id = eventId;
           }
