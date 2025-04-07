@@ -124,29 +124,10 @@ kind: Service
 metadata:
   name: ${APPLICATION_NAME}
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: ${APPLICATION_NAME}
   ports:
     - port: 8085
       targetPort: 8085
-      protocol: TCP
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: erinet-stage-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-spec:
-  rules:
-    - host: stage.eri.bot
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: erinet-stage
-                port:
-                  number: 8085
+      nodePort: 30085
