@@ -26,6 +26,7 @@ export const initialSortingState: SortingState = [
 export const columns = ({
   onDelete,
   onEdit,
+  onUpdateStream,
   broadcasterId,
   guild,
   hasTwitchAuth,
@@ -33,6 +34,7 @@ export const columns = ({
 }: {
   onDelete: (stream: Stream) => void;
   onEdit: (stream: Stream) => void;
+  onUpdateStream: (updatedStream: Stream) => void;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
@@ -104,6 +106,10 @@ export const columns = ({
             broadcasterId={broadcasterId}
             guild={guild}
             hasTwitchAuth={hasTwitchAuth}
+            onUpdate={(updatedStream) => {
+              // This will update the data in the table
+              onUpdateStream(updatedStream);
+            }}
           />
         }
       </div>

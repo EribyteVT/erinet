@@ -16,11 +16,13 @@ export const SendStreamTwitchButton = ({
   broadcasterId,
   guild,
   hasTwitchAuth,
+  onUpdate,
 }: {
   stream: Stream;
   broadcasterId: string | null | undefined;
   guild: string;
   hasTwitchAuth: boolean;
+  onUpdate: (updatedStream: Stream) => void;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -87,8 +89,12 @@ export const SendStreamTwitchButton = ({
         guild
       );
 
-      if (response.response === "OKAY") {
+      if (response.response === "OKAY" && response.data) {
+        // Update the stream in the parent component with the new data
+        // This would require adding an onUpdate prop to the component
         setIsSuccess(true);
+
+        onUpdate(response.data);
       }
     } catch (error) {
       console.error("Error sending to Twitch:", error);

@@ -146,6 +146,7 @@ export function StreamTable({
     columns: columns({
       onDelete: (stream) => setStreamToDelete(stream),
       onEdit: setEditingStream,
+      onUpdateStream: handleSaveEdit,
       broadcasterId: twitchBroadcasterId,
       guild: guild,
       hasTwitchAuth: hasTwitchAuth,
