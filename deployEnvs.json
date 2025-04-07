@@ -10,7 +10,8 @@
         "ip": "10.96.46.200",
         "external-ip": "10.111.131.200",
         "assetPrefix": "https://stage.eri.bot",
-        "HOST_NAME": "stage.eri.bot"
+        "HOST_NAME": "stage.eri.bot",
+        "EXPOSE_PORT": "30085"
       }
     },
     {
@@ -22,7 +23,8 @@
         "ip": "10.96.46.201",
         "external-ip": "10.111.131.201",
         "assetPrefix": "https://eri.bot",
-        "HOST_NAME": "eri.bot"
+        "HOST_NAME": "eri.bot",
+        "EXPOSE_PORT": "30086"
       }
     }
   ]
