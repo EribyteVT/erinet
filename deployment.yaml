@@ -125,11 +125,28 @@ metadata:
   name: ${APPLICATION_NAME}
 spec:
   type: ClusterIP
-  clusterIP: ${ip}
   selector:
     app: ${APPLICATION_NAME}
-  externalIPs:
-    - ${external-ip}
   ports:
-    - targetPort: 8085
-      port: 8085
+    - port: 8085
+      targetPort: 8085
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${APPLICATION_NAME}-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: stage.eri.bot
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: ${APPLICATION_NAME}
+                port:
+                  number: 8085
