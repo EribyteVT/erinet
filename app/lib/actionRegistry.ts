@@ -38,9 +38,6 @@ async function checkRateLimit(
   // Create a unique key for this action and IP
   const key = `action-ratelimit:${actionName}:${ip}`;
 
-  //DELETE THIS IN PROD, STAGE ONLY DEPLOY TEST
-  console.log(key);
-
   // Get current state from cache
   const rateLimit = cache.get<{ count: number; reset: number }>(key);
 
