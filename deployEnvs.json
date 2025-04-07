@@ -9,7 +9,8 @@
         "CONFIG_NAME": "erinet-config-stage",
         "ip": "10.96.46.200",
         "external-ip": "10.111.131.200",
-        "assetPrefix": "https://stage.eri.bot"
+        "assetPrefix": "https://stage.eri.bot",
+        "HOST_NAME": "stage.eri.bot"
       }
     },
     {
@@ -20,7 +21,8 @@
         "CONFIG_NAME": "erinet-config-prod",
         "ip": "10.96.46.201",
         "external-ip": "10.111.131.201",
-        "assetPrefix": "https://eri.bot"
+        "assetPrefix": "https://eri.bot",
+        "HOST_NAME": "eri.bot"
       }
     }
   ]

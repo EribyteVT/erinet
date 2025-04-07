@@ -124,12 +124,10 @@ kind: Service
 metadata:
   name: ${APPLICATION_NAME}
 spec:
-  type: ClusterIP
-  clusterIP: ${ip}
+  type: NodePort
   selector:
     app: ${APPLICATION_NAME}
-  externalIPs:
-    - ${external-ip}
   ports:
-    - targetPort: 8085
-      port: 8085
+    - port: 8085
+      targetPort: 8085
+      nodePort: 30085
