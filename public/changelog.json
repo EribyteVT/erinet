@@ -2,7 +2,7 @@
   "changelog": [
     {
       "date": "4/06/2025",
-      "version": "0.2.0",
+      "version": "0.2.2",
       "items": [
         "privacy policy updated",
         "security improved with server side sessions",
@@ -12,7 +12,7 @@
     },
     {
       "date": "4/05/2025",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "items": [
         "privacy policy",
         "Credits page",

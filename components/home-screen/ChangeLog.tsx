@@ -34,7 +34,7 @@ function BuildList({ changelog }: { changelog: any[] }) {
     console.log(changelog);
     return changelog.map((data: any) => (
       <>
-        <BuildItem key={data.version} changelogitem={data} />
+        <BuildItem key={data} changelogitem={data} />
         <hr />
       </>
     ));

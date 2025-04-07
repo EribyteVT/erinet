@@ -113,7 +113,7 @@ export default async function DashboardPage() {
         </div>
       </div>
       <Card className=" dark:black shadow-xl  mx-8">
-        <div className=" px-3">
+        <div className=" px-3 my-4">
           <ChangeLog
             content={await myReadFile("/public/changelog.json")}
           ></ChangeLog>

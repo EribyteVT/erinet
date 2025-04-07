@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MainNav } from "../components/dashboard/main-nav";
 import { SignIn } from "../components/dashboard/signIn";
 import { ModeToggle } from "@/components/ui/ModeToggle";
+import { Footer } from "@/components/dashboard/footer";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/Eribyte.png", // Path to your image (relative to the public directory)
-        width: 1200,
+        width: 630,
         height: 630,
         alt: "Eribot Platform",
       },
@@ -88,6 +89,7 @@ export default async function RootLayout({
             </div>
           </div>
           {children}
+          <Footer />
         </ThemeProvider>
       </body>
     </html>
