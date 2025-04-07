@@ -1,4 +1,3 @@
-// app/api/force-signout/route.ts
 import { signOutAndCleanupAction } from "@/app/actions/authActions";
 import { NextRequest, NextResponse } from "next/server";
 
