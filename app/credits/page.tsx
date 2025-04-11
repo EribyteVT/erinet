@@ -112,6 +112,15 @@ const creditData: CreditCategory[] = [
         websiteUrl: "https://keagaboo.github.io/mainpage/",
         websiteLabel: "Visit Website",
       },
+      {
+        name: "NightRose",
+        role: "Beta Tester",
+        description:
+          "Found a bug with website generation, thank her for it working well",
+        imageUrl: "/nightRose.png",
+        websiteUrl: "https://nightrosevt.github.io/nightrose/",
+        websiteLabel: "Visit Website",
+      },
     ],
     footerText:
       "And many more amazing testers who helped make this project better!",
@@ -143,7 +152,7 @@ const creditData: CreditCategory[] = [
         name: "Eris Aconitum",
         role: "",
         description:
-          "My vtuber mom that rigged my model, highly reccomend if you need a mdoel rigged",
+          "My vtuber mom that rigged my model, highly reccomend if you need a model rigged!!!! (also very enertaining and good at singing)",
         imageUrl: "/eris.png",
         websiteUrl: "https://erisaconitum.wordpress.com/",
         websiteLabel: "Visit Website",

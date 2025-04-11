@@ -149,7 +149,7 @@ export default function StreamPage({
 
         <div className="space-y-6">
           <SectionHeader
-            title="Guild Options"
+            title="Server Options"
             description="Configure server-specific settings"
           />
           <div className="bg-background border border-border rounded-lg p-4">
