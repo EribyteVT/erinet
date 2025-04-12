@@ -228,6 +228,9 @@ export const fetchUserGuilds = createRateLimitedStructuredAction(
 async function fetchSpecificUserGuildImpl(
   guildId: string
 ): Promise<NormalizedResponse<GuildData | null>> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second delay between retries
+
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
@@ -247,31 +250,70 @@ async function fetchSpecificUserGuildImpl(
   // Check if we have all guilds cached
   let guilds = cache.get<GuildData[]>(allGuildsCacheKey);
 
-  // If not in cache, fetch from Discord API
+  // If not in cache, fetch from Discord API with retry logic
   if (!guilds) {
-    const token = await getDiscordToken(session.user.id);
-    if (!token) {
-      throw new Error("Discord token not found or expired");
-    }
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const token = await getDiscordToken(session.user.id);
+        if (!token) {
+          throw new Error("Discord token not found or expired");
+        }
 
-    const response = await fetch(
-      "https://discord.com/api/v10/users/@me/guilds",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        const response = await fetch(
+          "https://discord.com/api/v10/users/@me/guilds",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorStatus = response.status;
+          console.error(
+            `Discord API error on attempt ${attempt + 1}: ${errorStatus}`
+          );
+
+          // Check if we should retry based on status code
+          if (
+            errorStatus === 429 ||
+            (errorStatus >= 500 && errorStatus < 600)
+          ) {
+            // Rate limit or server error - worth retrying
+            if (attempt < MAX_RETRIES - 1) {
+              console.log(`Waiting ${RETRY_DELAY}ms before retry...`);
+              await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+              continue;
+            }
+          }
+
+          throw new Error(`Discord API error: ${errorStatus}`);
+        }
+
+        guilds = await response.json();
+
+        // Cache all guilds
+        cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
+
+        // Success, break out of retry loop
+        break;
+      } catch (error) {
+        if (attempt === MAX_RETRIES - 1) {
+          // This was our last attempt, rethrow the error
+          console.error(
+            `Failed to fetch guilds after ${MAX_RETRIES} attempts:`,
+            error
+          );
+          throw error;
+        }
+
+        console.log(
+          `Attempt ${attempt + 1} failed, retrying after ${RETRY_DELAY}ms`
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Discord API error: ${response.status}`);
     }
-
-    guilds = await response.json();
-
-    // Cache all guilds
-    cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
   }
 
   let guild = null;
@@ -345,5 +387,183 @@ async function createDiscordEventActionImpl(
 export const createDiscordEventAction = createRateLimitedStructuredAction(
   "createDiscordEventAction",
   createDiscordEventActionImpl,
+  "discord"
+);
+
+async function fetchGuildChannelsImpl(
+  guildId: string
+): Promise<NormalizedResponse<any[]>> {
+  try {
+    // Get the current user session
+    const session = await auth();
+    if (!session?.user?.id) {
+      return errorResponse("Unauthorized: User not authenticated");
+    }
+
+    // Get the Discord token from server-side storage
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      return errorResponse("Unauthorized: Discord token not found");
+    }
+
+    // Check if the user has permission for this guild
+    const hasPermission = await isAllowedGuild(null, guildId);
+    if (!hasPermission) {
+      return errorResponse(
+        "Forbidden: User does not have admin permission for this guild"
+      );
+    }
+
+    // Call Discord API to get channels
+    const response = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}/channels`,
+      {
+        headers: {
+          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`Discord API error: ${response.status}`);
+      return errorResponse(`Failed to fetch channels: ${response.statusText}`);
+    }
+
+    const channels = await response.json();
+
+    // Filter to only text channels (type 0)
+    const textChannels = channels.filter((channel: any) => channel.type === 0);
+
+    return successResponse(textChannels, "Channels fetched successfully");
+  } catch (error) {
+    console.error("Error fetching guild channels:", error);
+    return errorResponse("An unexpected error occurred");
+  }
+}
+
+export const fetchGuildChannels = createRateLimitedStructuredAction(
+  "fetchGuildChannels",
+  fetchGuildChannelsImpl,
+  "discord"
+);
+
+async function sendScheduleMessageImpl(
+  guildId: string,
+  channelId: string,
+  streamerId: number
+): Promise<NormalizedResponse<any>> {
+  try {
+    // Get the current user session
+    const session = await auth();
+    if (!session?.user?.id) {
+      return errorResponse("Unauthorized: User not authenticated");
+    }
+
+    // Get the Discord token from server-side storage
+    const token = await getDiscordToken(session.user.id);
+    if (!token) {
+      return errorResponse("Unauthorized: Discord token not found");
+    }
+
+    // Check if the user has permission for this guild
+    const hasPermission = await isAllowedGuild(null, guildId);
+    if (!hasPermission) {
+      return errorResponse(
+        "Forbidden: User does not have admin permission for this guild"
+      );
+    }
+
+    // Get the streamer info
+    const streamer = await prisma.streamer_lookup.findFirst({
+      where: { streamer_id: streamerId },
+    });
+
+    if (!streamer) {
+      return errorResponse("Streamer not found");
+    }
+
+    // Get streams for the next week
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    const streams = await prisma.stream_table_tied.findMany({
+      where: {
+        streamer_id: streamerId.toString(),
+        stream_date: {
+          gte: today,
+          lt: nextWeek,
+        },
+      },
+      orderBy: {
+        stream_date: "asc",
+      },
+    });
+
+    // Format message
+    let messageContent = `# ${streamer.streamer_name}'s Stream Schedule\n\n`;
+
+    if (streams.length === 0) {
+      messageContent += "No streams scheduled for the coming week.";
+    } else {
+      messageContent += "Upcoming streams:\n\n";
+
+      for (const stream of streams) {
+        const date = new Date(stream.stream_date);
+
+        let timestamp = date.getTime() / 1000;
+
+        const duration = stream.duration ? `(${stream.duration} minutes)` : "";
+
+        messageContent += `- **${stream.stream_name}** at <t:${timestamp}:f> (<t:${timestamp}:R>)\n`;
+      }
+    }
+
+    // Add a footer
+    messageContent +=
+      "\n-# *This schedule was posted via [Eribot](https://eri.bot)*";
+
+    // Send message to Discord
+    const response = await fetch(
+      `https://discord.com/api/v10/channels/${channelId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: messageContent,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Discord API error:", errorData);
+      return errorResponse(
+        `Failed to send message: ${JSON.stringify(errorData)}`
+      );
+    }
+
+    const messageData = await response.json();
+
+    // Update the streamer_lookup table with the message ID
+    await prisma.streamer_lookup.update({
+      where: { streamer_id: streamerId },
+      data: { schedule_message_id: messageData.id },
+    });
+
+    return successResponse(messageData, "Schedule message sent successfully");
+  } catch (error) {
+    console.error("Error sending schedule message:", error);
+    return errorResponse("An unexpected error occurred");
+  }
+}
+
+export const sendScheduleMessage = createRateLimitedStructuredAction(
+  "sendScheduleMessage",
+  sendScheduleMessageImpl,
   "discord"
 );

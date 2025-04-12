@@ -29,7 +29,7 @@ export default async function Page({
     console.error("Error fetching streamer ID:", error);
   }
 
-  if (!streamer) redirect("/");
+  if (!streamer) redirect(`/${guildId}/onboarding`);
 
   if (guild == null) redirect("/");
 

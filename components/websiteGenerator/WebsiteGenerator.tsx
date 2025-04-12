@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, Plus, Copy, Archive } from "lucide-react";
+import { X, Plus, Copy, Archive, Info } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { Stream, Streamer } from "@/components/Streams/types";
 import WebsitePreview from "./WebsitePreview";
@@ -206,6 +206,7 @@ export function WebsiteGenerator({
   const [generatedHTML, setGeneratedHTML] = useState("");
   const [generatedCSS, setGeneratedCSS] = useState("");
   const [generatedJS, setGeneratedJS] = useState("");
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
 
   const handleAddSocialLink = () => {
     setConfig({
@@ -249,6 +250,17 @@ export function WebsiteGenerator({
     setShowPreview(true);
   };
 
+  const handleDownload = async () => {
+    setShowInfoPopup(true);
+    await downloadZip();
+  };
+
+  const proceedWithDownload = async () => {
+    setShowInfoPopup(false);
+    setShowPreview(false);
+    setIsOpen(false);
+  };
+
   const downloadZip = async () => {
     await downloadWebsiteZip(
       generatedHTML,
@@ -282,7 +294,7 @@ export function WebsiteGenerator({
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] md:max-w-[90vw] lg:max-w-[85vw]">
+        <DialogContent className="max-w-[95vw] w-[95vw] md:max-w-[90vw] lg:max-w-[85vw] max-h-screen my-6">
           <DialogHeader>
             <DialogTitle>Website Generator</DialogTitle>
             <DialogDescription>
@@ -621,11 +633,58 @@ export function WebsiteGenerator({
                     Back to Editor
                   </Button>
 
-                  <Button onClick={downloadZip} variant="default" type="button">
+                  <Button
+                    onClick={handleDownload}
+                    variant="default"
+                    type="button"
+                  >
                     <Archive className="h-4 w-4 mr-2" /> Download ZIP
                   </Button>
                 </div>
               </div>
+
+              <Dialog open={showInfoPopup} onOpenChange={setShowInfoPopup}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-500" /> Hosting
+                      Instructions Included
+                    </DialogTitle>
+                    <DialogDescription>
+                      Important information about your website download
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <p>
+                      The ZIP file includes a <strong>README.txt</strong> file
+                      with step-by-step instructions on:
+                    </p>
+
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li>
+                        How to set up your website using GitHub Pages for{" "}
+                        <strong>free hosting</strong>
+                      </li>
+                      <li>
+                        How to use custom domains if you&apos;d like to use your
+                        own URL
+                      </li>
+                      <li>Basic customization tips for your new website</li>
+                    </ul>
+
+                    <p className="text-sm text-muted-foreground">
+                      if you&apos;re having trouble or need help, check the
+                      tutorial page for &apos;Website Hosting&apos; or join our
+                      discord (link in footer)
+                    </p>
+                  </div>
+
+                  <DialogFooter>
+                    <Button onClick={proceedWithDownload}>Close</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <div className="border rounded-md overflow-hidden">
                 <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 px-4 py-2">

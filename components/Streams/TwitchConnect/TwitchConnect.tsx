@@ -41,7 +41,7 @@ export const TwitchConnect = ({
         </Alert>
       )}
 
-      {hasTwitchAuth ? (
+      {hasTwitchAuth && streamer.twitch_user_id != null ? (
         <div>
           <ConnectedTwitchUser
             streamer={streamer}
