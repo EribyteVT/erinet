@@ -47,7 +47,7 @@ export const GuildOptions = ({
         isTwitchAuto ? "Y" : "N"
       );
 
-      setStreamer(updatedStreamer!);
+      setStreamer(updatedStreamer.data);
 
       setSaveStatus({
         type: "success",

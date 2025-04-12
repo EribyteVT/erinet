@@ -26,6 +26,7 @@ type CreditCategory = {
   };
   people: Person[];
   footerText?: string | undefined;
+  className: string
 };
 
 const creditData: CreditCategory[] = [
@@ -52,7 +53,17 @@ const creditData: CreditCategory[] = [
         websiteUrl: "https://eribyte.net",
         websiteLabel: "Visit Website",
       },
+      {
+        name: "Rakito",
+        role: "Security consultant",
+        description:
+          "I asked him many questions about frontend development and security. Because he is a smart man",
+        imageUrl: "/Rakito.png",
+        websiteUrl: "https://www.twitch.tv/rakitoboktoso",
+        websiteLabel: "Visit Website",
+      },
     ],
+    className: "space-y-6"
   },
   {
     title: "Artists",
@@ -78,6 +89,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Portfolio",
       },
     ],
+    className: "space-y-6"
   },
   {
     title: "Beta Testers",
@@ -112,7 +124,17 @@ const creditData: CreditCategory[] = [
         websiteUrl: "https://keagaboo.github.io/mainpage/",
         websiteLabel: "Visit Website",
       },
+      {
+        name: "NightRose",
+        role: "Beta Tester",
+        description:
+          "Found a bug with website generation, thank her for it working well",
+        imageUrl: "/nightRose.png",
+        websiteUrl: "https://nightrosevt.github.io/nightrose/",
+        websiteLabel: "Visit Website",
+      },
     ],
+    className: "grid grid-cols-1 md:grid-cols-2 gap-6",
     footerText:
       "And many more amazing testers who helped make this project better!",
   },
@@ -143,7 +165,7 @@ const creditData: CreditCategory[] = [
         name: "Eris Aconitum",
         role: "",
         description:
-          "My vtuber mom that rigged my model, highly reccomend if you need a mdoel rigged",
+          "My vtuber mom that rigged my model, highly reccomend if you need a model rigged!!!! (also very enertaining and good at singing)",
         imageUrl: "/eris.png",
         websiteUrl: "https://erisaconitum.wordpress.com/",
         websiteLabel: "Visit Website",
@@ -158,6 +180,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
     ],
+    className: "space-y-6"
   },
 ];
 
@@ -234,7 +257,7 @@ const CreditCategorySection = ({ category }: { category: CreditCategory }) => (
         {category.title}
       </h2>
 
-      <div className="space-y-6">
+      <div className={category.className}>
         {category.people.map((person, index) => (
           <PersonCard
             key={`${category.title}-${person.name}-${index}`}

@@ -1,6 +1,15 @@
 {
   "changelog": [
     {
+      "date": "4/12/2025",
+      "version": "0.3.0",
+      "items": [
+        "website generation improvements",
+        "onboarding recovery/checks added, incase of any hiccups should now be recoverable",
+        "added discord stream message sender (currently needs testing [what permissions if any are needed <I think none, as long as bot can see channels and can send in channel>])"
+      ]
+    },
+    {
       "date": "4/06/2025",
       "version": "0.2.2",
       "items": [

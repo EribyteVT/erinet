@@ -15,26 +15,62 @@ import { addEventToTwitchAction } from "@/app/actions/twitchActions";
 async function sendToDiscord(
   stream: Stream,
   guild: string,
-  streamerLink: string
-) {
-  try {
-    const endDate = dayjs(new Date(stream.stream_date)).add(
-      stream.duration!,
-      "minutes"
-    );
+  streamerLink: string,
+  maxRetries = 3
+): Promise<string | null> {
+  let retries = 0;
+  let delayMs = 1000; // Initial delay in ms
 
-    const response = await createDiscordEventAction(
-      stream.stream_id.toString(),
-      guild,
-      stream.stream_name,
-      new Date(stream.stream_date).toISOString(),
-      endDate.toISOString(),
-      streamerLink
-    );
-    return response.data?.event_id;
-  } catch (error) {
-    console.error("Error sending to Discord:", error);
-    return null;
+  while (true) {
+    try {
+      const endDate = dayjs(new Date(stream.stream_date)).add(
+        stream.duration!,
+        "minutes"
+      );
+
+      const response = await createDiscordEventAction(
+        stream.stream_id.toString(),
+        guild,
+        stream.stream_name,
+        new Date(stream.stream_date).toISOString(),
+        endDate.toISOString(),
+        streamerLink
+      );
+
+      // If successful, return the event ID
+      return response.data?.event_id;
+    } catch (error) {
+      console.error(
+        `Discord event creation attempt ${retries + 1}/${maxRetries} failed:`,
+        error
+      );
+
+      // Check if we've reached max retries
+      if (retries >= maxRetries) {
+        console.error("Max retries exceeded for Discord event creation");
+        return null;
+      }
+
+      // Check if this is likely a rate limit error
+      const isRateLimit =
+        error instanceof Error &&
+        (error.message.includes("rate limit") || error.message.includes("429"));
+
+      if (isRateLimit) {
+        console.warn(
+          `Rate limited by Discord. Retrying in ${delayMs / 1000}s...`
+        );
+
+        // Wait with exponential backoff before retrying
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        retries++;
+        delayMs *= 2; // Exponential backoff
+        continue;
+      }
+
+      // For other errors, just return null
+      return null;
+    }
   }
 }
 
@@ -106,13 +142,22 @@ export const AddRow: React.FC<{
 
         // Auto-create Discord event if enabled
         if (streamer.auto_discord_event === "Y") {
-          const eventId = await sendToDiscord(
-            updatedStream,
-            guild,
-            streamer.streamer_link!
-          );
-          if (eventId) {
-            updatedStream.event_id = eventId;
+          try {
+            setIsLoading(true);
+            const eventId = await sendToDiscord(
+              updatedStream,
+              guild,
+              streamer.streamer_link!
+            );
+            if (eventId) {
+              updatedStream.event_id = eventId;
+            }
+
+            // Add a small delay before any subsequent API calls
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          } catch (error) {
+            console.error("Error creating Discord event:", error);
+            // You could add a toast notification here if desired
           }
         }
 

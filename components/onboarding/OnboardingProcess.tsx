@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GuildData } from "@/components/Streams/types";
 import {
@@ -30,20 +30,25 @@ import { createStreamerAction } from "@/app/actions/streameractions";
 interface OnboardingProcessProps {
   guild: GuildData;
   botInviteBase: string;
+  state: number; // 0: both steps, 1: bot invite only, 2: streamer setup only
 }
 
 export default function OnboardingProcess({
   guild,
   botInviteBase,
+  state,
 }: OnboardingProcessProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
+  // Initialize currentStep based on state (start at step 2 if state is 2)
+  const [currentStep, setCurrentStep] = useState(state === 2 ? 2 : 1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [streamerName, setStreamerName] = useState("");
   const [streamerLink, setStreamerLink] = useState("");
   const [levelSystem, setLevelSystem] = useState("N");
   const [botInvited, setBotInvited] = useState(false);
+
+  console.log("Onboarding state:", state);
 
   // Generate bot invite URL with required permissions
   const botInviteUrl = botInviteBase + guild.id;
@@ -91,7 +96,23 @@ export default function OnboardingProcess({
   };
 
   const handleNext = () => {
-    setCurrentStep(currentStep + 1);
+    // If state is 1 (bot invite only), redirect directly to manage page
+    if (state === 1) {
+      router.push(`/${guild.id}/manage`);
+    } else {
+      // Otherwise, go to step 2
+      setCurrentStep(2);
+    }
+  };
+
+  // Calculate total steps based on state
+  const totalSteps = state === 0 ? 2 : 1;
+
+  // Determine step title text
+  const getStepTitle = () => {
+    if (state === 1) return "Invite Bot";
+    if (state === 2) return "Streamer Setup";
+    return currentStep === 1 ? "Invite Bot" : "Streamer Setup";
   };
 
   return (
@@ -114,13 +135,15 @@ export default function OnboardingProcess({
       <Card className="border shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
-            {currentStep === 1 && <Bot className="h-5 w-5" />}
-            {currentStep === 2 && <UserCircle className="h-5 w-5" />}
-            Step {currentStep} of 2:{" "}
-            {currentStep === 1 ? "Invite Bot" : "Streamer Setup"}
+            {(currentStep === 1 || state === 1) && <Bot className="h-5 w-5" />}
+            {(currentStep === 2 || state === 2) && (
+              <UserCircle className="h-5 w-5" />
+            )}
+            {state === 0 ? `Step ${currentStep} of ${totalSteps}: ` : ""}
+            {getStepTitle()}
           </CardTitle>
           <CardDescription>
-            {currentStep === 1
+            {currentStep === 1 || state === 1
               ? "First, you need to invite the Eribot to your Discord server"
               : "Now, let's set up the streamer information for your server"}
           </CardDescription>
@@ -135,7 +158,8 @@ export default function OnboardingProcess({
             </Alert>
           )}
 
-          {currentStep === 1 ? (
+          {/* Show bot invitation step if currentStep is 1 and state is not 2 */}
+          {currentStep === 1 && state !== 2 ? (
             <div className="space-y-6">
               <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border space-y-3">
                 <p className="text-sm">
@@ -161,7 +185,7 @@ export default function OnboardingProcess({
 
                 {botInvited ? (
                   <Button onClick={handleNext}>
-                    Continue
+                    {state === 1 ? "Complete" : "Continue"}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
@@ -172,6 +196,7 @@ export default function OnboardingProcess({
               </div>
             </div>
           ) : (
+            /* Show streamer setup step if currentStep is 2 or state is 2 */
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -220,9 +245,19 @@ export default function OnboardingProcess({
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                  Back
-                </Button>
+                {state === 0 && ( // Only show Back button if we're doing both steps
+                  <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                    Back
+                  </Button>
+                )}
+                {state === 2 && ( // Show Cancel button if only doing streamer setup
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/guilds")}
+                  >
+                    Cancel
+                  </Button>
+                )}
                 <Button onClick={handleCreateStreamer}>Complete Setup</Button>
               </div>
             </div>

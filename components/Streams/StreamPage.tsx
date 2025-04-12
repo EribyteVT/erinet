@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { StreamTable } from "@/components/Streams/StreamTable/streamTable";
 import { TwitchConnect } from "@/components/Streams/TwitchConnect/TwitchConnect";
 import { GuildOptions } from "@/components/Streams/GuildOptions/GuildOptions";
+import { DiscordScheduleSender } from "@/components/Streams/GuildOptions/DiscordScheduleSender";
 import { GuildHeader } from "@/components/Streams/GuildHeader/GuildHeader";
 import { GuildData, Streamer, Stream } from "@/components/Streams/types";
 import { PageContainer } from "@/components/ui/page-container";
@@ -75,8 +76,6 @@ export default function StreamPage({
     checkTwitchIntegration();
   }, [guild.id, streamer.twitch_user_id]);
 
-  // console.log("HERE")
-
   return (
     <PageContainer maxWidth="full">
       {isLoading && (
@@ -128,7 +127,7 @@ export default function StreamPage({
       </div>
 
       {/* Settings sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-6">
           <SectionHeader
             title="Twitch Connection"
@@ -157,6 +156,21 @@ export default function StreamPage({
               streamer={streamer}
               setStreamer={setStreamer}
               hasTwitchAuth={hasTwitchAuth}
+              setIsLoading={setIsLoading}
+              setLoadingMessage={setLoadingMessage}
+            />
+          </div>
+        </div>
+
+        {/* New Discord Schedule section */}
+        <div className="space-y-6">
+          <SectionHeader
+            title="Discord Schedule"
+            description="Share your schedule to Discord"
+          />
+          <div className="bg-background border border-border rounded-lg p-4">
+            <DiscordScheduleSender
+              streamer={streamer}
               setIsLoading={setIsLoading}
               setLoadingMessage={setLoadingMessage}
             />
