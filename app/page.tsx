@@ -29,7 +29,7 @@ export default async function DashboardPage() {
         <h1 className=" text-6xl text-center py-7">Welcome to Eribot!</h1>
         <Image
           className="rounded-full mx-auto"
-          src="/eri-face.png"
+          src="/Eribyte.png"
           alt=" a photo of eribyte"
           height={600}
           width={600}

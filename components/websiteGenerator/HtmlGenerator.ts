@@ -21,7 +21,6 @@ type WebsiteConfig = {
 
 export function generateHTML(
   config: WebsiteConfig,
-  streams: Stream[],
   streamer: Streamer,
   discordAvatar: string,
   crudUrl: string

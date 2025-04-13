@@ -14,7 +14,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { SectionHeader } from "@/components/ui/selection-header";
 import { Button } from "@/components/ui/button";
 import { LoadingIndicator } from "@/components/ui/loading-indicator";
-import { WebsiteGenerator } from "@/components/websiteGenerator/WebsiteGenerator";
+import { WebsiteGenerator } from "@/components/websiteGenerator/WebsiteGeneratorButton";
 import { fetchStreamsAction } from "@/app/actions/streamActions";
 import { guildHasAuthTokens } from "@/app/actions/twitchActions";
 
@@ -107,7 +107,6 @@ export default function StreamPage({
 
       <WebsiteGenerator
         streamer={streamer}
-        streams={streams}
         discordAvatar={avatarUrl}
         crudUrl={crudUrl}
       />

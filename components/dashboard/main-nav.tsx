@@ -27,6 +27,13 @@ export function MainNav({
         Manage
       </Link>
       <Link
+        href="/website"
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        Website
+      </Link>
+      <div className="h-5 w-px bg-muted" />
+      <Link
         href="/howto"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >

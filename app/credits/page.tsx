@@ -26,7 +26,7 @@ type CreditCategory = {
   };
   people: Person[];
   footerText?: string | undefined;
-  className: string
+  className: string;
 };
 
 const creditData: CreditCategory[] = [
@@ -63,7 +63,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
     ],
-    className: "space-y-6"
+    className: "space-y-6",
   },
   {
     title: "Artists",
@@ -89,7 +89,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Portfolio",
       },
     ],
-    className: "space-y-6"
+    className: "space-y-6",
   },
   {
     title: "Beta Testers",
@@ -180,7 +180,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
     ],
-    className: "space-y-6"
+    className: "space-y-6",
   },
 ];
 
@@ -285,7 +285,7 @@ export default function CreditsPage() {
   let copyrightName = "Eribot";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12">
+    <div className="min-h-screen py-12">
       <div className="max-w-max mx-auto px-4">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">

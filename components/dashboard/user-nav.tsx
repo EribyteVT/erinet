@@ -43,6 +43,10 @@ export async function UserNav() {
           <Link href="/privacy">Privacy Policy</Link>
         </DropdownMenuItem>
 
+        <DropdownMenuItem>
+          <Link href="/terms">Terms</Link>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <SignOut />
