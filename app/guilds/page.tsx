@@ -24,15 +24,15 @@ export default async function DashboardPage() {
           <div className="space-y-4 ">
             <div className="flex items-center justify-center">
               <h2 className="text-3xl font-bold tracking-tight text-center">
-                Dashboard
+                Manage
               </h2>
             </div>
             <div className="flex items-center justify-center">
               <Card>
                 <CardHeader className="flex items-center justify-center">
-                  <CardTitle>⚠️ Protected Content</CardTitle>
+                  <CardTitle>⚠️ Login first!</CardTitle>
                   <CardDescription>
-                    To view your dashboard, please sign in using discord.
+                    To manage your streams, please login first
                   </CardDescription>
                 </CardHeader>
               </Card>

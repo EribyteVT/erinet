@@ -26,7 +26,7 @@ export default async function WebsitePage() {
           <div className="flex items-center justify-center">
             <Card>
               <CardHeader className="flex items-center justify-center">
-                <CardTitle>⚠️ Protected Content</CardTitle>
+                <CardTitle>⚠️ Login First</CardTitle>
                 <CardDescription>
                   To use the website generator, please sign in using Discord.
                 </CardDescription>
