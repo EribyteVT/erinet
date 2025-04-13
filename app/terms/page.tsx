@@ -51,10 +51,10 @@ export default function TermsAndConditionsPage() {
                   but is not limited to loss of data, revenue, or profits.
                 </p>
                 <p>
-                  Our services are provided "as is" and "as available" without
-                  any warranties, express or implied. We do not guarantee that
-                  our services will be error-free, 100% secure, or
-                  uninterrupted.
+                  Our services are provided &quot;as is&quot; and &quot;as
+                  available&quot; without any warranties, express or implied. We
+                  do not guarantee that our services will be error-free, 100%
+                  secure, or uninterrupted.
                 </p>
               </section>
 

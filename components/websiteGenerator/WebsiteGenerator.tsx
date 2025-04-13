@@ -303,7 +303,7 @@ export function WebsiteGenerator({
               <CardHeader>
                 <CardTitle>Basic Settings</CardTitle>
                 <CardDescription>
-                  Configure your website's appearance
+                  Configure your website&apos;s appearance
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

@@ -127,7 +127,7 @@ export default function WebsiteGuildSelector() {
         <CardHeader>
           <CardTitle>No Servers Found</CardTitle>
           <CardDescription>
-            You don't have any Discord servers where you have administrator
+            You don&apos;t have any Discord servers where you have administrator
             permissions.
           </CardDescription>
         </CardHeader>
