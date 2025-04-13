@@ -6,7 +6,9 @@
       "items": [
         "website generation improvements",
         "onboarding recovery/checks added, incase of any hiccups should now be recoverable",
-        "added discord stream message sender (currently needs testing [what permissions if any are needed <I think none, as long as bot can see channels and can send in channel>])"
+        "added discord stream message sender (currently needs testing [what permissions if any are needed <I think none, as long as bot can see channels and can send in channel>])",
+        "changed mainpage image to be less horrifying",
+        "updated main nav with website option"
       ]
     },
     {
