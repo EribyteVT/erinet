@@ -53,9 +53,7 @@ export async function downloadWebsiteZip(
     2. Drag and drop all the files from the ZIP you downloaded (index.html, index.css, index.js)
     3. Add a commit message like "Initial website upload"
     4. Click "Commit changes"
-    
-    _[Screenshot: File upload interface with files being uploaded]_
-    
+        
     ### 4. Enable GitHub Pages
     
     1. Click on "Settings" in the top menu of your repository
