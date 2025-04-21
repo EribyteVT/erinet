@@ -177,6 +177,7 @@ export function StreamTable({
         stream={editingStream}
         onSave={handleSaveEdit}
         guildId={guild}
+        streamer={streamer}
       />
 
       <DeleteConfirmationModal

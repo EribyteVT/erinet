@@ -125,7 +125,8 @@ export const useStreams = (guildId: string, streamerId: number) => {
       guildId: string,
       newName: string,
       newTime: string,
-      newDuration: number
+      newDuration: number,
+      location: string
     ): Promise<{ success: boolean; data?: Stream | null }> => {
       try {
         console.log("Updating stream with new data:", {
@@ -141,7 +142,8 @@ export const useStreams = (guildId: string, streamerId: number) => {
           guildId,
           newName,
           newTime,
-          newDuration
+          newDuration,
+          location
         );
 
         console.log("Stream update response:", response);
