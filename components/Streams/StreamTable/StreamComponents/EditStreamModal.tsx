@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Stream } from "../../types";
+import {Stream, Streamer} from "../../types";
 import dayjs from "dayjs";
 import { DateTimePicker } from "../../../ui/DateTimePicker";
 import { Calendar, Clock, AlertCircle, Loader2 } from "lucide-react";
@@ -22,6 +22,7 @@ interface EditStreamModalProps {
   stream: Stream | null;
   onSave: (updatedStream: Stream) => void;
   guildId: string;
+  streamer: Streamer;
 }
 
 export function EditStreamModal({
@@ -30,6 +31,7 @@ export function EditStreamModal({
   stream,
   onSave,
   guildId,
+  streamer,
 }: EditStreamModalProps) {
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState(dayjs());
@@ -88,7 +90,8 @@ export function EditStreamModal({
         guildId,
         name,
         fullTime.toString(),
-        durationValue
+        durationValue,
+        streamer?.streamer_link!
       );
 
       // Handle the response
