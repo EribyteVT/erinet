@@ -215,22 +215,30 @@ export function generateJS(
         // Check if we have streams for this day
         const dayStreams = streamsByDay[dayName] || [];
         
-        if (dayStreams.length > 0) {
-          // Create a row for each stream on this day
-          dayStreams.forEach(stream => {
-            if(stream.datetime.getMonth() != thisDate.getMonth() || stream.datetime.getDate() != thisDate.getDate()){
-              return;
-            }
-            const streamRow = document.createElement('div');
-            streamRow.className = 'gridRow';
-            streamRow.innerHTML = \`
+        let chosen_stream = null;
+
+    dayStreams.forEach((stream) => {
+      if (
+        stream.datetime.getMonth() != thisDate.getMonth() ||
+        stream.datetime.getDate() != thisDate.getDate()
+      ) {
+        return;
+      }
+      chosen_stream = stream;
+    });
+
+    if (chosen_stream) {
+      // Create a row for each stream on this day
+
+      const streamRow = document.createElement("div");
+      streamRow.className = "gridRow";
+      streamRow.innerHTML = \`
               <div class="scheduleDay">\${dayName}</div>
-              <div class="scheduleDate">\${stream.date}</div>
-              <div class="scheduleStream"><a href=https://twitch.tv/${streamer.streamer_name}>\${stream.name}</a> at \${stream.time}</div>
+              <div class="scheduleDate">\${chosen_stream.date}</div>
+              <div class="scheduleStream"><a href=https://twitch.tv/NightroseVT>\${chosen_stream.name}</a> at \${chosen_stream.time}</div>
             \`;
-            gridSchedule.appendChild(streamRow);
-          });
-        } else {
+      gridSchedule.appendChild(streamRow);
+    } else {
           // Create an empty row for this day
           const emptyRow = document.createElement('div');
           emptyRow.className = 'gridRow';

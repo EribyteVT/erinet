@@ -1,19 +1,19 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { X, Plus, Copy, Archive, Info } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
-import { Stream, Streamer } from "@/components/Streams/types";
+import { Streamer } from "@/components/Streams/types";
 import WebsitePreview from "./WebsitePreview";
 import { downloadWebsiteZip } from "@/utils/zipUtils";
 import { generateHTML } from "./HtmlGenerator";
@@ -27,6 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // load font awesome dynamically cuz we have no head
 function FontAwesomeLoader() {
@@ -172,14 +180,12 @@ type WebsiteConfig = {
 
 interface WebsiteGeneratorProps {
   streamer: Streamer;
-  streams: Stream[];
   discordAvatar: string | undefined;
   crudUrl: string;
 }
 
 export function WebsiteGenerator({
   streamer,
-  streams,
   discordAvatar,
   crudUrl,
 }: WebsiteGeneratorProps) {
@@ -199,7 +205,6 @@ export function WebsiteGenerator({
     ],
   };
 
-  const [isOpen, setIsOpen] = useState(false);
   const [config, setConfig] = useState<WebsiteConfig>(defaultConfig);
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -233,13 +238,7 @@ export function WebsiteGenerator({
 
   const generateWebsite = async () => {
     // Generate HTML, CSS, and JS code
-    const html = generateHTML(
-      config,
-      streams,
-      streamer,
-      discordAvatar!,
-      crudUrl
-    );
+    const html = generateHTML(config, streamer, discordAvatar!, crudUrl);
     const css = generateCSS(config);
     const js = generateJS(config, streamer, crudUrl);
 
@@ -258,7 +257,6 @@ export function WebsiteGenerator({
   const proceedWithDownload = async () => {
     setShowInfoPopup(false);
     setShowPreview(false);
-    setIsOpen(false);
   };
 
   const downloadZip = async () => {
@@ -287,89 +285,161 @@ export function WebsiteGenerator({
   };
 
   return (
-    <>
+    <div className="container mx-auto px-4 py-8">
       <FontAwesomeLoader />
-      <Button onClick={() => setIsOpen(true)} variant="default">
-        Generate Website
-      </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] md:max-w-[90vw] lg:max-w-[85vw] max-h-screen my-6">
-          <DialogHeader>
-            <DialogTitle>Website Generator</DialogTitle>
-            <DialogDescription>
-              Customize your website settings below. You can configure the
-              appearance and social links.
-            </DialogDescription>
-          </DialogHeader>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Website Generator</h1>
+        <p className="text-muted-foreground">
+          Customize your website settings below. You can configure the
+          appearance and social links.
+        </p>
+      </div>
 
-          {!showPreview ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Basic Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Display Name</Label>
+      {!showPreview ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Settings</CardTitle>
+                <CardDescription>
+                  Configure your website&apos;s appearance
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Display Name</Label>
+                  <Input
+                    id="name"
+                    value={config.name}
+                    onChange={(e) =>
+                      setConfig({ ...config, name: e.target.value })
+                    }
+                    placeholder="Your Name"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 mt-4">
+                  <Checkbox
+                    id="useGradient"
+                    checked={config.useGradient}
+                    onCheckedChange={(checked) =>
+                      setConfig({
+                        ...config,
+                        useGradient: checked === true,
+                      })
+                    }
+                  />
+                  <Label
+                    htmlFor="useGradient"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Use Gradient Background
+                  </Label>
+                </div>
+
+                {!config.useGradient ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="backgroundColor">Background Color</Label>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-10 h-10 rounded-md border cursor-pointer"
+                        style={{ backgroundColor: config.backgroundColor }}
+                        onClick={() => setShowColorPicker("background")}
+                      ></div>
                       <Input
-                        id="name"
-                        value={config.name}
+                        id="backgroundColor"
+                        value={config.backgroundColor}
                         onChange={(e) =>
-                          setConfig({ ...config, name: e.target.value })
-                        }
-                        placeholder="Your Name"
-                      />
-                    </div>
-
-                    <div className="flex items-center space-x-2 mt-4">
-                      <Checkbox
-                        id="useGradient"
-                        checked={config.useGradient}
-                        onCheckedChange={(checked) =>
                           setConfig({
                             ...config,
-                            useGradient: checked === true,
+                            backgroundColor: e.target.value,
                           })
                         }
                       />
-                      <Label
-                        htmlFor="useGradient"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Use Gradient Background
+                    </div>
+                    {showColorPicker === "background" && (
+                      <div className="mt-2">
+                        <HexColorPicker
+                          color={config.backgroundColor}
+                          onChange={(color) =>
+                            setConfig({ ...config, backgroundColor: color })
+                          }
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowColorPicker(null)}
+                          className="mt-2"
+                          type="button"
+                        >
+                          Close Picker
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="gradientDirection">
+                        Gradient Direction
                       </Label>
+                      <Select
+                        value={config.gradientDirection}
+                        onValueChange={(value) =>
+                          setConfig({
+                            ...config,
+                            gradientDirection: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Select direction" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {gradientDirections.map((direction) => (
+                            <SelectItem
+                              key={direction.value}
+                              value={direction.value}
+                            >
+                              {direction.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
-                    {!config.useGradient ? (
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="backgroundColor">
-                          Background Color
-                        </Label>
+                        <Label htmlFor="gradientStartColor">Start Color</Label>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-10 h-10 rounded-md border cursor-pointer"
-                            style={{ backgroundColor: config.backgroundColor }}
-                            onClick={() => setShowColorPicker("background")}
+                            style={{
+                              backgroundColor: config.gradientStartColor,
+                            }}
+                            onClick={() => setShowColorPicker("start")}
                           ></div>
                           <Input
-                            id="backgroundColor"
-                            value={config.backgroundColor}
+                            id="gradientStartColor"
+                            value={config.gradientStartColor}
                             onChange={(e) =>
                               setConfig({
                                 ...config,
-                                backgroundColor: e.target.value,
+                                gradientStartColor: e.target.value,
                               })
                             }
                           />
                         </div>
-                        {showColorPicker === "background" && (
+                        {showColorPicker === "start" && (
                           <div className="mt-2">
                             <HexColorPicker
-                              color={config.backgroundColor}
+                              color={config.gradientStartColor}
                               onChange={(color) =>
-                                setConfig({ ...config, backgroundColor: color })
+                                setConfig({
+                                  ...config,
+                                  gradientStartColor: color,
+                                })
                               }
                             />
                             <Button
@@ -384,313 +454,248 @@ export function WebsiteGenerator({
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="gradientDirection">
-                            Gradient Direction
-                          </Label>
-                          <Select
-                            value={config.gradientDirection}
-                            onValueChange={(value) =>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="gradientEndColor">End Color</Label>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-10 h-10 rounded-md border cursor-pointer"
+                            style={{
+                              backgroundColor: config.gradientEndColor,
+                            }}
+                            onClick={() => setShowColorPicker("end")}
+                          ></div>
+                          <Input
+                            id="gradientEndColor"
+                            value={config.gradientEndColor}
+                            onChange={(e) =>
                               setConfig({
                                 ...config,
-                                gradientDirection: value,
+                                gradientEndColor: e.target.value,
                               })
                             }
-                          >
-                            <SelectTrigger className="w-full mt-1">
-                              <SelectValue placeholder="Select direction" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {gradientDirections.map((direction) => (
-                                <SelectItem
-                                  key={direction.value}
-                                  value={direction.value}
-                                >
-                                  {direction.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="gradientStartColor">
-                              Start Color
-                            </Label>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-10 h-10 rounded-md border cursor-pointer"
-                                style={{
-                                  backgroundColor: config.gradientStartColor,
-                                }}
-                                onClick={() => setShowColorPicker("start")}
-                              ></div>
-                              <Input
-                                id="gradientStartColor"
-                                value={config.gradientStartColor}
-                                onChange={(e) =>
-                                  setConfig({
-                                    ...config,
-                                    gradientStartColor: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            {showColorPicker === "start" && (
-                              <div className="mt-2">
-                                <HexColorPicker
-                                  color={config.gradientStartColor}
-                                  onChange={(color) =>
-                                    setConfig({
-                                      ...config,
-                                      gradientStartColor: color,
-                                    })
-                                  }
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setShowColorPicker(null)}
-                                  className="mt-2"
-                                  type="button"
-                                >
-                                  Close Picker
-                                </Button>
-                              </div>
-                            )}
+                        {showColorPicker === "end" && (
+                          <div className="mt-2">
+                            <HexColorPicker
+                              color={config.gradientEndColor}
+                              onChange={(color) =>
+                                setConfig({
+                                  ...config,
+                                  gradientEndColor: color,
+                                })
+                              }
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowColorPicker(null)}
+                              className="mt-2"
+                              type="button"
+                            >
+                              Close Picker
+                            </Button>
                           </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="gradientEndColor">End Color</Label>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-10 h-10 rounded-md border cursor-pointer"
-                                style={{
-                                  backgroundColor: config.gradientEndColor,
-                                }}
-                                onClick={() => setShowColorPicker("end")}
-                              ></div>
-                              <Input
-                                id="gradientEndColor"
-                                value={config.gradientEndColor}
-                                onChange={(e) =>
-                                  setConfig({
-                                    ...config,
-                                    gradientEndColor: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            {showColorPicker === "end" && (
-                              <div className="mt-2">
-                                <HexColorPicker
-                                  color={config.gradientEndColor}
-                                  onChange={(color) =>
-                                    setConfig({
-                                      ...config,
-                                      gradientEndColor: color,
-                                    })
-                                  }
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setShowColorPicker(null)}
-                                  className="mt-2"
-                                  type="button"
-                                >
-                                  Close Picker
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="relative h-12 border rounded-md mt-4 overflow-hidden">
-                          <div
-                            className="absolute inset-0 w-full h-full"
-                            style={getBackgroundStyle()}
-                          ></div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-white text-sm font-medium drop-shadow-md">
-                              Gradient Preview
-                            </span>
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                    </div>
 
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      <span>Social Media Links </span>
-                      <span className="text-gray-300">(10 max)</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {config.socialLinks.map((link, index) => (
-                        <div
-                          key={`social-link-${index}`}
-                          className="flex items-center gap-2 p-2 border rounded-md"
-                        >
-                          <IconSelector
-                            currentIcon={link.icon}
-                            onIconChange={(newIconValue, iconLabel) => {
-                              const newLinks = [...config.socialLinks];
+                    <div className="relative h-12 border rounded-md mt-4 overflow-hidden">
+                      <div
+                        className="absolute inset-0 w-full h-full"
+                        style={getBackgroundStyle()}
+                      ></div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-white text-sm font-medium drop-shadow-md">
+                          Gradient Preview
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                              newLinks[index] = {
-                                ...newLinks[index],
-                                icon: newIconValue,
-                                //update if default (for smoothness)
-                                tooltip:
-                                  link.tooltip ===
-                                  socialMediaIcons.find(
-                                    (i) => i.value === link.icon
-                                  )?.label
-                                    ? iconLabel
-                                    : link.tooltip,
-                              };
+            <div className="flex justify-end">
+              <Button onClick={generateWebsite} size="lg" type="button">
+                Generate Website Preview
+              </Button>
+            </div>
+          </div>
 
-                              setConfig({
-                                ...config,
-                                socialLinks: newLinks,
-                              });
-                            }}
-                            socialMediaIcons={socialMediaIcons}
-                          />
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <span>Social Media Links </span>
+                  <span className="text-muted-foreground">(10 max)</span>
+                </CardTitle>
+                <CardDescription>
+                  Add and customize your social media links
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {config.socialLinks.map((link, index) => (
+                    <div
+                      key={`social-link-${index}`}
+                      className="flex items-center gap-2 p-2 border rounded-md"
+                    >
+                      <IconSelector
+                        currentIcon={link.icon}
+                        onIconChange={(newIconValue, iconLabel) => {
+                          const newLinks = [...config.socialLinks];
 
-                          <Input
-                            value={link.url}
-                            onChange={(e) => {
-                              const newLinks = [...config.socialLinks];
-                              newLinks[index] = {
-                                ...newLinks[index],
-                                url: e.target.value,
-                              };
-                              setConfig({ ...config, socialLinks: newLinks });
-                            }}
-                            placeholder="URL"
-                            className="flex-1"
-                          />
+                          newLinks[index] = {
+                            ...newLinks[index],
+                            icon: newIconValue,
+                            //update if default (for smoothness)
+                            tooltip:
+                              link.tooltip ===
+                              socialMediaIcons.find(
+                                (i) => i.value === link.icon
+                              )?.label
+                                ? iconLabel
+                                : link.tooltip,
+                          };
 
-                          <Input
-                            value={link.tooltip}
-                            onChange={(e) => {
-                              const newLinks = [...config.socialLinks];
-                              newLinks[index] = {
-                                ...newLinks[index],
-                                tooltip: e.target.value,
-                              };
-                              setConfig({ ...config, socialLinks: newLinks });
-                            }}
-                            placeholder="Tooltip"
-                            className="w-32 md:w-44"
-                          />
+                          setConfig({
+                            ...config,
+                            socialLinks: newLinks,
+                          });
+                        }}
+                        socialMediaIcons={socialMediaIcons}
+                      />
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveSocialLink(index)}
-                            type="button"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
+                      <Input
+                        value={link.url}
+                        onChange={(e) => {
+                          const newLinks = [...config.socialLinks];
+                          newLinks[index] = {
+                            ...newLinks[index],
+                            url: e.target.value,
+                          };
+                          setConfig({ ...config, socialLinks: newLinks });
+                        }}
+                        placeholder="URL"
+                        className="flex-1"
+                      />
+
+                      <Input
+                        value={link.tooltip}
+                        onChange={(e) => {
+                          const newLinks = [...config.socialLinks];
+                          newLinks[index] = {
+                            ...newLinks[index],
+                            tooltip: e.target.value,
+                          };
+                          setConfig({ ...config, socialLinks: newLinks });
+                        }}
+                        placeholder="Tooltip"
+                        className="w-32 md:w-44"
+                      />
 
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={handleAddSocialLink}
-                        disabled={config.socialLinks.length >= 10}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveSocialLink(index)}
                         type="button"
                       >
-                        <Plus className="h-4 w-4 mr-2" /> Add Social Link
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                  ))}
+
                   <Button
-                    onClick={() => setShowPreview(false)}
                     variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleAddSocialLink}
+                    disabled={config.socialLinks.length >= 10}
                     type="button"
                   >
-                    Back to Editor
-                  </Button>
-
-                  <Button
-                    onClick={handleDownload}
-                    variant="default"
-                    type="button"
-                  >
-                    <Archive className="h-4 w-4 mr-2" /> Download ZIP
+                    <Plus className="h-4 w-4 mr-2" /> Add Social Link
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-6">
+            <Button
+              onClick={() => setShowPreview(false)}
+              variant="outline"
+              type="button"
+            >
+              Back to Editor
+            </Button>
+
+            <Button
+              onClick={handleDownload}
+              variant="default"
+              type="button"
+              className="gap-2"
+            >
+              <Archive className="h-4 w-4" /> Download ZIP
+            </Button>
+          </div>
+
+          <Dialog open={showInfoPopup} onOpenChange={setShowInfoPopup}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-blue-500" /> Hosting
+                  Instructions Included
+                </DialogTitle>
+                <DialogDescription>
+                  Important information about your website download
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <p>
+                  The ZIP file includes a <strong>README.txt</strong> file with
+                  step-by-step instructions on:
+                </p>
+
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>
+                    How to set up your website using GitHub Pages for{" "}
+                    <strong>free hosting</strong>
+                  </li>
+                  <li>
+                    How to use custom domains if you&apos;d like to use your own
+                    URL
+                  </li>
+                  <li>Basic customization tips for your new website</li>
+                </ul>
+
+                <p className="text-sm text-muted-foreground">
+                  if you&apos;re having trouble or need help, check the tutorial
+                  page for &apos;Website Hosting&apos; or join our discord (link
+                  in footer)
+                </p>
               </div>
 
-              <Dialog open={showInfoPopup} onOpenChange={setShowInfoPopup}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Info className="h-5 w-5 text-blue-500" /> Hosting
-                      Instructions Included
-                    </DialogTitle>
-                    <DialogDescription>
-                      Important information about your website download
-                    </DialogDescription>
-                  </DialogHeader>
+              <DialogFooter>
+                <Button onClick={proceedWithDownload}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-                  <div className="space-y-4">
-                    <p>
-                      The ZIP file includes a <strong>README.txt</strong> file
-                      with step-by-step instructions on:
-                    </p>
-
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>
-                        How to set up your website using GitHub Pages for{" "}
-                        <strong>free hosting</strong>
-                      </li>
-                      <li>
-                        How to use custom domains if you&apos;d like to use your
-                        own URL
-                      </li>
-                      <li>Basic customization tips for your new website</li>
-                    </ul>
-
-                    <p className="text-sm text-muted-foreground">
-                      if you&apos;re having trouble or need help, check the
-                      tutorial page for &apos;Website Hosting&apos; or join our
-                      discord (link in footer)
-                    </p>
-                  </div>
-
-                  <DialogFooter>
-                    <Button onClick={proceedWithDownload}>Close</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
+          <Card>
+            <CardHeader>
+              <CardTitle>Website Preview</CardTitle>
+              <CardDescription>
+                This is how your website will look like
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="border rounded-md overflow-hidden">
-                <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 px-4 py-2">
-                  <h3 className="font-medium">Mock Preview</h3>
-                </div>
-                <div className="h-96 overflow-auto border-t">
+                <div className="h-[500px] overflow-auto">
                   <WebsitePreview
                     html={generatedHTML}
                     css={generatedCSS}
@@ -698,96 +703,80 @@ export function WebsiteGenerator({
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <Card className="md:col-span-2">
-                  <CardHeader className="py-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">
-                        HTML (index.html)
-                      </CardTitle>
-                      <Button
-                        onClick={() => copyToClipboard(generatedHTML)}
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                      >
-                        <Copy className="h-4 w-4 mr-2" /> Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <pre className="text-xs md:text-sm p-4 overflow-auto max-h-60 bg-slate-50 dark:bg-slate-900 rounded-md">
-                      {generatedHTML}
-                    </pre>
-                  </CardContent>
-                </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="py-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">HTML (index.html)</CardTitle>
+                  <Button
+                    onClick={() => copyToClipboard(generatedHTML)}
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    className="gap-2"
+                  >
+                    <Copy className="h-4 w-4" /> Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="text-xs md:text-sm p-4 overflow-auto max-h-80 bg-slate-50 dark:bg-slate-900 rounded-md">
+                  {generatedHTML}
+                </pre>
+              </CardContent>
+            </Card>
 
-                <Card>
-                  <CardHeader className="py-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">CSS (index.css)</CardTitle>
-                      <Button
-                        onClick={() => copyToClipboard(generatedCSS)}
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                      >
-                        <Copy className="h-4 w-4 mr-2" /> Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <pre className="text-xs md:text-sm p-4 overflow-auto max-h-60 bg-slate-50 dark:bg-slate-900 rounded-md">
-                      {generatedCSS}
-                    </pre>
-                  </CardContent>
-                </Card>
+            <Card>
+              <CardHeader className="py-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">CSS (index.css)</CardTitle>
+                  <Button
+                    onClick={() => copyToClipboard(generatedCSS)}
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    className="gap-2"
+                  >
+                    <Copy className="h-4 w-4" /> Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="text-xs md:text-sm p-4 overflow-auto max-h-80 bg-slate-50 dark:bg-slate-900 rounded-md">
+                  {generatedCSS}
+                </pre>
+              </CardContent>
+            </Card>
 
-                <Card>
-                  <CardHeader className="py-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm">
-                        JavaScript (index.js)
-                      </CardTitle>
-                      <Button
-                        onClick={() => copyToClipboard(generatedJS)}
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                      >
-                        <Copy className="h-4 w-4 mr-2" /> Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <pre className="text-xs md:text-sm p-4 overflow-auto max-h-60 bg-slate-50 dark:bg-slate-900 rounded-md">
-                      {generatedJS}
-                    </pre>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            {!showPreview ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                  type="button"
-                >
-                  Cancel
-                </Button>
-                <Button onClick={generateWebsite} type="button">
-                  Generate Website
-                </Button>
-              </>
-            ) : null}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            <Card className="md:col-span-2">
+              <CardHeader className="py-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    JavaScript (index.js)
+                  </CardTitle>
+                  <Button
+                    onClick={() => copyToClipboard(generatedJS)}
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    className="gap-2"
+                  >
+                    <Copy className="h-4 w-4" /> Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <pre className="text-xs md:text-sm p-4 overflow-auto max-h-80 bg-slate-50 dark:bg-slate-900 rounded-md">
+                  {generatedJS}
+                </pre>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

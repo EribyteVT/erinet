@@ -209,7 +209,8 @@ async function editStreamActionImpl(
   guildId: string,
   newName: string,
   newTime: string,
-  newDuration: number
+  newDuration: number,
+  location: string
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
@@ -273,7 +274,8 @@ async function editStreamActionImpl(
           existingStream.event_id,
           newName,
           streamDate.toISOString(),
-          endTime.toISOString()
+          endTime.toISOString(),
+          location,
         );
       } catch (error) {
         console.error("Failed to update Discord event:", error);

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Dayjs } from "dayjs";
+import dayjs from "dayjs"; // Add import for dayjs constructor
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -27,6 +28,28 @@ export function DateTimePicker({
 }) {
   const [open, setOpen] = React.useState(false);
 
+  // time format
+  const formatTimeDisplay = () => {
+    try {
+      if (time && typeof time.toDate === "function") {
+        return format(time.toDate(), "hh:mm aa");
+      }
+      return "Select time";
+    } catch (error) {
+      return "Select time";
+    }
+  };
+
+  // Handle time changes safely
+  const handleTimeChange = (newValue: any) => {
+    // If newValue is null or invalid, don't
+    if (!newValue || !newValue.isValid()) {
+      setTime(dayjs());
+    } else {
+      setTime(newValue);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -38,13 +61,8 @@ export function DateTimePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") + "  " : <span>Pick a date</span>}
-
-          {"  " + time ? (
-            format(time.toDate(), "hh:mm aa")
-          ) : (
-            <span>Pick a date</span>
-          )}
+          {date ? format(date, "PPP") : <span>Pick a date</span>}{" "}
+          <span>{formatTimeDisplay()}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="grid grid-cols-3 items-center" align="start">
@@ -66,7 +84,7 @@ export function DateTimePicker({
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <TimeField
               value={time}
-              onChange={(newValue) => setTime(newValue)}
+              onChange={handleTimeChange}
               className="flex-grow"
               sx={{
                 "& .MuiInputBase-root": {
@@ -83,6 +101,14 @@ export function DateTimePicker({
                 },
               }}
               format="hh:mm a"
+              // Add error handling
+              onError={(error) => {
+                console.log("Time field error:", error);
+                // Reset to current time if there's an error
+                if (error) {
+                  setTime(dayjs());
+                }
+              }}
             />
           </LocalizationProvider>
         </div>

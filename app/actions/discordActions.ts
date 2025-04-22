@@ -70,7 +70,7 @@ export async function updateDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string = "https://twitch.tv/EribyteVT"
+  location: string
 ): Promise<boolean> {
   try {
     const response = await fetch(
@@ -342,7 +342,7 @@ async function createDiscordEventActionImpl(
   name: string,
   startTime: string,
   endTime: string,
-  location: string = "https://twitch.tv/EribyteVT"
+  location: string
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session

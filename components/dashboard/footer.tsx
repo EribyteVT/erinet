@@ -33,6 +33,13 @@ export function Footer() {
             Privacy Policy
           </Link>
 
+          <Link
+            href="/terms"
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Terms of use
+          </Link>
+
           <Separator className="hidden h-4 md:block" orientation="vertical" />
 
           <Link
