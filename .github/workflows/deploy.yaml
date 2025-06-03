@@ -20,12 +20,13 @@ jobs:
     steps:
       - name: Set environment variables
         id: set-env
-        run: if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-          echo "environment=prod" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
-          echo "environment=stage" >> $GITHUB_OUTPUT
+            echo "environment=stage" >> $GITHUB_OUTPUT
           else
-          echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "environment=dev" >> $GITHUB_OUTPUT
           fi
           echo "image-tag=${GITHUB_SHA::8}-$(date +%s)" >> $GITHUB_OUTPUT
 
