@@ -1,4 +1,3 @@
-# .github/workflows/deploy-eks-only.yml
 name: Deploy to EKS (Docker Hub)
 
 on:
@@ -28,8 +27,8 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: "eribyteofficial/erinet"
-  EKS_CLUSTER_NAME: "your-eks-cluster-name"
-  AWS_REGION: "us-west-2"
+  EKS_CLUSTER_NAME: "Eribot-prod"
+  AWS_REGION: "us-east-2"
 
 jobs:
   # Determine environment based on branch or manual input
