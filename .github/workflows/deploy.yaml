@@ -4,36 +4,79 @@ name: Deploy to EKS (Docker Hub)
 on:
   push:
     branches: [main, stage]
+  # Manual deployment trigger with options
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "stage"
+        type: choice
+        options:
+          - stage
+          - prod
+      image_tag:
+        description: "Docker image tag to deploy (leave empty for latest)"
+        required: false
+        default: "latest"
+        type: string
+      skip_build:
+        description: "Skip building new image (deploy existing image)"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DOCKER_IMAGE_NAME: "eribyteofficial/erinet"
-  EKS_CLUSTER_NAME: "Eribot-prod"
-  AWS_REGION: "us-east-2"
+  EKS_CLUSTER_NAME: "your-eks-cluster-name"
+  AWS_REGION: "us-west-2"
 
 jobs:
-  # Determine environment based on branch
+  # Determine environment based on branch or manual input
   setup:
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
       image-tag: ${{ steps.set-env.outputs.image-tag }}
+      skip-build: ${{ steps.set-env.outputs.skip-build }}
     steps:
       - name: Set environment variables
         id: set-env
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "environment=prod" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
-            echo "environment=stage" >> $GITHUB_OUTPUT
+          # Handle manual dispatch vs automatic push
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual deployment
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            
+            # Use provided image tag or generate new one
+            if [[ "${{ github.event.inputs.image_tag }}" == "latest" ]] || [[ -z "${{ github.event.inputs.image_tag }}" ]]; then
+              echo "image-tag=latest" >> $GITHUB_OUTPUT
+            else
+              echo "image-tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            fi
+            
+            echo "skip-build=${{ github.event.inputs.skip_build }}" >> $GITHUB_OUTPUT
           else
-            echo "environment=dev" >> $GITHUB_OUTPUT
+            # Automatic deployment based on branch
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              echo "environment=prod" >> $GITHUB_OUTPUT
+            elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
+              echo "environment=stage" >> $GITHUB_OUTPUT
+            else
+              echo "environment=dev" >> $GITHUB_OUTPUT
+            fi
+            
+            # Generate new tag for automatic builds
+            echo "image-tag=${GITHUB_SHA::8}-$(date +%s)" >> $GITHUB_OUTPUT
+            echo "skip-build=false" >> $GITHUB_OUTPUT
           fi
-          echo "image-tag=${GITHUB_SHA::8}-$(date +%s)" >> $GITHUB_OUTPUT
 
   # Build and push to Docker Hub (same as your Jenkins setup)
   build:
     needs: setup
     runs-on: ubuntu-latest
+    # Only run if not skipping build
+    if: needs.setup.outputs.skip-build == 'false'
     outputs:
       image: ${{ steps.build-image.outputs.image }}
 
@@ -79,7 +122,8 @@ jobs:
   deploy:
     needs: [setup, build]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage'
+    # Always run deploy, but build job might be skipped
+    if: always() && !failure() && !cancelled() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage' || github.event_name == 'workflow_dispatch')
 
     steps:
       - name: Checkout code
@@ -120,7 +164,16 @@ jobs:
             echo "ASSET_PREFIX=https://eri.bot" >> $GITHUB_ENV
           fi
 
-          echo "DOCKER_IMAGE=${{ needs.build.outputs.image }}" >> $GITHUB_ENV
+          # Determine which image to deploy
+          if [[ "${{ needs.setup.outputs.skip-build }}" == "true" ]]; then
+            # Use existing image tag specified in manual dispatch
+            echo "DOCKER_IMAGE=${{ env.DOCKER_IMAGE_NAME }}:${{ needs.setup.outputs.image-tag }}" >> $GITHUB_ENV
+            echo "🚀 Deploying existing image: ${{ env.DOCKER_IMAGE_NAME }}:${{ needs.setup.outputs.image-tag }}"
+          else
+            # Use newly built image
+            echo "DOCKER_IMAGE=${{ needs.build.outputs.image }}" >> $GITHUB_ENV
+            echo "🚀 Deploying newly built image: ${{ needs.build.outputs.image }}"
+          fi
 
       - name: Install envsubst
         run: |
@@ -138,6 +191,9 @@ jobs:
 
       - name: Deploy to EKS
         run: |
+          echo "🚀 Starting deployment to ${{ needs.setup.outputs.environment }} environment..."
+          echo "📦 Image: ${{ env.DOCKER_IMAGE }}"
+
           # Apply the deployment (same as your Jenkins)
           kubectl apply -f k8s-deployment.yaml
 
@@ -152,9 +208,20 @@ jobs:
 
       - name: Verify deployment
         run: |
-          echo "Deployment completed successfully!"
+          echo "✅ Deployment completed successfully!"
+          echo "🌍 Environment: ${{ needs.setup.outputs.environment }}"
+          echo "📦 Image: ${{ env.DOCKER_IMAGE }}"
+          echo ""
+
           kubectl get pods -l app=${{ env.APPLICATION_NAME }}
           kubectl get service ${{ env.APPLICATION_NAME }}
 
           # Show recent events
+          echo ""
+          echo "📋 Recent events:"
           kubectl get events --sort-by='.lastTimestamp' | tail -10
+
+          # Show service endpoint info
+          echo ""
+          echo "🌐 Service endpoints:"
+          kubectl get service ${{ env.APPLICATION_NAME }} -o wide
