@@ -144,11 +144,24 @@ metadata:
   name: ${APPLICATION_NAME}
   labels:
     app: ${APPLICATION_NAME}
+  annotations:
+    # Use SSL certificate from ACM
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-2:364652779695:certificate/2c54b82b-61d4-4352-9ade-6b4024e69fad"
+    # Redirect HTTP to HTTPS
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+    # Optional: Only allow HTTPS traffic
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
 spec:
-  type: LoadBalancer # Changed from ClusterIP
+  type: LoadBalancer
   selector:
     app: ${APPLICATION_NAME}
   ports:
-    - port: 80
+    - name: http
+      port: 80
+      targetPort: 8085
+      protocol: TCP
+    - name: https
+      port: 443
       targetPort: 8085
       protocol: TCP
