@@ -145,36 +145,10 @@ metadata:
   labels:
     app: ${APPLICATION_NAME}
 spec:
-  type: ClusterIP # Changed from NodePort to ClusterIP for ALB
+  type: LoadBalancer # Changed from ClusterIP
   selector:
     app: ${APPLICATION_NAME}
   ports:
     - port: 80
       targetPort: 8085
       protocol: TCP
----
-# Ingress for ALB (Application Load Balancer)
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ${APPLICATION_NAME}-ingress
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: ${SSL_CERT_ARN} # You'll need to set this
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/load-balancer-name: ${APPLICATION_NAME}-alb
-spec:
-  rules:
-    - host: ${HOST_NAME}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ${APPLICATION_NAME}
-                port:
-                  number: 80
