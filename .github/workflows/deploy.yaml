@@ -1,0 +1,160 @@
+# .github/workflows/deploy-eks-only.yml
+name: Deploy to EKS (Docker Hub)
+
+on:
+  push:
+    branches: [main, stage]
+
+env:
+  DOCKER_IMAGE_NAME: "eribyteofficial/erinet"
+  EKS_CLUSTER_NAME: "Eribot-prod"
+  AWS_REGION: "us-east-2"
+
+jobs:
+  # Determine environment based on branch
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      image-tag: ${{ steps.set-env.outputs.image-tag }}
+    steps:
+      - name: Set environment variables
+        id: set-env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/stage" ]]; then
+            echo "environment=stage" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+          echo "image-tag=${GITHUB_SHA::8}-$(date +%s)" >> $GITHUB_OUTPUT
+
+  # Build and push to Docker Hub (same as your Jenkins setup)
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        id: build-image
+        env:
+          IMAGE_TAG: ${{ needs.setup.outputs.image-tag }}
+        run: |
+          # Determine asset prefix based on environment
+          if [[ "${{ needs.setup.outputs.environment }}" == "stage" ]]; then
+            ASSET_PREFIX="https://stage.eri.bot"
+          else
+            ASSET_PREFIX="https://eri.bot"
+          fi
+
+          # Build and push Docker image (same as your Jenkins setup)
+          docker build \
+            --build-arg NEXT_PUBLIC_ASSET_PREFIX=$ASSET_PREFIX \
+            --build-arg ASSET_PREFIX=$ASSET_PREFIX \
+            -t ${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG \
+            -t ${{ env.DOCKER_IMAGE_NAME }}:latest .
+
+          # Push both tags
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG
+          docker push ${{ env.DOCKER_IMAGE_NAME }}:latest
+
+          echo "image=${{ env.DOCKER_IMAGE_NAME }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+  # Deploy to EKS (this is the only new part)
+  deploy:
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stage'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.28.0"
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Set environment variables for deployment
+        run: |
+          # Set environment-specific variables (same logic as your Jenkins)
+          if [[ "${{ needs.setup.outputs.environment }}" == "stage" ]]; then
+            echo "APPLICATION_NAME=erinet-stage" >> $GITHUB_ENV
+            echo "SECRET_NAME=erinet-secrets-stage" >> $GITHUB_ENV
+            echo "CONFIG_NAME=erinet-config-stage" >> $GITHUB_ENV
+            echo "HOST_NAME=stage.eri.bot" >> $GITHUB_ENV
+            echo "EXPOSE_PORT=30085" >> $GITHUB_ENV
+            echo "ASSET_PREFIX=https://stage.eri.bot" >> $GITHUB_ENV
+          else
+            echo "APPLICATION_NAME=erinet-prod" >> $GITHUB_ENV
+            echo "SECRET_NAME=erinet-secrets-prod" >> $GITHUB_ENV
+            echo "CONFIG_NAME=erinet-config-prod" >> $GITHUB_ENV
+            echo "HOST_NAME=eri.bot" >> $GITHUB_ENV
+            echo "EXPOSE_PORT=30086" >> $GITHUB_ENV
+            echo "ASSET_PREFIX=https://eri.bot" >> $GITHUB_ENV
+          fi
+
+          echo "DOCKER_IMAGE=${{ needs.build.outputs.image }}" >> $GITHUB_ENV
+
+      - name: Install envsubst
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      - name: Generate Kubernetes manifests
+        run: |
+          # Use your existing deployment.yaml as template
+          envsubst < deployment.yaml > k8s-deployment.yaml
+
+          # Show what we're deploying
+          echo "Generated Kubernetes manifest:"
+          cat k8s-deployment.yaml
+
+      - name: Deploy to EKS
+        run: |
+          # Apply the deployment (same as your Jenkins)
+          kubectl apply -f k8s-deployment.yaml
+
+          # Wait for deployment to be ready
+          kubectl rollout status deployment/${{ env.APPLICATION_NAME }} --timeout=300s
+
+          # Restart deployment to ensure new image is pulled
+          kubectl rollout restart deployment/${{ env.APPLICATION_NAME }}
+
+          # Wait for restart to complete
+          kubectl rollout status deployment/${{ env.APPLICATION_NAME }} --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed successfully!"
+          kubectl get pods -l app=${{ env.APPLICATION_NAME }}
+          kubectl get service ${{ env.APPLICATION_NAME }}
+
+          # Show recent events
+          kubectl get events --sort-by='.lastTimestamp' | tail -10
