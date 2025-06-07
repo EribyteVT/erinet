@@ -129,7 +129,16 @@ const creditData: CreditCategory[] = [
         description:
           "Found a bug with website generation, thank her for it working well",
         imageUrl: "/nightRose.png",
-        websiteUrl: "https://nightrosevt.github.io/nightrose/",
+        websiteUrl: "https://nightrose.live",
+        websiteLabel: "Visit Website",
+      },
+      {
+        name: "NotsoUnhappy",
+        role: "Beta Tester",
+        description:
+          "Found a bug with date entry that caused a crash",
+        imageUrl: "/notso.png",
+        websiteUrl: "https://www.twitch.tv/notsounhappy",
         websiteLabel: "Visit Website",
       },
     ],
