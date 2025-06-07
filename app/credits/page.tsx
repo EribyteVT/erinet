@@ -80,12 +80,11 @@ const creditData: CreditCategory[] = [
     },
     people: [
       {
-        name: "Eribyte",
+        name: "sleepycrea",
         role: "Artist",
-        description:
-          "Im getting a new one soon, my ms paint doodles don't cut it",
-        imageUrl: "/Eribyte.png",
-        websiteUrl: "https://eribyte.net",
+        description: "created the pfp for Eribot!",
+        imageUrl: "/Eribot_face.png",
+        websiteUrl: "https://sleepycrea.carrd.co/",
         websiteLabel: "Visit Portfolio",
       },
     ],
