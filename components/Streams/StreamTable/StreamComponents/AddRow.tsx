@@ -18,17 +18,14 @@ async function sendToDiscord(
   streamerLink: string,
   maxRetries = 3
 ): Promise<string | null> {
-  let retries = 0;
-  let delayMs = 1000; // Initial delay in ms
-
-  while (true) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const endDate = dayjs(new Date(stream.stream_date)).add(
         stream.duration!,
         "minutes"
       );
 
-      const response = await createDiscordEventAction(
+      const response: any = await createDiscordEventAction(
         stream.stream_id.toString(),
         guild,
         stream.stream_name,
@@ -38,40 +35,31 @@ async function sendToDiscord(
       );
 
       // If successful, return the event ID
-      return response.data?.event_id;
+      if (response.status === "success") {
+        return response.data?.event_id;
+      }
+
+      // If we get an error response, throw it to trigger retry logic
+      throw new Error(response.message || "Discord API error");
     } catch (error) {
       console.error(
-        `Discord event creation attempt ${retries + 1}/${maxRetries} failed:`,
+        `Discord event creation attempt ${attempt + 1}/${maxRetries} failed:`,
         error
       );
 
       // Check if we've reached max retries
-      if (retries >= maxRetries) {
+      if (attempt >= maxRetries - 1) {
         console.error("Max retries exceeded for Discord event creation");
         return null;
       }
 
-      // Check if this is likely a rate limit error
-      const isRateLimit =
-        error instanceof Error &&
-        (error.message.includes("rate limit") || error.message.includes("429"));
-
-      if (isRateLimit) {
-        console.warn(
-          `Rate limited by Discord. Retrying in ${delayMs / 1000}s...`
-        );
-
-        // Wait with exponential backoff before retrying
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        retries++;
-        delayMs *= 2; // Exponential backoff
-        continue;
-      }
-
-      // For other errors, just return null
-      return null;
+      // The retry logic with proper retry_after handling is now in the Discord action itself
+      // We don't need to implement retry delays here since the action handles it
+      console.warn(`Retrying Discord event creation...`);
     }
   }
+
+  return null;
 }
 
 // Helper function to send stream to Twitch

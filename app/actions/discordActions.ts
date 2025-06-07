@@ -19,6 +19,74 @@ const GUILD_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes, users shouldn't join
 const BOT_GUILDS_CACHE_KEY = "botGuilds";
 const BOT_GUILDS_CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutes
 
+// Retry configuration
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_RETRY_DELAY = 1000; // Fallback delay in ms
+
+// Utility function for retrying Discord API calls with proper retry_after handling
+async function retryDiscordApiCall<T>(
+  apiCall: () => Promise<Response>,
+  maxRetries: number = DEFAULT_MAX_RETRIES
+): Promise<T> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await apiCall();
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      const errorStatus = response.status;
+      console.error(
+        `Discord API error on attempt ${attempt + 1}: ${errorStatus}`
+      );
+
+      // Check if we should retry based on status code
+      if (
+        errorStatus === 429 ||
+        (errorStatus >= 500 && errorStatus < 600)
+      ) {
+        // Rate limit or server error - worth retrying
+        if (attempt < maxRetries - 1) {
+          // Get retry delay from Discord's retry_after header or use default
+          let retryDelay = DEFAULT_RETRY_DELAY;
+          
+          const retryAfterHeader = response.headers.get('retry-after');
+          if (retryAfterHeader) {
+            // Discord returns retry_after in seconds, convert to milliseconds
+            retryDelay = parseInt(retryAfterHeader) * 1000;
+            console.log(`Using Discord's retry_after: ${retryDelay}ms`);
+          } else {
+            console.log(`Using default retry delay: ${retryDelay}ms`);
+          }
+
+          console.log(`Waiting ${retryDelay}ms before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          continue;
+        }
+      }
+
+      throw new Error(`Discord API error: ${errorStatus}`);
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        // This was our last attempt, rethrow the error
+        console.error(
+          `Failed Discord API call after ${maxRetries} attempts:`,
+          error
+        );
+        throw error;
+      }
+
+      console.log(
+        `Attempt ${attempt + 1} failed, retrying after ${DEFAULT_RETRY_DELAY}ms`
+      );
+      await new Promise((resolve) => setTimeout(resolve, DEFAULT_RETRY_DELAY));
+    }
+  }
+
+  throw new Error("Unexpected end of retry loop");
+}
+
 // Discord Event Management
 async function createDiscordEvent(
   guildId: string,
@@ -27,8 +95,8 @@ async function createDiscordEvent(
   endTime: string,
   location: string
 ): Promise<any> {
-  try {
-    const response = await fetch(
+  return retryDiscordApiCall(() =>
+    fetch(
       `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`,
       {
         method: "POST",
@@ -47,21 +115,8 @@ async function createDiscordEvent(
           },
         }),
       }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Discord API error:", errorData);
-      throw new Error(
-        `Failed to create Discord event: ${JSON.stringify(errorData)}`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error creating Discord event:", error);
-    throw error;
-  }
+    )
+  );
 }
 
 export async function updateDiscordEvent(
@@ -73,33 +128,28 @@ export async function updateDiscordEvent(
   location: string
 ): Promise<boolean> {
   try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          scheduled_start_time: startTime,
-          scheduled_end_time: endTime,
-          entity_type: 3, // External event
-          privacy_level: 2, // Guild only
-          entity_metadata: {
-            location,
+    await retryDiscordApiCall(() =>
+      fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
           },
-        }),
-      }
+          body: JSON.stringify({
+            name,
+            scheduled_start_time: startTime,
+            scheduled_end_time: endTime,
+            entity_type: 3, // External event
+            privacy_level: 2, // Guild only
+            entity_metadata: {
+              location,
+            },
+          }),
+        }
+      )
     );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Discord API error:", errorData);
-      return false;
-    }
-
     return true;
   } catch (error) {
     console.error("Error updating Discord event:", error);
@@ -112,18 +162,19 @@ export async function deleteDiscordEvent(
   eventId: string
 ): Promise<boolean> {
   try {
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
+    await retryDiscordApiCall(() =>
+      fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/scheduled-events/${eventId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
     );
-
-    return response.ok;
+    return true;
   } catch (error) {
     console.error("Error deleting Discord event:", error);
     return false;
@@ -139,21 +190,15 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
     // If not in cache, fetch fresh data
     if (!guilds) {
       console.log("Cache miss for botGuilds, fetching from Discord API");
-      const response = await fetch(
-        "https://discord.com/api/v10/users/@me/guilds",
-        {
+      
+      guilds = await retryDiscordApiCall(() =>
+        fetch("https://discord.com/api/v10/users/@me/guilds", {
           headers: {
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-        }
+        })
       );
-
-      if (!response.ok) {
-        throw new Error(`Discord API error: ${response.status}`);
-      }
-
-      guilds = await response.json();
 
       // Cache the result
       cache.set(BOT_GUILDS_CACHE_KEY, guilds, BOT_GUILDS_CACHE_EXPIRATION);
@@ -199,24 +244,24 @@ async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
     throw new Error("Discord token not found or expired");
   }
 
-  const response = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    const guilds: GuildData[] = await retryDiscordApiCall(() =>
+      fetch("https://discord.com/api/v10/users/@me/guilds", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+    );
 
-  if (!response.ok) {
-    throw new Error(`Discord API error: ${response.status}`);
+    // Store in cache for future use
+    cache.set(cacheKey, guilds, GUILD_CACHE_DURATION);
+
+    return successResponse(guilds, "OKAY");
+  } catch (error) {
+    console.error("Error fetching user guilds:", error);
+    throw new Error(`Discord API error: ${error}`);
   }
-
-  // Get the guilds data
-  const guilds: GuildData[] = await response.json();
-
-  // Store in cache for future use
-  cache.set(cacheKey, guilds, GUILD_CACHE_DURATION);
-
-  return successResponse(guilds, "OKAY");
 }
 
 export const fetchUserGuilds = createRateLimitedStructuredAction(
@@ -228,9 +273,6 @@ export const fetchUserGuilds = createRateLimitedStructuredAction(
 async function fetchSpecificUserGuildImpl(
   guildId: string
 ): Promise<NormalizedResponse<GuildData | null>> {
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY = 1000; // 1 second delay between retries
-
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("User not authenticated");
@@ -252,67 +294,26 @@ async function fetchSpecificUserGuildImpl(
 
   // If not in cache, fetch from Discord API with retry logic
   if (!guilds) {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        const token = await getDiscordToken(session.user.id);
-        if (!token) {
-          throw new Error("Discord token not found or expired");
-        }
-
-        const response = await fetch(
-          "https://discord.com/api/v10/users/@me/guilds",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorStatus = response.status;
-          console.error(
-            `Discord API error on attempt ${attempt + 1}: ${errorStatus}`
-          );
-
-          // Check if we should retry based on status code
-          if (
-            errorStatus === 429 ||
-            (errorStatus >= 500 && errorStatus < 600)
-          ) {
-            // Rate limit or server error - worth retrying
-            if (attempt < MAX_RETRIES - 1) {
-              console.log(`Waiting ${RETRY_DELAY}ms before retry...`);
-              await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-              continue;
-            }
-          }
-
-          throw new Error(`Discord API error: ${errorStatus}`);
-        }
-
-        guilds = await response.json();
-
-        // Cache all guilds
-        cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
-
-        // Success, break out of retry loop
-        break;
-      } catch (error) {
-        if (attempt === MAX_RETRIES - 1) {
-          // This was our last attempt, rethrow the error
-          console.error(
-            `Failed to fetch guilds after ${MAX_RETRIES} attempts:`,
-            error
-          );
-          throw error;
-        }
-
-        console.log(
-          `Attempt ${attempt + 1} failed, retrying after ${RETRY_DELAY}ms`
-        );
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+    try {
+      const token = await getDiscordToken(session.user.id);
+      if (!token) {
+        throw new Error("Discord token not found or expired");
       }
+
+      guilds = await retryDiscordApiCall(() =>
+        fetch("https://discord.com/api/v10/users/@me/guilds", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+      );
+
+      // Cache all guilds
+      cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
+    } catch (error) {
+      console.error("Failed to fetch guilds:", error);
+      throw error;
     }
   }
 
@@ -414,23 +415,15 @@ async function fetchGuildChannelsImpl(
       );
     }
 
-    // Call Discord API to get channels
-    const response = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/channels`,
-      {
+    // Call Discord API to get channels with retry logic
+    const channels: any = await retryDiscordApiCall(() =>
+      fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {
         headers: {
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      })
     );
-
-    if (!response.ok) {
-      console.error(`Discord API error: ${response.status}`);
-      return errorResponse(`Failed to fetch channels: ${response.statusText}`);
-    }
-
-    const channels = await response.json();
 
     // Filter to only text channels (type 0)
     const textChannels = channels.filter((channel: any) => channel.type === 0);
@@ -524,10 +517,9 @@ async function sendScheduleMessageImpl(
     messageContent +=
       "\n-# *This schedule was posted via [Eribot](https://eri.bot)*";
 
-    // Send message to Discord
-    const response = await fetch(
-      `https://discord.com/api/v10/channels/${channelId}/messages`,
-      {
+    // Send message to Discord with retry logic
+    const messageData: any = await retryDiscordApiCall(() =>
+      fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
         method: "POST",
         headers: {
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
@@ -536,18 +528,8 @@ async function sendScheduleMessageImpl(
         body: JSON.stringify({
           content: messageContent,
         }),
-      }
+      })
     );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Discord API error:", errorData);
-      return errorResponse(
-        `Failed to send message: ${JSON.stringify(errorData)}`
-      );
-    }
-
-    const messageData = await response.json();
 
     // Update the streamer_lookup table with the message ID
     await prisma.streamer_lookup.update({
