@@ -3,24 +3,66 @@
 import { useEffect, useRef, useState } from "react";
 import { Canvas, Image, Text, Polygon, Circle } from "fabric";
 import { Button } from "../ui/button";
+import { FILL_COLORS, POINT_TYPES, TYPE_COLORS, TypedPoint } from "./types";
 
 export default function ScheduleImage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<Canvas | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [isPolygonMode, setIsPolygonMode] = useState(false);
-  const [polygonPoints, setPolygonPoints] = useState<
-    { x: number; y: number }[]
-  >([]);
+  const [polygonPoints, setPolygonPoints] = useState<TypedPoint[]>([]);
+  const [selectedPointType, setSelectedPointType] =
+    useState<string>("stream name");
   const [tempPoints, setTempPoints] = useState<Circle[]>([]);
 
-  // Sample image URLs (you can replace these with your own images)
-  const sampleImages = [
-    "https://picsum.photos/200/150?random=1",
-    "https://picsum.photos/200/150?random=2",
-    "https://picsum.photos/200/150?random=3",
-    "https://picsum.photos/200/150?random=4",
-  ];
+  const savePoints = () => {
+    console.log("saving");
+    const pointsData = {
+      points: polygonPoints,
+      timestamp: new Date().toISOString(),
+    };
+    console.log(pointsData);
+    localStorage.setItem("erinet-schedule-points", JSON.stringify(pointsData));
+  };
+
+  const loadPoints = () => {
+    const saved = localStorage.getItem("erinet-schedule-points");
+    if (saved) {
+      const data = JSON.parse(saved);
+      console.log(data);
+      setPolygonPoints(data.points);
+      recreateVisualPoints(data.points);
+      console.log("Loaded");
+    }
+  };
+
+  const recreateVisualPoints = (points: TypedPoint[]) => {
+    if (!canvas) return;
+
+    // Clear any existing temporary points first
+    tempPoints.forEach((point) => canvas.remove(point));
+    setTempPoints([]);
+
+    // Create new visual indicators for each loaded point
+    const newTempPoints: Circle[] = [];
+
+    points.forEach((point) => {
+      const pointCircle = new Circle({
+        left: point.x - 3,
+        top: point.y - 3,
+        radius: 3,
+        fill: TYPE_COLORS[point.type] || "#ff0000",
+        selectable: false,
+        evented: false,
+      });
+
+      canvas.add(pointCircle);
+      newTempPoints.push(pointCircle);
+    });
+
+    setTempPoints(newTempPoints);
+    canvas.renderAll();
+  };
 
   // Initialize canvas only once
   useEffect(() => {
@@ -87,14 +129,19 @@ export default function ScheduleImage() {
       if (!isPolygonMode) return;
 
       const pointer = canvas.getPointer(e.e);
-      const newPoint = { x: pointer.x, y: pointer.y };
+      const newPoint: TypedPoint = {
+        x: pointer.x,
+        y: pointer.y,
+        type: selectedPointType,
+        id: crypto.randomUUID(), // or use a counter
+      };
 
-      // Add visual point indicator
+      // Create visual indicator with type-specific color
       const pointCircle = new Circle({
         left: pointer.x - 3,
         top: pointer.y - 3,
         radius: 3,
-        fill: "#ff0000",
+        fill: TYPE_COLORS[selectedPointType] || "#ff0000",
         selectable: false,
         evented: false,
       });
@@ -177,10 +224,6 @@ export default function ScheduleImage() {
   };
 
   const finishPolygon = () => {
-    console.log("finish polygon called");
-    console.log("canvas:", !!canvas);
-    console.log("polygonPoints length:", polygonPoints.length);
-    console.log("polygonPoints:", polygonPoints);
     if (!canvas || polygonPoints.length < 3) {
       console.log("not enough points or no canvas");
       alert("You need at least 3 points to create a polygon!");
@@ -201,11 +244,11 @@ export default function ScheduleImage() {
     const polygon = new Polygon(relativePoints, {
       left: minX,
       top: minY,
-      fill: "rgba(0, 150, 255, 0.3)",
-      stroke: "#0096ff",
+      fill: FILL_COLORS[selectedPointType],
+      stroke: TYPE_COLORS[selectedPointType],
       strokeWidth: 2,
       cornerStyle: "circle",
-      cornerColor: "#4285f4",
+      cornerColor: TYPE_COLORS[selectedPointType],
       cornerSize: 8,
       transparentCorners: false,
     });
@@ -312,41 +355,36 @@ export default function ScheduleImage() {
             </button>
 
             {isPolygonMode && (
-              <>
-                <Button
-                  onClick={finishPolygon}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                  disabled={polygonPoints.length < 3}
-                >
-                  Finish Polygon ({polygonPoints.length} points)
-                </Button>
-
-                <button
-                  onClick={cancelPolygon}
-                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
-                >
-                  Cancel
-                </button>
-              </>
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex items-center gap-4 mb-2">
+                  <Button
+                    onClick={finishPolygon}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                    disabled={polygonPoints.length < 3}
+                  >
+                    Finish Polygon ({polygonPoints.length} points)
+                  </Button>
+                  <Button
+                    onClick={cancelPolygon}
+                    className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                  >
+                    Cancel
+                  </Button>
+                  <label className="font-semibold">Point Type:</label>
+                  <select
+                    value={selectedPointType}
+                    onChange={(e) => setSelectedPointType(e.target.value)}
+                    className="px-2 py-1 border rounded"
+                  >
+                    {POINT_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             )}
-          </div>
-
-          {/* Image Controls */}
-          <div className="flex gap-2">
-            {sampleImages.map((url, index) => (
-              <button
-                key={index}
-                onClick={() => addImageToCanvas(url)}
-                disabled={isPolygonMode}
-                className={`px-4 py-2 rounded transition-colors ${
-                  isPolygonMode
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-500 text-white hover:bg-blue-600"
-                }`}
-              >
-                Add Image {index + 1}
-              </button>
-            ))}
           </div>
 
           {/* Other Controls */}
@@ -405,6 +443,20 @@ export default function ScheduleImage() {
             </button>
 
             <button
+              onClick={savePoints}
+              className={`px-4 py-2 rounded transition-colors bg-purple-500 text-white hover:bg-purple-600`}
+            >
+              Save
+            </button>
+
+            <button
+              onClick={loadPoints}
+              className={`px-4 py-2 rounded transition-colors bg-purple-500 text-white hover:bg-purple-600`}
+            >
+              Load
+            </button>
+
+            <button
               onClick={clearCanvas}
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
             >
@@ -418,82 +470,6 @@ export default function ScheduleImage() {
           <div className="border-2 border-gray-300 rounded-lg shadow-lg">
             <canvas ref={canvasRef} />
           </div>
-        </div>
-
-        {/* Instructions */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">How to Use:</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Image Controls:</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>
-                  • <strong>Add Images:</strong> Click "Add Image" buttons or
-                  upload your own
-                </li>
-                <li>
-                  • <strong>Move Images:</strong> Click and drag any image to
-                  move it
-                </li>
-                <li>
-                  • <strong>Resize Images:</strong> Drag corner handles to
-                  resize
-                </li>
-                <li>
-                  • <strong>Rotate Images:</strong> Drag the rotation handle
-                  above selection
-                </li>
-                <li>
-                  • <strong>Layer Control:</strong> Use "Bring to Front" and
-                  "Send to Back"
-                </li>
-                <li>
-                  • <strong>Delete:</strong> Select an image and click "Delete
-                  Selected"
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Polygon Creation:</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>
-                  • <strong>Enter Polygon Mode:</strong> Click "Polygon Mode"
-                  button
-                </li>
-                <li>
-                  • <strong>Add Points:</strong> Click anywhere on the canvas to
-                  add points
-                </li>
-                <li>
-                  • <strong>Visual Feedback:</strong> Red dots show where you've
-                  clicked
-                </li>
-                <li>
-                  • <strong>Finish Polygon:</strong> Click "Finish Polygon"
-                  (minimum 3 points)
-                </li>
-                <li>
-                  • <strong>Cancel:</strong> Click "Cancel" to discard current
-                  polygon
-                </li>
-                <li>
-                  • <strong>Exit Mode:</strong> Click "Exit Polygon Mode" when
-                  done
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {isPolygonMode && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-blue-800 font-semibold">
-                🔵 Polygon Mode Active - Click on the canvas to add points!
-              </p>
-              <p className="text-blue-600 text-sm mt-1">
-                Current points: {polygonPoints.length} | Minimum needed: 3
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
