@@ -3,65 +3,141 @@
 import { useEffect, useRef, useState } from "react";
 import { Canvas, Image, Text, Polygon, Circle } from "fabric";
 import { Button } from "../ui/button";
-import { FILL_COLORS, POINT_TYPES, TYPE_COLORS, TypedPoint } from "./types";
+import {
+  FILL_COLORS,
+  POLYGON_TYPES,
+  TYPE_COLORS,
+  Point,
+  TypedPolygon,
+  getTypeColor,
+} from "./types";
 
 export default function ScheduleImage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<Canvas | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [isPolygonMode, setIsPolygonMode] = useState(false);
-  const [polygonPoints, setPolygonPoints] = useState<TypedPoint[]>([]);
-  const [selectedPointType, setSelectedPointType] =
+
+  // Changed from TypedPoint[] to Point[] since types are now on polygons
+  const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
+  const [selectedPolygonType, setSelectedPolygonType] =
     useState<string>("stream name");
   const [tempPoints, setTempPoints] = useState<Circle[]>([]);
 
-  const savePoints = () => {
-    console.log("saving");
-    const pointsData = {
-      points: polygonPoints,
+  // New state for saving typed polygons
+  const [savedPolygons, setSavedPolygons] = useState<TypedPolygon[]>([]);
+
+  const savePolygons = () => {
+    if (!canvas) return;
+
+    console.log("saving polygons");
+
+    // Get all polygon objects from canvas and convert to TypedPolygon format
+    const polygonObjects = canvas
+      .getObjects()
+      .filter((obj) => obj.type === "polygon") as Polygon[];
+
+    const polygonsToSave: TypedPolygon[] = polygonObjects.map((polygon) => {
+      // Get the custom type property we'll set on the polygon
+      const polygonType = (polygon as any).polygonType || "stream name";
+
+      return {
+        id: (polygon as any).polygonId || crypto.randomUUID(),
+        points: (polygon as any).points.map((point: any) => ({
+          x: point.x,
+          y: point.y,
+        })),
+        type: polygonType,
+        left: polygon.left || 0,
+        top: polygon.top || 0,
+      };
+    });
+
+    const polygonData = {
+      polygons: polygonsToSave,
       timestamp: new Date().toISOString(),
     };
-    console.log(pointsData);
-    localStorage.setItem("erinet-schedule-points", JSON.stringify(pointsData));
+
+    console.log("Saving polygon data:", polygonData);
+    localStorage.setItem(
+      "erinet-schedule-polygons",
+      JSON.stringify(polygonData)
+    );
+    setSavedPolygons(polygonsToSave);
   };
 
-  const loadPoints = () => {
-    const saved = localStorage.getItem("erinet-schedule-points");
+  const loadPolygons = () => {
+    const saved = localStorage.getItem("erinet-schedule-polygons");
     if (saved) {
       const data = JSON.parse(saved);
-      console.log(data);
-      setPolygonPoints(data.points);
-      recreateVisualPoints(data.points);
-      console.log("Loaded");
+      console.log("Loading polygon data:", data);
+      setSavedPolygons(data.polygons);
+      recreatePolygons(data.polygons);
+      console.log("Polygons loaded");
     }
   };
 
-  const recreateVisualPoints = (points: TypedPoint[]) => {
+  const recreatePolygons = (polygons: TypedPolygon[]) => {
     if (!canvas) return;
 
-    // Clear any existing temporary points first
-    tempPoints.forEach((point) => canvas.remove(point));
-    setTempPoints([]);
+    // Remove any existing polygons (but keep background and other objects)
+    const objectsToRemove = canvas
+      .getObjects()
+      .filter((obj) => obj.type === "polygon" && (obj as any).polygonId);
+    objectsToRemove.forEach((obj) => canvas.remove(obj));
 
-    // Create new visual indicators for each loaded point
-    const newTempPoints: Circle[] = [];
-
-    points.forEach((point) => {
-      const pointCircle = new Circle({
-        left: point.x - 3,
-        top: point.y - 3,
-        radius: 3,
-        fill: TYPE_COLORS[point.type] || "#ff0000",
-        selectable: false,
-        evented: false,
+    // Recreate polygons from saved data
+    polygons.forEach((polygonData) => {
+      const polygon = new Polygon(polygonData.points, {
+        left: polygonData.left,
+        top: polygonData.top,
+        fill: getTypeColor(polygonData.type) + "55",
+        stroke: getTypeColor(polygonData.type),
+        strokeWidth: 2,
+        cornerStyle: "circle",
+        cornerColor: getTypeColor(polygonData.type),
+        cornerSize: 8,
+        transparentCorners: false,
       });
 
-      canvas.add(pointCircle);
-      newTempPoints.push(pointCircle);
+      // Store type and id on the polygon object for later retrieval
+      (polygon as any).polygonType = polygonData.type;
+      (polygon as any).polygonId = polygonData.id;
+
+      canvas.add(polygon);
     });
 
-    setTempPoints(newTempPoints);
     canvas.renderAll();
+  };
+
+  const cancelPolygon = () => {
+    if (!canvas) return;
+
+    // Remove temporary points
+    tempPoints.forEach((point) => canvas.remove(point));
+
+    // Reset state
+    setPolygonPoints([]);
+    setTempPoints([]);
+    canvas.renderAll();
+  };
+
+  const deleteSelected = () => {
+    if (!canvas) return;
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      canvas.remove(activeObject);
+      canvas.renderAll();
+    }
+  };
+
+  const bringToFront = () => {
+    if (!canvas) return;
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      canvas.bringObjectToFront(activeObject);
+      canvas.renderAll();
+    }
   };
 
   // Initialize canvas only once
@@ -93,7 +169,6 @@ export default function ScheduleImage() {
 
           fabricCanvas.add(backgroundImg);
           fabricCanvas.sendObjectToBack(backgroundImg);
-
           fabricCanvas.renderAll();
         })
         .catch((error) => {
@@ -129,11 +204,9 @@ export default function ScheduleImage() {
       if (!isPolygonMode) return;
 
       const pointer = canvas.getPointer(e.e);
-      const newPoint: TypedPoint = {
+      const newPoint: Point = {
         x: pointer.x,
         y: pointer.y,
-        type: selectedPointType,
-        id: crypto.randomUUID(), // or use a counter
       };
 
       // Create visual indicator with type-specific color
@@ -141,7 +214,7 @@ export default function ScheduleImage() {
         left: pointer.x - 3,
         top: pointer.y - 3,
         radius: 3,
-        fill: TYPE_COLORS[selectedPointType] || "#ff0000",
+        fill: getTypeColor(selectedPolygonType),
         selectable: false,
         evented: false,
       });
@@ -178,7 +251,7 @@ export default function ScheduleImage() {
     return () => {
       canvas.off("mouse:down", handleCanvasClick);
     };
-  }, [isPolygonMode, canvas]);
+  }, [isPolygonMode, canvas, selectedPolygonType]);
 
   const addImageToCanvas = (imageUrl: string) => {
     if (!canvas || isPolygonMode) return;
@@ -240,21 +313,26 @@ export default function ScheduleImage() {
       y: point.y - minY,
     }));
 
-    // Create the polygon
+    // Create the polygon with the selected type
     const polygon = new Polygon(relativePoints, {
       left: minX,
       top: minY,
-      fill: FILL_COLORS[selectedPointType],
-      stroke: TYPE_COLORS[selectedPointType],
+      fill: getTypeColor(selectedPolygonType) + "55",
+      stroke: getTypeColor(selectedPolygonType),
       strokeWidth: 2,
       cornerStyle: "circle",
-      cornerColor: TYPE_COLORS[selectedPointType],
+      cornerColor: getTypeColor(selectedPolygonType),
       cornerSize: 8,
       transparentCorners: false,
     });
 
+    // Store type and id on the polygon object
+    const polygonId = crypto.randomUUID();
+    (polygon as any).polygonType = selectedPolygonType;
+    (polygon as any).polygonId = polygonId;
+
     canvas.add(polygon);
-    console.log("polygon added to canvas");
+    console.log(`polygon added to canvas with type: ${selectedPolygonType}`);
 
     // Clean up temporary points
     tempPoints.forEach((point) => canvas.remove(point));
@@ -267,211 +345,139 @@ export default function ScheduleImage() {
     console.log("polygon creation completed");
   };
 
-  const cancelPolygon = () => {
-    if (!canvas) return;
-
-    // Remove temporary points
-    tempPoints.forEach((point) => canvas.remove(point));
-
-    // Reset state
-    setPolygonPoints([]);
-    setTempPoints([]);
-
-    canvas.renderAll();
-  };
-
-  const clearCanvas = () => {
-    if (!canvas) return;
-
-    const objects = canvas.getObjects();
-    // Keep background image (first object) and instruction text (second object)
-    // Remove everything else
-    const objectsToKeep = objects.slice(0, 2);
-    const objectsToRemove = objects.slice(2);
-
-    canvas.remove(...objectsToRemove);
-
-    // Reset polygon state
-    setPolygonPoints([]);
-    setTempPoints([]);
-    setIsPolygonMode(false);
-
-    canvas.renderAll();
-  };
-
-  const deleteSelected = () => {
-    if (!canvas || isPolygonMode) return;
-
-    const activeObject = canvas.getActiveObject();
-    const objects = canvas.getObjects();
-
-    // Don't allow deletion of background image (index 0) or instruction text (index 1)
-    if (activeObject && objects.indexOf(activeObject) > 1) {
-      canvas.remove(activeObject);
-      canvas.renderAll();
-    }
-  };
-
-  const bringToFront = () => {
-    if (!canvas || isPolygonMode) return;
-
-    const activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      canvas.bringObjectToFront(activeObject);
-      canvas.renderAll();
-    }
-  };
-
-  const sendToBack = () => {
-    if (!canvas || isPolygonMode) return;
-
-    const activeObject = canvas.getActiveObject();
-    if (activeObject) {
-      canvas.sendObjectToBack(activeObject);
-      canvas.renderAll();
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-          Interactive Canvas with Polygon Creation
-        </h1>
+    <div className="w-full max-w-6xl mx-auto p-4 space-y-4">
+      <div className="flex flex-wrap gap-4 mb-4">
+        {/* Polygon Mode Controls */}
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={togglePolygonMode}
+            className={`px-4 py-2 rounded transition-colors ${
+              isPolygonMode
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-indigo-500 text-white hover:bg-indigo-600"
+            }`}
+          >
+            {isPolygonMode ? "Exit Polygon Mode" : "Polygon Mode"}
+          </button>
 
-        {/* Controls */}
-        <div className="mb-6 flex flex-wrap gap-4 justify-center">
-          {/* Polygon Controls */}
-          <div className="flex gap-2 border-r-2 pr-4">
-            <button
-              onClick={togglePolygonMode}
-              className={`px-4 py-2 rounded transition-colors ${
-                isPolygonMode
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "bg-indigo-500 text-white hover:bg-indigo-600"
-              }`}
-            >
-              {isPolygonMode ? "Exit Polygon Mode" : "Polygon Mode"}
-            </button>
-
-            {isPolygonMode && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
-                <div className="flex items-center gap-4 mb-2">
-                  <Button
-                    onClick={finishPolygon}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                    disabled={polygonPoints.length < 3}
-                  >
-                    Finish Polygon ({polygonPoints.length} points)
-                  </Button>
-                  <Button
-                    onClick={cancelPolygon}
-                    className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
-                  >
-                    Cancel
-                  </Button>
-                  <label className="font-semibold">Point Type:</label>
-                  <select
-                    value={selectedPointType}
-                    onChange={(e) => setSelectedPointType(e.target.value)}
-                    className="px-2 py-1 border rounded"
-                  >
-                    {POINT_TYPES.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          {isPolygonMode && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+              <div className="flex items-center gap-4 mb-2">
+                <Button
+                  onClick={finishPolygon}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  disabled={polygonPoints.length < 3}
+                >
+                  Finish Polygon ({polygonPoints.length} points)
+                </Button>
+                <Button
+                  onClick={cancelPolygon}
+                  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+                >
+                  Cancel
+                </Button>
+                <label className="font-semibold">Polygon Type:</label>
+                <select
+                  value={selectedPolygonType}
+                  onChange={(e) => setSelectedPolygonType(e.target.value)}
+                  className="px-2 py-1 border rounded"
+                >
+                  {POLYGON_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
-          </div>
-
-          {/* Other Controls */}
-          <div className="flex gap-2">
-            <label
-              className={`px-4 py-2 rounded transition-colors cursor-pointer ${
-                isPolygonMode
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-green-500 text-white hover:bg-green-600"
-              }`}
-            >
-              Upload Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={addImageFromFile}
-                className="hidden"
-                disabled={isPolygonMode}
-              />
-            </label>
-
-            <button
-              onClick={deleteSelected}
-              disabled={isPolygonMode}
-              className={`px-4 py-2 rounded transition-colors ${
-                isPolygonMode
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-red-500 text-white hover:bg-red-600"
-              }`}
-            >
-              Delete Selected
-            </button>
-
-            <button
-              onClick={bringToFront}
-              disabled={isPolygonMode}
-              className={`px-4 py-2 rounded transition-colors ${
-                isPolygonMode
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-purple-500 text-white hover:bg-purple-600"
-              }`}
-            >
-              Bring to Front
-            </button>
-
-            <button
-              onClick={sendToBack}
-              disabled={isPolygonMode}
-              className={`px-4 py-2 rounded transition-colors ${
-                isPolygonMode
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-purple-500 text-white hover:bg-purple-600"
-              }`}
-            >
-              Send to Back
-            </button>
-
-            <button
-              onClick={savePoints}
-              className={`px-4 py-2 rounded transition-colors bg-purple-500 text-white hover:bg-purple-600`}
-            >
-              Save
-            </button>
-
-            <button
-              onClick={loadPoints}
-              className={`px-4 py-2 rounded transition-colors bg-purple-500 text-white hover:bg-purple-600`}
-            >
-              Load
-            </button>
-
-            <button
-              onClick={clearCanvas}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-            >
-              Clear Canvas
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Canvas Container */}
-        <div className="flex justify-center">
-          <div className="border-2 border-gray-300 rounded-lg shadow-lg">
-            <canvas ref={canvasRef} />
-          </div>
+        {/* Other Controls */}
+        <div className="flex gap-2">
+          <label
+            className={`px-4 py-2 rounded transition-colors cursor-pointer ${
+              isPolygonMode
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
+          >
+            Upload Image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={addImageFromFile}
+              className="hidden"
+              disabled={isPolygonMode}
+            />
+          </label>
+
+          <button
+            onClick={deleteSelected}
+            disabled={isPolygonMode}
+            className={`px-4 py-2 rounded transition-colors ${
+              isPolygonMode
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-red-500 text-white hover:bg-red-600"
+            }`}
+          >
+            Delete Selected
+          </button>
+
+          <button
+            onClick={bringToFront}
+            disabled={isPolygonMode}
+            className={`px-4 py-2 rounded transition-colors ${
+              isPolygonMode
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            Bring to Front
+          </button>
+        </div>
+
+        {/* Save/Load Controls */}
+        <div className="flex gap-2">
+          <button
+            onClick={savePolygons}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+          >
+            Save Polygons
+          </button>
+          <button
+            onClick={loadPolygons}
+            className="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600 transition-colors"
+          >
+            Load Polygons
+          </button>
         </div>
       </div>
+
+      {/* Canvas */}
+      <div className="border border-gray-300 rounded-lg overflow-hidden">
+        <canvas ref={canvasRef} />
+      </div>
+
+      {/* Debug Info */}
+      {savedPolygons.length > 0 && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded">
+          <h3 className="font-semibold mb-2">
+            Saved Polygons ({savedPolygons.length}):
+          </h3>
+          <div className="space-y-1">
+            {savedPolygons.map((polygon, index) => (
+              <div key={polygon.id} className="text-sm">
+                {index + 1}. Type:{" "}
+                <span className="font-medium">{polygon.type}</span> | Points:{" "}
+                {polygon.points.length} | Position: ({Math.round(polygon.left)},{" "}
+                {Math.round(polygon.top)})
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
