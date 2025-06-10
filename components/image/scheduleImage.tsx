@@ -11,6 +11,7 @@ import {
   TypedPolygon,
   getTypeColor,
 } from "./types";
+import { TypeSelector } from "./TypeSelector";
 
 export default function ScheduleImage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -317,11 +318,11 @@ export default function ScheduleImage() {
     const polygon = new Polygon(relativePoints, {
       left: minX,
       top: minY,
-      fill: getTypeColor(selectedPolygonType) + "55",
-      stroke: getTypeColor(selectedPolygonType),
+      fill: getTypeColor(selectedPolygonType, "") + "55", // Add transparency
+      stroke: getTypeColor(selectedPolygonType, ""),
       strokeWidth: 2,
       cornerStyle: "circle",
-      cornerColor: getTypeColor(selectedPolygonType),
+      cornerColor: getTypeColor(selectedPolygonType, ""),
       cornerSize: 8,
       transparentCorners: false,
     });
@@ -362,7 +363,7 @@ export default function ScheduleImage() {
           </button>
 
           {isPolygonMode && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+            <div className="mt-4 p-4  border border-blue-200 rounded">
               <div className="flex items-center gap-4 mb-2">
                 <Button
                   onClick={finishPolygon}
@@ -378,17 +379,11 @@ export default function ScheduleImage() {
                   Cancel
                 </Button>
                 <label className="font-semibold">Polygon Type:</label>
-                <select
-                  value={selectedPolygonType}
-                  onChange={(e) => setSelectedPolygonType(e.target.value)}
-                  className="px-2 py-1 border rounded"
-                >
-                  {POLYGON_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                <TypeSelector
+                  selectedPolygonType={selectedPolygonType}
+                  setSelectedPolygonType={setSelectedPolygonType}
+                  guildId={""}
+                />
               </div>
             </div>
           )}

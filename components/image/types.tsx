@@ -45,6 +45,27 @@ export const TYPE_COLORS: Record<PolygonType, string> = {
 };
 
 // Then use it with a fallback
-export const getTypeColor = (type: string): string => {
-  return TYPE_COLORS[type as PolygonType] || "#ff0000"; // fallback to red
+export const getTypeColor = (type: string, guildId = "default"): string => {
+  // Check predefined types first
+  if (TYPE_COLORS[type as keyof typeof TYPE_COLORS]) {
+    return TYPE_COLORS[type as keyof typeof TYPE_COLORS];
+  }
+
+  // Check custom types from localStorage
+  const savedCustomTypes = localStorage.getItem(`custom-types-${guildId}`);
+  if (savedCustomTypes) {
+    const customTypes = JSON.parse(savedCustomTypes);
+    const customType = customTypes.find((ct: any) => ct.name === type);
+    if (customType?.color) {
+      return customType.color;
+    }
+  }
+
+  // Generate color if none found
+  let hash = 0;
+  for (let i = 0; i < type.length; i++) {
+    hash = type.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 70%, 50%)`;
 };
