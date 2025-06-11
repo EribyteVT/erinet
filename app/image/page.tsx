@@ -1,9 +1,9 @@
-import ScheduleImage from "@/components/image/scheduleImage";
+import ScheduleImageGenerator from "@/components/image/ScheduleImageGenerator";
 
 export default async function DashboardPage() {
   return (
     <>
-      <ScheduleImage />
+      <ScheduleImageGenerator />
     </>
   );
 }
