@@ -66,6 +66,7 @@ export const getTypeColor = (type: string, guildId = "default"): string => {
   for (let i = 0; i < type.length; i++) {
     hash = type.charCodeAt(i) + ((hash << 5) - hash);
   }
+  
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 70%, 50%)`;
 };
