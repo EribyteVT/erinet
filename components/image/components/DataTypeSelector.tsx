@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useDrawing } from "../hooks/useDrawing";
 import { OFFSET_STREAM_TYPES, SINGULAR_POLYGON_TYPES, generateOffsetTemplate } from "../types";
+import { DrawingControls } from "./DrawingControls";
 
 var stream_number_positions = ["First Stream", "Second Stream","Third Stream", "Fourth Stream","Fifth Stream", "Sixth Stream","Seventh Stream"]
 
@@ -188,6 +189,8 @@ export function DataTypeSelector() {
             </Button>
           </div>
         </div>
+        {/* Drawing Controls */}
+        <DrawingControls />
       </CardContent>
     </Card>
   );

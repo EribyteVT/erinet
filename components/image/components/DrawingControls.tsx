@@ -15,13 +15,7 @@ export function DrawingControls() {
   } = useDrawing();
 
   return (
-    <Card className="bg-gray-700 border-gray-600">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-green-400 text-sm font-semibold uppercase tracking-wide">
-          Drawing Mode
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <>
         <Button
           onClick={toggleDrawingMode}
           className={`w-full ${
@@ -57,7 +51,6 @@ export function DrawingControls() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+        </>
   );
 }
