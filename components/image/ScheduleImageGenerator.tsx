@@ -10,10 +10,10 @@ import { DesignModePanel } from "./components/DesignModePanel";
 import { ScheduleModePanel } from "./components/ScheduleModePanel";
 import { CanvasArea } from "./components/CanvasArea";
 
-export type AppMode = 'design' | 'schedule';
+export type AppMode = "design" | "schedule";
 
 export default function ScheduleImageGenerator() {
-  const [mode, setMode] = useState<AppMode>('design');
+  const [mode, setMode] = useState<AppMode>("design");
 
   return (
     <CanvasProvider>
@@ -21,10 +21,8 @@ export default function ScheduleImageGenerator() {
         <ScheduleDataProvider>
           <DrawingProvider>
             <div className="w-full h-screen flex flex-col bg-gray-900 text-white">
-              <TopBar mode={mode} onModeChange={setMode} />
-              
               <div className="flex flex-1 overflow-hidden">
-                {mode === 'design' ? (
+                {mode === "design" ? (
                   <DesignModePanel />
                 ) : (
                   <ScheduleModePanel />
