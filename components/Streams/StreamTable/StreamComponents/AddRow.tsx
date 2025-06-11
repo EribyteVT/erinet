@@ -35,7 +35,7 @@ async function sendToDiscord(
       );
 
       // If successful, return the event ID
-      if (response.status === "success") {
+      if (response.success) {
         return response.data?.event_id;
       }
 
@@ -53,8 +53,6 @@ async function sendToDiscord(
         return null;
       }
 
-      // The retry logic with proper retry_after handling is now in the Discord action itself
-      // We don't need to implement retry delays here since the action handles it
       console.warn(`Retrying Discord event creation...`);
     }
   }
