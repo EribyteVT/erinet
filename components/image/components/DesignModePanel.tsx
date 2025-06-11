@@ -13,7 +13,7 @@ export function DesignModePanel() {
   const { currentTemplate, saveTemplate } = useTemplate();
 
   return (
-    <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+    <div className="w-100 bg-gray-800 border-r border-gray-700 overflow-y-auto">
       <div className="p-6 space-y-6">
         {/* Template Management */}
         <Card className="bg-gray-700 border-gray-600">

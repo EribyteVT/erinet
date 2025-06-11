@@ -27,7 +27,8 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
   const { updatePolygonsList } = useTemplate();
   
   const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [currentDataType, setCurrentDataType] = useState("streamTitle");
+  // Updated default to use offset-based naming
+  const [currentDataType, setCurrentDataType] = useState("day0_stream_name");
   const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
   const [tempPoints, setTempPoints] = useState<Circle[]>([]);
   const [customDataTypes, setCustomDataTypes] = useState<string[]>([]);
@@ -142,12 +143,12 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
       transparentCorners: false,
     });
 
-    // Create text object
+    // Create text object with better default styling
     // const textObj = new Text(`[${currentDataType}]`, {
     //   left: 0,
     //   top: 0,
     //   fontFamily: "Arial",
-    //   fontSize: 16,
+    //   fontSize: 14,
     //   fill: "#fff",
     //   stroke: "#000",
     //   strokeWidth: 1,
@@ -201,6 +202,8 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
   const addCustomDataType = useCallback((typeName: string) => {
     if (typeName && !customDataTypes.includes(typeName)) {
       setCustomDataTypes(prev => [...prev, typeName]);
+      // Automatically select the newly added custom type
+      setCurrentDataType(typeName);
     }
   }, [customDataTypes]);
 
