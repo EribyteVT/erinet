@@ -79,13 +79,15 @@ export function GenerateScheduleButton({
 
         if (stream) {
           console.log("YES STREAM");
+          console.log(`day${dayOffset}_stream_time`);
+
           // Update with actual stream data
           const streamDate = new Date(stream.stream_date);
           const timeStr = format(streamDate, "HH:mm");
           const durationHours = stream.duration
             ? Math.round(stream.duration / 60)
             : 0;
-
+          console.log(timeStr);
           updateScheduleData(`day${dayOffset}_stream_name`, stream.stream_name);
           updateScheduleData(`day${dayOffset}_stream_time`, timeStr);
           updateScheduleData(
