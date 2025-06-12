@@ -11,7 +11,7 @@ import {
   type SaveTemplateResult,
   type LoadTemplateResult,
 } from "@/app/actions/template-actions";
-import { fabric } from "fabric";
+import * as fabric from "fabric"; // Changed import for Fabric 6.x
 
 interface SaveTemplateData {
   guildId: string;
@@ -32,24 +32,34 @@ export function useTemplateSave() {
     const polygons: TypedPolygon[] = [];
 
     canvas.getObjects().forEach((obj) => {
-      // Only extract polygon objects with our custom properties
-      if ((obj as any).polygonType && (obj as any).points) {
-        const typedObj = obj as any;
+      // Check for both polygonType and polygonId (as used in PolygonsList)
+      const polygonType = (obj as any).polygonType;
+      const polygonId = (obj as any).polygonId;
+
+      if (polygonType && polygonId && obj.type === "group") {
+        const group = obj as any;
+
+        // Get the actual polygon from the group to extract points
+        const polygonObj = group
+          .getObjects()
+          .find((o: any) => o.type === "polygon");
+
+        const points = polygonObj?.points || [];
 
         polygons.push({
-          id: typedObj.id || crypto.randomUUID(),
-          points: typedObj.points || [],
-          type: typedObj.polygonType,
+          id: polygonId,
+          points: points,
+          type: polygonType,
           left: obj.left || 0,
           top: obj.top || 0,
-          // Include additional Fabric.js properties for reconstruction
-          fill: obj.fill as string,
-          stroke: obj.stroke as string,
-          strokeWidth: obj.strokeWidth,
-          scaleX: obj.scaleX,
-          scaleY: obj.scaleY,
-          angle: obj.angle,
-          opacity: obj.opacity,
+          // Include additional Fabric.js properties with fallbacks for null values
+          fill: "rgba(255, 0, 0, 0.3)",
+          stroke: "#ff0000",
+          strokeWidth: obj.strokeWidth || 2,
+          scaleX: obj.scaleX || 1,
+          scaleY: obj.scaleY || 1,
+          angle: obj.angle || 0,
+          opacity: obj.opacity || 1,
         });
       }
     });
@@ -71,23 +81,24 @@ export function useTemplateSave() {
 
     if (backgroundObj && backgroundObj.type === "image") {
       try {
-        // Create a temporary canvas with just the background
-        const tempCanvas = new fabric.Canvas(null, {
-          width: canvas.width,
-          height: canvas.height,
-        });
+        // Get the image element from the fabric image object
+        const imageElement =
+          (backgroundObj as any)._element ||
+          (backgroundObj as any).getElement();
 
-        // Clone and add the background object
-        const clonedObj = fabric.util.object.clone(backgroundObj);
-        tempCanvas.add(clonedObj);
+        if (imageElement) {
+          // Create a temporary canvas to convert image to base64
+          const tempCanvas = document.createElement("canvas");
+          const ctx = tempCanvas.getContext("2d");
 
-        const dataURL = tempCanvas.toDataURL({
-          format: "png",
-          quality: 0.8,
-        });
+          tempCanvas.width = imageElement.width || imageElement.naturalWidth;
+          tempCanvas.height = imageElement.height || imageElement.naturalHeight;
 
-        tempCanvas.dispose();
-        return dataURL;
+          if (ctx) {
+            ctx.drawImage(imageElement, 0, 0);
+            return tempCanvas.toDataURL("image/png", 0.8);
+          }
+        }
       } catch (error) {
         console.error("Error extracting background image:", error);
         return null;
@@ -99,7 +110,10 @@ export function useTemplateSave() {
 
   // Save template using server action
   const saveTemplate = useCallback(
-    async (data: SaveTemplateData): Promise<SaveTemplateResult> => {
+    async (
+      data: SaveTemplateData,
+      polygonData?: TypedPolygon[]
+    ): Promise<SaveTemplateResult> => {
       if (!canvas) {
         return { success: false, error: "Canvas not initialized" };
       }
@@ -107,7 +121,8 @@ export function useTemplateSave() {
       setIsSaving(true);
 
       try {
-        const polygons = extractPolygonData();
+        // Use provided polygon data or extract from canvas if not provided
+        const polygons = polygonData || extractPolygonData();
         const backgroundImage = extractBackgroundImage();
 
         const templateData = {
@@ -199,17 +214,16 @@ export function useTemplateSave() {
     }
   }, []);
 
-  // Apply loaded template to canvas
+  // Apply loaded template data to canvas
   const applyTemplateToCanvas = useCallback(
-    async (templateData: any) => {
-      if (!canvas || !templateData.template_data) return false;
+    async (data: any): Promise<boolean> => {
+      if (!canvas) return false;
 
       try {
+        // Clear existing objects
         canvas.clear();
 
-        const data = templateData.template_data;
-
-        // Set canvas dimensions if specified
+        // Set canvas dimensions if provided
         if (data.canvasWidth && data.canvasHeight) {
           canvas.setDimensions({
             width: data.canvasWidth,
@@ -217,24 +231,19 @@ export function useTemplateSave() {
           });
         }
 
-        // Load background image if present
+        // Load background image if provided
         if (data.backgroundImage) {
           try {
-            const imgObj = await fabric.Image.fromURL(data.backgroundImage);
-            imgObj.set({
-              left: 0,
-              top: 0,
-              selectable: false,
-              evented: false,
-              excludeFromExport: false,
-            });
+            const imgObj = await fabric.FabricImage.fromURL(
+              data.backgroundImage
+            );
 
-            // Scale to fit canvas if needed
-            const scaleX = canvas.width! / imgObj.width!;
-            const scaleY = canvas.height! / imgObj.height!;
+            // Scale to fit canvas
+            const scaleX = canvas.width! / imgObj.getScaledWidth();
+            const scaleY = canvas.height! / imgObj.getScaledHeight();
             const scale = Math.min(scaleX, scaleY);
 
-            imgObj.scale(scale);
+            imgObj.set({ scaleX: scale, scaleY: scale });
             canvas.add(imgObj);
             canvas.sendObjectToBack(imgObj);
           } catch (imgError) {
@@ -291,6 +300,7 @@ export function useTemplateSave() {
     getTemplateInfo,
     applyTemplateToCanvas,
     extractPolygonData,
+    extractBackgroundImage,
     isSaving,
     isLoading,
     isDeleting,

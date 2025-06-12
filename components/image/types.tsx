@@ -11,6 +11,14 @@ export interface TypedPolygon {
   // Store fabric.js properties for reconstruction
   left: number;
   top: number;
+  // Additional Fabric.js properties for complete reconstruction
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  scaleX?: number;
+  scaleY?: number;
+  angle?: number;
+  opacity?: number;
 }
 
 // Offset-based polygon types for weekly schedules

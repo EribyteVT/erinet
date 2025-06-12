@@ -17,19 +17,29 @@ import {
   Trash2,
   Info,
 } from "lucide-react";
+import { Group } from "fabric";
+import { TypedPolygon } from "../types";
 
-interface TemplateSaveProps {
-  guildId: string; // This should be passed from your Discord integration
+interface PolygonDisplay {
+  id: string;
+  type: string;
+  pointsCount: number;
+  fabricObject: Group;
 }
 
-export function TemplateSave({ guildId }: TemplateSaveProps) {
+interface TemplateSaveProps {
+  guildId: string;
+  polygons: PolygonDisplay[];
+}
+
+export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
   const {
     saveTemplate,
     loadTemplate,
     deleteTemplate,
     getTemplateInfo,
     applyTemplateToCanvas,
-    extractPolygonData,
+    extractBackgroundImage,
     isSaving,
     isLoading,
     isDeleting,
@@ -46,6 +56,36 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     templateName?: string;
     lastUpdated?: Date;
   }>({ exists: false });
+
+  // Convert PolygonDisplay to TypedPolygon for saving
+  const convertPolygonsForSaving = (): TypedPolygon[] => {
+    return polygons.map((polygon) => {
+      const fabricObject = polygon.fabricObject;
+
+      // Get the actual polygon from the group to extract points
+      const polygonObj = fabricObject
+        .getObjects()
+        .find((o) => o.type === "polygon");
+
+      const points = (polygonObj as any)?.points || [];
+
+      return {
+        id: polygon.id,
+        points: points,
+        type: polygon.type,
+        left: fabricObject.left || 0,
+        top: fabricObject.top || 0,
+        // Include additional Fabric.js properties with fallbacks for null values
+        fill: fabricObject.fill || "rgba(255, 0, 0, 0.3)",
+        stroke: fabricObject.stroke || "#ff0000",
+        strokeWidth: fabricObject.strokeWidth || 2,
+        scaleX: fabricObject.scaleX || 1,
+        scaleY: fabricObject.scaleY || 1,
+        angle: fabricObject.angle || 0,
+        opacity: fabricObject.opacity || 1,
+      };
+    });
+  };
 
   // Load template info on component mount
   useEffect(() => {
@@ -75,7 +115,6 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     }
 
     // Check if there are polygons to save
-    const polygons = extractPolygonData();
     if (polygons.length === 0) {
       setMessage({
         type: "error",
@@ -84,24 +123,38 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
       return;
     }
 
-    const result = await saveTemplate({
+    const templateData = {
       guildId,
       templateName: templateName.trim(),
       backgroundUrl: backgroundUrl.trim() || undefined,
-    });
+    };
+
+    // Use the converted polygons instead of extractPolygonData
+    const polygonData = convertPolygonsForSaving();
+
+    const result = await saveTemplate(templateData, polygonData);
 
     if (result.success) {
-      setMessage({ type: "success", text: result.message });
+      setMessage({
+        type: "success",
+        text: `Template "${templateName}" saved successfully!`,
+      });
 
       // Update template info
       setTemplateInfo({
         exists: true,
-        templateName: templateName.trim(),
+        templateName: templateName,
         lastUpdated: new Date(),
       });
     } else {
-      setMessage({ type: "error", text: result.error });
+      setMessage({
+        type: "error",
+        text: result.error || "Failed to save template",
+      });
     }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setMessage(null), 5000);
   };
 
   const handleLoadTemplate = async () => {
@@ -111,9 +164,13 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
       const applied = await applyTemplateToCanvas(result.template);
 
       if (applied) {
-        setMessage({ type: "success", text: "Template loaded successfully!" });
+        setMessage({
+          type: "success",
+          text: "Template loaded successfully!",
+        });
 
-        // Update form fields with loaded template data
+        // Update form with loaded data
+        // Update form with loaded data
         if (result.template.template_name) {
           setTemplateName(result.template.template_name);
         }
@@ -129,15 +186,18 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     } else {
       setMessage({
         type: "error",
-        text: "error",
+        text: "Failed to load template",
       });
     }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setMessage(null), 5000);
   };
 
   const handleDeleteTemplate = async () => {
     if (
       !confirm(
-        "Are you sure you want to delete your saved template? This action cannot be undone."
+        "Are you sure you want to delete this template? This action cannot be undone."
       )
     ) {
       return;
@@ -148,207 +208,155 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     if (result.success) {
       setMessage({
         type: "success",
-        text: result.message || "Template deleted successfully",
+        text: "Template deleted successfully!",
       });
 
-      // Reset template info and form
-      setTemplateInfo({ exists: false });
+      // Reset form and template info
       setTemplateName("");
       setBackgroundUrl("");
+      setTemplateInfo({ exists: false });
     } else {
       setMessage({
         type: "error",
         text: result.error || "Failed to delete template",
       });
     }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setMessage(null), 5000);
   };
 
-  // Clear message after 5 seconds
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
-  const isAnyActionRunning = isSaving || isLoading || isDeleting;
-
   return (
-    <Card className="bg-gray-800 border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-white text-lg">
-          💾 Template Manager
+    <Card className="bg-gray-700 border-gray-600 m-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-blue-400 text-sm font-semibold uppercase tracking-wide">
+          Template Management
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Template Status Info */}
+        {/* Template Info Display */}
         {templateInfo.exists && (
-          <Alert className="bg-blue-900/50 border-blue-600 text-blue-200">
+          <Alert className="bg-blue-900/50 border-blue-700">
             <Info className="h-4 w-4" />
-            <AlertDescription>
-              <div className="space-y-1">
-                <p>
-                  <strong>Saved Template:</strong>{" "}
-                  {templateInfo.templateName || "Unnamed Template"}
-                </p>
-                {templateInfo.lastUpdated && (
-                  <p className="text-sm opacity-80">
-                    Last updated:{" "}
-                    {new Date(templateInfo.lastUpdated).toLocaleString()}
-                  </p>
-                )}
-              </div>
+            <AlertDescription className="text-blue-100">
+              Existing template: <strong>{templateInfo.templateName}</strong>
+              {templateInfo.lastUpdated && (
+                <div className="text-xs mt-1 text-blue-200">
+                  Last updated: {templateInfo.lastUpdated.toLocaleString()}
+                </div>
+              )}
             </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Status Message */}
-        {message && (
-          <Alert
-            className={`${
-              message.type === "success"
-                ? "bg-green-900/50 border-green-600 text-green-200"
-                : message.type === "info"
-                ? "bg-blue-900/50 border-blue-600 text-blue-200"
-                : "bg-red-900/50 border-red-600 text-red-200"
-            }`}
-          >
-            {message.type === "success" ? (
-              <Check className="h-4 w-4" />
-            ) : message.type === "info" ? (
-              <Info className="h-4 w-4" />
-            ) : (
-              <AlertCircle className="h-4 w-4" />
-            )}
-            <AlertDescription>{message.text}</AlertDescription>
           </Alert>
         )}
 
         {/* Template Name Input */}
         <div className="space-y-2">
-          <Label
-            htmlFor="templateName"
-            className="text-sm font-medium text-gray-300"
-          >
+          <Label htmlFor="templateName" className="text-gray-200">
             Template Name
           </Label>
           <Input
             id="templateName"
-            type="text"
-            placeholder="My Streaming Schedule Template"
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-            disabled={isAnyActionRunning}
+            placeholder="Enter template name..."
+            className="bg-gray-600 border-gray-500 text-white"
           />
         </div>
 
-        {/* Background URL Input (Optional) */}
+        {/* Background URL Input */}
         <div className="space-y-2">
-          <Label
-            htmlFor="backgroundUrl"
-            className="text-sm font-medium text-gray-300"
-          >
-            Background Image URL (Optional)
+          <Label htmlFor="backgroundUrl" className="text-gray-200">
+            Background Image URL (optional)
           </Label>
           <Input
             id="backgroundUrl"
-            type="url"
-            placeholder="https://example.com/my-background.png"
             value={backgroundUrl}
             onChange={(e) => setBackgroundUrl(e.target.value)}
-            className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
-            disabled={isAnyActionRunning}
+            placeholder="https://example.com/image.jpg"
+            className="bg-gray-600 border-gray-500 text-white"
           />
-          <p className="text-xs text-gray-400">
-            Leave empty to save the current background image with the template
-          </p>
+        </div>
+
+        {/* Polygons Count Display */}
+        <div className="text-sm text-gray-300">
+          Current polygons:{" "}
+          <span className="font-semibold">{polygons.length}</span>
         </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <Button
             onClick={handleSaveTemplate}
-            disabled={isAnyActionRunning || !templateName.trim()}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white"
+            disabled={isSaving || !templateName.trim()}
+            className="w-full bg-green-600 hover:bg-green-700"
           >
             {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {templateInfo.exists
-                  ? "Updating Template..."
-                  : "Saving Template..."}
-              </>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {templateInfo.exists ? "Update Template" : "Save Template"}
-              </>
+              <Save className="mr-2 h-4 w-4" />
             )}
+            {templateInfo.exists ? "Update Template" : "Save Template"}
           </Button>
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={handleLoadTemplate}
-              disabled={isAnyActionRunning || !templateInfo.exists}
-              variant="outline"
-              className="bg-gray-700 hover:bg-gray-600 border-gray-600 text-white"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-1 h-4 w-4" />
-                  Load Template
-                </>
-              )}
-            </Button>
+          <Button
+            onClick={handleLoadTemplate}
+            disabled={isLoading}
+            variant="outline"
+            className="w-full border-gray-500 text-gray-200 hover:bg-gray-600"
+          >
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            Load Template
+          </Button>
 
+          {templateInfo.exists && (
             <Button
               onClick={handleDeleteTemplate}
-              disabled={isAnyActionRunning || !templateInfo.exists}
+              disabled={isDeleting}
               variant="destructive"
-              className="bg-red-600 hover:bg-red-500"
+              className="w-full"
             >
               {isDeleting ? (
-                <>
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <>
-                  <Trash2 className="mr-1 h-4 w-4" />
-                  Delete
-                </>
+                <Trash2 className="mr-2 h-4 w-4" />
               )}
+              Delete Template
             </Button>
-          </div>
+          )}
         </div>
 
-        {/* Info */}
-        <div className="text-xs text-gray-400 p-3 bg-gray-700/50 rounded border border-gray-600">
-          <p className="font-medium mb-1">💡 How it works:</p>
-          <ul className="space-y-1">
-            <li>• Create polygons in Design Mode for your schedule areas</li>
-            <li>• Save your layout as a reusable template</li>
-            <li>
-              • Load your template anytime to start with your saved layout
-            </li>
-            <li>• Each server can have one saved template</li>
-            <li>
-              • Templates include both polygon layouts and background images
-            </li>
-          </ul>
-        </div>
-
-        {/* Guild ID Info (for debugging - remove in production) */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="text-xs text-gray-500 p-2 bg-gray-900/50 rounded">
-            Guild ID: {guildId}
-          </div>
+        {/* Status Messages */}
+        {message && (
+          <Alert
+            className={`${
+              message.type === "success"
+                ? "bg-green-900/50 border-green-700"
+                : message.type === "error"
+                ? "bg-red-900/50 border-red-700"
+                : "bg-blue-900/50 border-blue-700"
+            }`}
+          >
+            {message.type === "success" ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <AlertCircle className="h-4 w-4" />
+            )}
+            <AlertDescription
+              className={`${
+                message.type === "success"
+                  ? "text-green-100"
+                  : message.type === "error"
+                  ? "text-red-100"
+                  : "text-blue-100"
+              }`}
+            >
+              {message.text}
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>

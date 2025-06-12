@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { useDrawing } from "../hooks/useDrawing";
 import { useCanvas } from "../hooks/useCanvas";
-import { useState, useEffect } from "react";
 import { Group } from "fabric";
 
 // Define the polygon interface for display purposes
@@ -16,64 +15,13 @@ interface PolygonDisplay {
   fabricObject: Group;
 }
 
-export function PolygonsList() {
+interface PolygonsListProps {
+  polygons: PolygonDisplay[];
+}
+
+export function PolygonsList({ polygons }: PolygonsListProps) {
   const { selectedPolygon, deleteSelected } = useDrawing();
   const { canvas } = useCanvas();
-  const [savedPolygons, setSavedPolygons] = useState<PolygonDisplay[]>([]);
-
-  // Get polygons from canvas
-  useEffect(() => {
-    if (!canvas) return;
-
-    const updatePolygonsList = () => {
-      const polygons: PolygonDisplay[] = [];
-
-      canvas.getObjects().forEach((obj) => {
-        // Check if object has polygon metadata
-        const polygonType = (obj as any).polygonType;
-        const polygonId = (obj as any).polygonId;
-
-        if (polygonType && polygonId && obj.type === "group") {
-          const group = obj as Group;
-
-          // Get the actual polygon from the group to count points
-          const polygonObj = group
-            .getObjects()
-            .find((o) => o.type === "polygon");
-          const pointsCount = polygonObj
-            ? (polygonObj as any).points?.length || 0
-            : 0;
-
-          polygons.push({
-            id: polygonId,
-            type: polygonType,
-            pointsCount,
-            fabricObject: group,
-          });
-        }
-      });
-
-      setSavedPolygons(polygons);
-    };
-
-    // Update list initially
-    updatePolygonsList();
-
-    // Listen for canvas changes
-    const handleCanvasChange = () => {
-      updatePolygonsList();
-    };
-
-    canvas.on("object:added", handleCanvasChange);
-    canvas.on("object:removed", handleCanvasChange);
-    canvas.on("object:modified", handleCanvasChange);
-
-    return () => {
-      canvas.off("object:added", handleCanvasChange);
-      canvas.off("object:removed", handleCanvasChange);
-      canvas.off("object:modified", handleCanvasChange);
-    };
-  }, [canvas]);
 
   const handlePolygonClick = (polygon: PolygonDisplay) => {
     if (!canvas) return;
@@ -104,12 +52,12 @@ export function PolygonsList() {
       </CardHeader>
       <CardContent>
         <div className="max-h-64 overflow-y-auto space-y-2">
-          {savedPolygons.length === 0 ? (
+          {polygons.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-4">
               No polygons yet
             </p>
           ) : (
-            savedPolygons.map((polygon) => (
+            polygons.map((polygon) => (
               <div
                 key={polygon.id}
                 onClick={() => handlePolygonClick(polygon)}
