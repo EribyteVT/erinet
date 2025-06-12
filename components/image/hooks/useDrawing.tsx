@@ -1,10 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+  useEffect,
+} from "react";
 import { Canvas, Polygon, Circle, Group, Text } from "fabric";
 import { Point, getTypeColor } from "../types";
 import { useCanvas } from "./useCanvas";
-import { useTemplate } from "./useTemplate";
 
 interface DrawingContextType {
   isDrawingMode: boolean;
@@ -24,8 +30,7 @@ const DrawingContext = createContext<DrawingContextType | undefined>(undefined);
 
 export function DrawingProvider({ children }: { children: ReactNode }) {
   const { canvas } = useCanvas();
-  const { updatePolygonsList } = useTemplate();
-  
+
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   // Updated default to use offset-based naming
   const [currentDataType, setCurrentDataType] = useState("day0_stream_name");
@@ -50,15 +55,15 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
         top: pointer.y - 4,
         radius: 4,
         fill: getTypeColor(currentDataType),
-        stroke: '#fff',
+        stroke: "#fff",
         strokeWidth: 2,
         selectable: false,
         evented: false,
       });
 
       canvas.add(pointCircle);
-      setTempPoints(prev => [...prev, pointCircle]);
-      setDrawingPoints(prev => [...prev, newPoint]);
+      setTempPoints((prev) => [...prev, pointCircle]);
+      setDrawingPoints((prev) => [...prev, newPoint]);
       canvas.renderAll();
     };
 
@@ -93,17 +98,17 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    canvas.on('selection:created', handleObjectSelection);
-    canvas.on('selection:updated', handleObjectSelection);
-    canvas.on('selection:cleared', () => setSelectedPolygon(null));
+    canvas.on("selection:created", handleObjectSelection);
+    canvas.on("selection:updated", handleObjectSelection);
+    canvas.on("selection:cleared", () => setSelectedPolygon(null));
 
     canvas.renderAll();
 
     return () => {
       canvas.off("mouse:down", handleCanvasClick);
-      canvas.off('selection:created', handleObjectSelection);
-      canvas.off('selection:updated', handleObjectSelection);
-      canvas.off('selection:cleared');
+      canvas.off("selection:created", handleObjectSelection);
+      canvas.off("selection:updated", handleObjectSelection);
+      canvas.off("selection:cleared");
     };
   }, [isDrawingMode, canvas, currentDataType]);
 
@@ -121,11 +126,11 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
     }
 
     // Calculate bounding box
-    const minX = Math.min(...drawingPoints.map(point => point.x));
-    const minY = Math.min(...drawingPoints.map(point => point.y));
+    const minX = Math.min(...drawingPoints.map((point) => point.x));
+    const minY = Math.min(...drawingPoints.map((point) => point.y));
 
     // Create relative points for the polygon
-    const relativePoints = drawingPoints.map(point => ({
+    const relativePoints = drawingPoints.map((point) => ({
       x: point.x - minX,
       y: point.y - minY,
     }));
@@ -174,8 +179,7 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
     // Clean up
     cleanupDrawing();
     setIsDrawingMode(false);
-    updatePolygonsList();
-  }, [canvas, drawingPoints, currentDataType, updatePolygonsList]);
+  }, [canvas, drawingPoints, currentDataType]);
 
   const cancelPolygon = useCallback(() => {
     cleanupDrawing();
@@ -183,8 +187,8 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
 
   const cleanupDrawing = useCallback(() => {
     if (!canvas) return;
-    
-    tempPoints.forEach(point => canvas.remove(point));
+
+    tempPoints.forEach((point) => canvas.remove(point));
     setTempPoints([]);
     setDrawingPoints([]);
     canvas.renderAll();
@@ -192,35 +196,39 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
 
   const deleteSelected = useCallback(() => {
     if (!canvas || !selectedPolygon) return;
-    
+
     canvas.remove(selectedPolygon);
     setSelectedPolygon(null);
     canvas.renderAll();
-    updatePolygonsList();
-  }, [canvas, selectedPolygon, updatePolygonsList]);
+  }, [canvas, selectedPolygon]);
 
-  const addCustomDataType = useCallback((typeName: string) => {
-    if (typeName && !customDataTypes.includes(typeName)) {
-      setCustomDataTypes(prev => [...prev, typeName]);
-      // Automatically select the newly added custom type
-      setCurrentDataType(typeName);
-    }
-  }, [customDataTypes]);
+  const addCustomDataType = useCallback(
+    (typeName: string) => {
+      if (typeName && !customDataTypes.includes(typeName)) {
+        setCustomDataTypes((prev) => [...prev, typeName]);
+        // Automatically select the newly added custom type
+        setCurrentDataType(typeName);
+      }
+    },
+    [customDataTypes]
+  );
 
   return (
-    <DrawingContext.Provider value={{
-      isDrawingMode,
-      currentDataType,
-      drawingPoints,
-      customDataTypes,
-      selectedPolygon,
-      setCurrentDataType,
-      toggleDrawingMode,
-      finishPolygon,
-      cancelPolygon,
-      addCustomDataType,
-      deleteSelected
-    }}>
+    <DrawingContext.Provider
+      value={{
+        isDrawingMode,
+        currentDataType,
+        drawingPoints,
+        customDataTypes,
+        selectedPolygon,
+        setCurrentDataType,
+        toggleDrawingMode,
+        finishPolygon,
+        cancelPolygon,
+        addCustomDataType,
+        deleteSelected,
+      }}
+    >
       {children}
     </DrawingContext.Provider>
   );
@@ -229,7 +237,7 @@ export function DrawingProvider({ children }: { children: ReactNode }) {
 export function useDrawing() {
   const context = useContext(DrawingContext);
   if (context === undefined) {
-    throw new Error('useDrawing must be used within a DrawingProvider');
+    throw new Error("useDrawing must be used within a DrawingProvider");
   }
   return context;
 }

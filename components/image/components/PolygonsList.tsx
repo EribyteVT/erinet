@@ -3,11 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
-import { useTemplate } from "../hooks/useTemplate";
 import { useDrawing } from "../hooks/useDrawing";
 
 export function PolygonsList() {
-  const { savedPolygons } = useTemplate();
+  const savedPolygons = [];
   const { selectedPolygon, deleteSelected } = useDrawing();
 
   return (
@@ -20,15 +19,18 @@ export function PolygonsList() {
       <CardContent>
         <div className="max-h-64 overflow-y-auto space-y-2">
           {savedPolygons.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">No polygons yet</p>
+            <p className="text-gray-400 text-sm text-center py-4">
+              No polygons yet
+            </p>
           ) : (
             savedPolygons.map((polygon) => (
               <div
                 key={polygon.id}
                 className={`flex justify-between items-center p-3 bg-gray-600 rounded cursor-pointer transition-colors ${
-                  selectedPolygon && (selectedPolygon as any).polygonId === polygon.id
-                    ? 'bg-green-600'
-                    : 'hover:bg-gray-500'
+                  selectedPolygon &&
+                  (selectedPolygon as any).polygonId === polygon.id
+                    ? "bg-green-600"
+                    : "hover:bg-gray-500"
                 }`}
               >
                 <div>

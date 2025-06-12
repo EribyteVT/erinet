@@ -70,3 +70,15 @@ model streamer_refresh_tokens {
   access_token   String @db.VarChar
   access_salt    String @db.VarChar
 }
+
+model guild_schedule_template {
+  id              String    @id @default(cuid())
+  guild_id        String    @unique @map("guild_id") // One template per guild
+  template_name   String?   @map("template_name")
+  template_data   Json      @map("template_data") // Stores the template configuration (polygons, layout, etc.)
+  background_url  String?   @map("background_url") // Optional background image URL
+  created_at      DateTime  @default(now()) @map("created_at")
+  updated_at      DateTime  @updatedAt @map("updated_at")
+
+  @@map("guild_schedule_template")
+}

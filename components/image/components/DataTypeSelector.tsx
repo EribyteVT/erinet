@@ -50,35 +50,31 @@ export function DataTypeSelector() {
     label: stream_number_positions[i],
   }));
 
-  // Function to get already used field types from canvas
-  const getUsedFieldTypes = useCallback(() => {
+  // Function to get already used day+field combinations from canvas
+  const getUsedDataTypes = useCallback(() => {
     if (!canvas) return new Set<string>();
 
-    const usedFields = new Set<string>();
+    const usedTypes = new Set<string>();
     canvas.getObjects().forEach((obj) => {
       const polygonType = (obj as any).polygonType;
       if (polygonType && polygonType.startsWith("day")) {
-        // Extract field from type like "day0_stream_name" -> "stream_name"
-        const match = polygonType.match(/day\d+_(.+)/);
-        if (match) {
-          usedFields.add(match[1]);
-        }
+        usedTypes.add(polygonType);
       }
     });
-    return usedFields;
+    return usedTypes;
   }, [canvas, canvasUpdateTrigger]);
 
-  // Get currently used field types
-  const usedFieldTypes = getUsedFieldTypes();
+  // Get currently used data types
+  const usedDataTypes = getUsedDataTypes();
 
-  // Separated field options - Basic vs Advanced
-  const allBasicFieldOptions = [
+  // Separated field options - Basic vs Advanced (always show all options)
+  const basicFieldOptions = [
     { value: "stream_name", label: "Stream Name" },
     { value: "stream_date", label: "Stream Date" },
     { value: "stream_time", label: "Stream Time" },
   ];
 
-  const allAdvancedFieldOptions = [
+  const advancedFieldOptions = [
     { value: "stream_month", label: "Stream Date Month" },
     { value: "stream_day", label: "Stream Date Day" },
     { value: "stream_time_ntz", label: "Stream Time (no timezone)" },
@@ -88,17 +84,13 @@ export function DataTypeSelector() {
     { value: "notes", label: "Notes" },
   ];
 
-  // Filter out already used field types
-  const basicFieldOptions = allBasicFieldOptions.filter(
-    (option) => !usedFieldTypes.has(option.value)
-  );
-
-  const advancedFieldOptions = allAdvancedFieldOptions.filter(
-    (option) => !usedFieldTypes.has(option.value)
-  );
-
-  // Combined for compatibility - only available fields
+  // Combined for compatibility - all options available
   const fieldOptions = [...basicFieldOptions, ...advancedFieldOptions];
+
+  // Check if current day+field combination is already used
+  const currentDataTypeUsed = usedDataTypes.has(
+    `day${selectedDay}_${selectedField}`
+  );
 
   const singularTypes = [...SINGULAR_POLYGON_TYPES];
 
@@ -114,8 +106,6 @@ export function DataTypeSelector() {
   };
 
   const getDisplayName = () => {
-    if (fieldOptions.length === 0) return "All fields used";
-
     const streamName = stream_number_positions[parseInt(selectedDay)];
     const fieldLabel =
       fieldOptions.find((option) => option.value === selectedField)?.label ||
@@ -135,13 +125,6 @@ export function DataTypeSelector() {
     const offsetType = `day${selectedDay}_${selectedField}`;
     setCurrentDataType(offsetType);
   }, [selectedDay, selectedField, setCurrentDataType]);
-
-  // Reset selected field if it becomes unavailable
-  useEffect(() => {
-    if (usedFieldTypes.has(selectedField) && fieldOptions.length > 0) {
-      setSelectedField(fieldOptions[0].value);
-    }
-  }, [usedFieldTypes, selectedField, fieldOptions]);
 
   // Force re-render when canvas objects change
   useEffect(() => {
@@ -191,10 +174,29 @@ export function DataTypeSelector() {
             Stream Types
           </Label>
 
-          {/* Show used fields status */}
-          {usedFieldTypes.size > 0 && (
-            <div className="text-xs text-yellow-300 bg-yellow-900/20 p-2 rounded">
-              Used fields: {Array.from(usedFieldTypes).join(", ")}
+          {/* Show used data types status */}
+          {usedDataTypes.size > 0 && (
+            <div className="text-xs text-yellow-300 bg-yellow-900/20 p-2 rounded max-h-20 overflow-y-auto">
+              <div className="font-medium mb-1">Used combinations:</div>
+              <div className="space-y-1">
+                {Array.from(usedDataTypes).map((dataType) => {
+                  const match = dataType.match(/day(\d+)_(.+)/);
+                  if (match) {
+                    const dayNum = parseInt(match[1]);
+                    const field = match[2];
+                    const streamName = stream_number_positions[dayNum];
+                    const fieldLabel =
+                      fieldOptions.find((f) => f.value === field)?.label ||
+                      field;
+                    return (
+                      <div key={dataType} className="text-xs">
+                        {streamName}'s {fieldLabel}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
             </div>
           )}
 
@@ -221,59 +223,46 @@ export function DataTypeSelector() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {fieldOptions.length === 0 ? (
-                    <div className="px-2 py-1 text-xs text-gray-500">
-                      All field types have been used
+                  {/* Basic Field Options */}
+                  {basicFieldOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+
+                  {/* Separator */}
+                  <div className="px-2 py-1">
+                    <div className="border-t border-gray-300 relative">
+                      <span className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500 font-medium">
+                        Advanced
+                      </span>
                     </div>
-                  ) : (
-                    <>
-                      {/* Basic Field Options */}
-                      {basicFieldOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
+                  </div>
 
-                      {/* Separator - only show if both basic and advanced options exist */}
-                      {basicFieldOptions.length > 0 &&
-                        advancedFieldOptions.length > 0 && (
-                          <div className="px-2 py-1">
-                            <div className="border-t border-gray-300 relative">
-                              <span className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-gray-500 font-medium">
-                                Advanced
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                      {/* Advanced Field Options */}
-                      {advancedFieldOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </>
-                  )}
+                  {/* Advanced Field Options */}
+                  {advancedFieldOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {fieldOptions.length > 0 ? (
-            <div
-              className={`w-full text-xs h-7 rounded px-3 py-1 text-center flex items-center justify-center ${
-                currentDataType === `day${selectedDay}_${selectedField}`
-                  ? "bg-green-500 text-black"
-                  : "bg-gray-600 text-white"
-              }`}
-            >
-              {getDisplayName()}
-            </div>
-          ) : (
-            <div className="w-full text-xs h-7 rounded px-3 py-1 text-center flex items-center justify-center bg-red-500 text-white">
-              All field types have been used
-            </div>
-          )}
+          <div
+            className={`w-full text-xs h-7 rounded px-3 py-1 text-center flex items-center justify-center ${
+              currentDataTypeUsed
+                ? "bg-red-500 text-white"
+                : currentDataType === `day${selectedDay}_${selectedField}`
+                ? "bg-green-500 text-black"
+                : "bg-gray-600 text-white"
+            }`}
+          >
+            {currentDataTypeUsed
+              ? `${getDisplayName()} - Already Used`
+              : getDisplayName()}
+          </div>
         </div>
 
         {/* Singular Types */}
@@ -301,14 +290,67 @@ export function DataTypeSelector() {
           </div>
         )}
 
+        {/* Custom Types */}
+        {customTypesFiltered.length > 0 && (
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-blue-300">
+              Custom Types
+            </Label>
+            <div className="grid grid-cols-2 gap-1">
+              {customTypesFiltered.map((type) => (
+                <Button
+                  key={type}
+                  onClick={() => setCurrentDataType(type)}
+                  variant={currentDataType === type ? "default" : "outline"}
+                  className={`text-xs p-2 h-auto ${
+                    currentDataType === type
+                      ? "bg-green-500 text-black border-green-500"
+                      : "bg-gray-600 border-gray-500 text-white hover:bg-gray-500"
+                  }`}
+                >
+                  {type}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Add Custom Type */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-purple-300">
+            Add Custom Type
+          </Label>
+          <div className="flex gap-1">
+            <Input
+              value={customTypeName}
+              onChange={(e) => setCustomTypeName(e.target.value)}
+              placeholder="Custom type name"
+              className="bg-gray-600 border-gray-500 text-white text-xs h-7"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleAddCustomType(customTypeName);
+                }
+              }}
+            />
+            <Button
+              onClick={() => handleAddCustomType(customTypeName)}
+              disabled={!customTypeName.trim()}
+              className="bg-purple-500 hover:bg-purple-600 text-white text-xs h-7 px-2"
+            >
+              Add
+            </Button>
+          </div>
+        </div>
+
         {/* Drawing Controls */}
-        {fieldOptions.length > 0 ? (
+        {!currentDataTypeUsed ? (
           <DrawingControls />
         ) : (
           <div className="text-center p-4 bg-red-900/20 rounded border border-red-500">
             <p className="text-xs text-red-300">
-              Drawing disabled: All field types have been used. Delete existing
-              polygons to create new ones.
+              Drawing disabled: This specific combination "{getDisplayName()}"
+              is already used. Choose a different day/field combination or
+              delete the existing polygon.
             </p>
           </div>
         )}
