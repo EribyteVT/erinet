@@ -7,6 +7,7 @@ import { useDrawing } from "../hooks/useDrawing";
 import { DataTypeSelector } from "./DataTypeSelector";
 import { PolygonsList } from "./PolygonsList";
 import { DrawingControls } from "./DrawingControls";
+import { TemplateSave } from "./TemplateSave";
 
 export function DesignModePanel() {
   return (
@@ -18,6 +19,7 @@ export function DesignModePanel() {
         {/* Polygon Management */}
         <PolygonsList />
       </div>
+      <TemplateSave guildId="54326" />
     </div>
   );
 }
