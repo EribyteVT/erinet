@@ -76,8 +76,8 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
         left: fabricObject.left || 0,
         top: fabricObject.top || 0,
         // Include additional Fabric.js properties with fallbacks for null values
-        fill: fabricObject.fill || "rgba(255, 0, 0, 0.3)",
-        stroke: fabricObject.stroke || "#ff0000",
+        fill: "rgba(255, 0, 0, 0.3)",
+        stroke: "#ff0000",
         strokeWidth: fabricObject.strokeWidth || 2,
         scaleX: fabricObject.scaleX || 1,
         scaleY: fabricObject.scaleY || 1,

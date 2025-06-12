@@ -275,7 +275,7 @@ async function editStreamActionImpl(
           newName,
           streamDate.toISOString(),
           endTime.toISOString(),
-          location,
+          location
         );
       } catch (error) {
         console.error("Failed to update Discord event:", error);
@@ -317,3 +317,40 @@ export const editStreamAction = createRateLimitedStructuredAction(
   editStreamActionImpl,
   "stream"
 );
+
+export async function fetchStreamsArb(
+  from: string,
+  to: string,
+  guild: string,
+  streamerId: string
+): Promise<Stream[]> {
+  try {
+    const streams = await prisma.stream_table_tied.findMany({
+      where: {
+        streamer_id: streamerId,
+        stream_date: {
+          gte: new Date(from),
+          lte: new Date(to),
+        },
+      },
+      orderBy: {
+        stream_date: "asc",
+      },
+    });
+
+    // Convert to Stream type format
+    return streams.map((stream) => ({
+      stream_id: stream.stream_id,
+      stream_date: stream.stream_date.toISOString(),
+      stream_name: stream.stream_name,
+      streamer_id: stream.streamer_id,
+      event_id: stream.event_id,
+      twitch_segment_id: stream.twitch_segment_id,
+      duration: stream.duration,
+      category_id: stream.category_id,
+    }));
+  } catch (error) {
+    console.error("Error fetching streams:", error);
+    return [];
+  }
+}

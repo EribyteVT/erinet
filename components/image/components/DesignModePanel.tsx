@@ -87,7 +87,7 @@ export function DesignModePanel() {
         {/* Polygon Management */}
         <PolygonsList polygons={savedPolygons} />
       </div>
-      <TemplateSave guildId="54326" polygons={savedPolygons} />
+      <TemplateSave guildId="1298744996199137290" polygons={savedPolygons} />
     </div>
   );
 }
