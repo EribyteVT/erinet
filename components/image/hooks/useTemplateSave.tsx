@@ -217,14 +217,23 @@ export function useTemplateSave() {
   // Apply loaded template data to canvas
   const applyTemplateToCanvas = useCallback(
     async (data: any): Promise<boolean> => {
-      if (!canvas) return false;
+      console.log("🔄 Starting applyTemplateToCanvas", data);
+
+      if (!canvas) {
+        console.error("❌ Canvas not available");
+        return false;
+      }
 
       try {
+        console.log("🧹 Clearing canvas...");
         // Clear existing objects
         canvas.clear();
 
         // Set canvas dimensions if provided
         if (data.canvasWidth && data.canvasHeight) {
+          console.log(
+            `📐 Setting canvas dimensions: ${data.canvasWidth}x${data.canvasHeight}`
+          );
           canvas.setDimensions({
             width: data.canvasWidth,
             height: data.canvasHeight,
@@ -233,32 +242,64 @@ export function useTemplateSave() {
 
         // Load background image if provided
         if (data.backgroundImage) {
+          console.log(
+            "🖼️ Loading background image...",
+            data.backgroundImage.substring(0, 50) + "..."
+          );
           try {
-            const imgObj = await fabric.FabricImage.fromURL(
+            // Add timeout to prevent hanging
+            const imageLoadPromise = fabric.FabricImage.fromURL(
               data.backgroundImage
             );
+
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("Image load timeout")), 10000)
+            );
+
+            const imgObj = (await Promise.race([
+              imageLoadPromise,
+              timeoutPromise,
+            ])) as fabric.FabricImage;
+
+            console.log("✅ Background image loaded successfully");
 
             // Scale to fit canvas
             const scaleX = canvas.width! / imgObj.getScaledWidth();
             const scaleY = canvas.height! / imgObj.getScaledHeight();
             const scale = Math.min(scaleX, scaleY);
 
+            console.log(`🔧 Scaling image: ${scale}`);
             imgObj.set({ scaleX: scale, scaleY: scale });
             canvas.add(imgObj);
             canvas.sendObjectToBack(imgObj);
+            console.log("✅ Background image added to canvas");
           } catch (imgError) {
-            console.error("Error loading background image:", imgError);
-            // Continue without background image
+            console.error("❌ Error loading background image:", imgError);
+            // Continue without background image - don't fail the whole operation
           }
+        } else {
+          console.log("ℹ️ No background image to load");
         }
 
         // Recreate polygons
+        // Replace the polygon recreation section in applyTemplateToCanvas with this:
+
+        // Recreate polygons
         if (data.polygons && Array.isArray(data.polygons)) {
-          for (const polygonData of data.polygons) {
+          console.log(`🔺 Loading ${data.polygons.length} polygons...`);
+
+          for (let i = 0; i < data.polygons.length; i++) {
+            const polygonData = data.polygons[i];
+            console.log(
+              `🔺 Creating polygon ${i + 1}/${data.polygons.length}:`,
+              polygonData
+            );
+
             try {
+              // Create the polygon exactly like in useDrawing.tsx
               const polygon = new fabric.Polygon(polygonData.points, {
-                left: polygonData.left,
-                top: polygonData.top,
+                left: 0, // Reset to 0 since group will handle positioning
+                top: 0, // Reset to 0 since group will handle positioning
                 fill: polygonData.fill || "rgba(255, 0, 0, 0.3)",
                 stroke: polygonData.stroke || "#ff0000",
                 strokeWidth: polygonData.strokeWidth || 2,
@@ -266,27 +307,47 @@ export function useTemplateSave() {
                 scaleY: polygonData.scaleY || 1,
                 angle: polygonData.angle || 0,
                 opacity: polygonData.opacity || 1,
+                cornerStyle: "circle",
+                cornerColor: polygonData.stroke || "#ff0000",
+                cornerSize: 8,
+                transparentCorners: false,
                 selectable: true,
                 evented: true,
               });
 
-              // Add custom properties
-              (polygon as any).polygonType = polygonData.type;
-              (polygon as any).points = polygonData.points;
-              (polygon as any).id = polygonData.id;
+              // ✅ CREATE GROUP JUST LIKE ORIGINAL - This is the key fix!
+              const group = new fabric.Group([polygon], {
+                left: polygonData.left,
+                top: polygonData.top,
+                selectable: true,
+                evented: true,
+              });
 
-              canvas.add(polygon);
+              // ✅ Add metadata to GROUP, not individual polygon
+              (group as any).polygonType = polygonData.type;
+              (group as any).polygonId = polygonData.id;
+              (group as any).points = polygonData.points;
+
+              canvas.add(group);
+              console.log(`✅ Polygon group ${i + 1} added successfully`);
             } catch (polygonError) {
-              console.error("Error creating polygon:", polygonError);
+              console.error(
+                `❌ Error creating polygon ${i + 1}:`,
+                polygonError
+              );
               // Continue with next polygon
             }
           }
+        } else {
+          console.log("ℹ️ No polygons to load");
         }
 
+        console.log("🎨 Rendering canvas...");
         canvas.renderAll();
+        console.log("✅ Template applied successfully!");
         return true;
       } catch (error) {
-        console.error("Error applying template to canvas:", error);
+        console.error("❌ Error applying template to canvas:", error);
         return false;
       }
     },

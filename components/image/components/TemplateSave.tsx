@@ -157,11 +157,29 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
     setTimeout(() => setMessage(null), 5000);
   };
 
+  // Add this debugging to your handleLoadTemplate function
   const handleLoadTemplate = async () => {
+    console.log("🚀 Starting template load for guildId:", guildId);
+
     const result = await loadTemplate(guildId);
+    console.log("📦 Load template result:", result);
 
     if (result.success && result.template) {
-      const applied = await applyTemplateToCanvas(result.template);
+      console.log("📊 Template data structure:", {
+        hasTemplateData: !!result.template.template_data,
+        templateDataType: typeof result.template.template_data,
+        templateDataKeys: result.template.template_data
+          ? Object.keys(result.template.template_data)
+          : [],
+      });
+
+      // Log the actual template data
+      console.log("🔍 Raw template data:", result.template.template_data);
+
+      const applied = await applyTemplateToCanvas(
+        result.template.template_data
+      );
+      console.log("✅ Template application result:", applied);
 
       if (applied) {
         setMessage({
@@ -169,7 +187,6 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
           text: "Template loaded successfully!",
         });
 
-        // Update form with loaded data
         // Update form with loaded data
         if (result.template.template_name) {
           setTemplateName(result.template.template_name);
@@ -184,6 +201,7 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
         });
       }
     } else {
+      console.error("❌ Template load failed:");
       setMessage({
         type: "error",
         text: "Failed to load template",
