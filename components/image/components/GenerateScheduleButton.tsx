@@ -128,21 +128,27 @@ export function GenerateScheduleButton({
     canvas.discardActiveObject();
     canvas.renderAll();
 
-    const polygons = canvas
-      .getObjects()
-      .filter((obj) => obj.type === "polygon");
-    polygons.forEach((polygon) => polygon.set("visible", false));
+    // Find polygon objects (they are stored as groups with polygon metadata)
+    const polygonObjects = canvas.getObjects().filter((obj) => {
+      return (obj as any).polygonType || obj.type === "polygon";
+    });
 
-    // Generate image
+    // Hide all polygon objects
+    polygonObjects.forEach((obj) => obj.set("visible", false));
+
+    // Generate image with polygons hidden
     const dataURL = canvas.toDataURL();
 
-    polygons.forEach((polygon) => polygon.set("visible", true));
+    // Render the canvas with polygons hidden
     canvas.renderAll();
 
+    // Download the image
     const link = document.createElement("a");
     link.download = `schedule-${format(weekStartDate, "yyyy-MM-dd")}.png`;
     link.href = dataURL;
     link.click();
+
+    // Note: Polygons remain hidden after export - this is the desired behavior
   };
 
   return (
