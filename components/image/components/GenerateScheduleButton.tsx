@@ -23,7 +23,7 @@ export function GenerateScheduleButton({
   mode = "schedule",
 }: GenerateScheduleButtonProps) {
   const { canvas } = useCanvas();
-  const { updateScheduleData, weekStartDate } = useScheduleData();
+  const { batchUpdateScheduleData, weekStartDate } = useScheduleData();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generateScheduleImage = async () => {
@@ -38,6 +38,13 @@ export function GenerateScheduleButton({
       // Calculate date range for the week
       const fromDate = startOfDay(weekStartDate);
       const toDate = addDays(fromDate, 6); // 7 days total
+
+      console.log(
+        "Date range:",
+        fromDate.toISOString(),
+        "to",
+        toDate.toISOString()
+      );
 
       // Fetch streams for the week
       const streams = await fetchStreamsArb(
@@ -56,7 +63,7 @@ export function GenerateScheduleButton({
       if (streams && streams.length > 0) {
         streams.forEach((stream) => {
           const streamDate = new Date(stream.stream_date);
-          console.log(streamDate);
+          console.log("Processing stream:", streamDate, stream.stream_name);
           const dayOffset = Math.floor(
             (streamDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
           );
@@ -74,6 +81,9 @@ export function GenerateScheduleButton({
         });
       }
 
+      // Prepare batch updates for all days
+      const batchUpdates: Record<string, string> = {};
+
       // Update canvas with data for each day (0-6)
       for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
         const stream = streamsByDay.get(dayOffset);
@@ -82,12 +92,16 @@ export function GenerateScheduleButton({
         const dayDate = getDateFromOffset(weekStartDate, dayOffset);
         const dayName = getDayName(dayOffset, weekStartDate);
         const formattedDate = format(dayDate, "MM/dd");
-        updateScheduleData(`day${dayOffset}_stream_date`, formattedDate);
-        updateScheduleData(`day${dayOffset}_day_name`, dayName);
+
+        // Add basic day info to batch updates
+        batchUpdates[`day${dayOffset}_stream_date`] = formattedDate;
+        batchUpdates[`day${dayOffset}_day_name`] = dayName;
 
         if (stream) {
-          console.log("YES STREAM");
-          console.log(`day${dayOffset}_stream_time`);
+          console.log(
+            `Processing stream for day ${dayOffset}:`,
+            stream.stream_name
+          );
 
           // Update with actual stream data
           const streamDate = new Date(stream.stream_date);
@@ -95,29 +109,37 @@ export function GenerateScheduleButton({
           const durationHours = stream.duration
             ? Math.round(stream.duration / 60)
             : 0;
-          console.log(timeStr);
 
-          updateScheduleData(`day${dayOffset}_stream_name`, stream.stream_name);
-          updateScheduleData(`day${dayOffset}_stream_time`, timeStr);
-          updateScheduleData(
-            `day${dayOffset}_game`,
-            stream.category_id || "Just Chatting"
+          console.log(
+            `Day ${dayOffset} - Time: ${timeStr}, Duration: ${durationHours}h`
           );
-          updateScheduleData(`day${dayOffset}_duration`, `${durationHours}`);
-          updateScheduleData(`day${dayOffset}_notes`, "");
+
+          // Add stream data to batch updates
+          batchUpdates[`day${dayOffset}_stream_name`] =
+            stream.stream_name || "";
+          batchUpdates[`day${dayOffset}_stream_time`] = timeStr;
+          batchUpdates[`day${dayOffset}_game`] =
+            stream.category_id || "Just Chatting";
+          batchUpdates[`day${dayOffset}_duration`] = `${durationHours}h`;
+          batchUpdates[`day${dayOffset}_notes`] = "";
         } else {
-          // No stream for this day - but still populate date information
-          updateScheduleData(`day${dayOffset}_stream_name`, "No stream");
-          updateScheduleData(`day${dayOffset}_stream_time`, "");
-          updateScheduleData(`day${dayOffset}_duration`, "");
+          console.log(`No stream for day ${dayOffset}`);
+          // No stream for this day - clear the fields
+          batchUpdates[`day${dayOffset}_stream_name`] = "No stream";
+          batchUpdates[`day${dayOffset}_stream_time`] = "";
+          batchUpdates[`day${dayOffset}_game`] = "";
+          batchUpdates[`day${dayOffset}_duration`] = "";
+          batchUpdates[`day${dayOffset}_notes`] = "";
         }
       }
 
-      // Render the canvas to ensure all updates are visible
-      canvas.renderAll();
+      console.log("Batch updates to apply:", batchUpdates);
 
-      // Small delay to ensure rendering is complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Apply all updates at once
+      batchUpdateScheduleData(batchUpdates);
+
+      // Wait a bit for canvas to update
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Export the image
       exportScheduleImage();
