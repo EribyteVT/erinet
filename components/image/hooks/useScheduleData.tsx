@@ -67,21 +67,6 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
 
           // Format the display value
           let displayValue = value;
-          if (dataType.includes("_time") && value) {
-            try {
-              const date = new Date(value);
-              if (!isNaN(date.getTime())) {
-                displayValue = date.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                });
-              }
-            } catch (e) {
-              displayValue = value;
-            }
-          } else if (dataType.includes("_duration") && value) {
-            displayValue = value.includes("hour") ? value : `${value} hours`;
-          }
 
           // Create or find existing text object for this polygon
           let textObj = canvas

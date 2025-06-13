@@ -9,6 +9,7 @@ import { useScheduleData } from "../hooks/useScheduleData";
 import { format, startOfDay, addDays } from "date-fns";
 import { Stream } from "@/components/Streams/types";
 import { fetchStreamsArb } from "@/app/actions/streamActions";
+import { getDateFromOffset, getDayName } from "../types";
 
 interface GenerateScheduleButtonProps {
   guild: string;
@@ -73,9 +74,16 @@ export function GenerateScheduleButton({
         });
       }
 
-      // Update canvas with stream data for each day
+      // Update canvas with data for each day (0-6)
       for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
         const stream = streamsByDay.get(dayOffset);
+
+        // Calculate the date for this day offset
+        const dayDate = getDateFromOffset(weekStartDate, dayOffset);
+        const dayName = getDayName(dayOffset, weekStartDate);
+        const formattedDate = format(dayDate, "MM/dd");
+        updateScheduleData(`day${dayOffset}_stream_date`, formattedDate);
+        updateScheduleData(`day${dayOffset}_day_name`, dayName);
 
         if (stream) {
           console.log("YES STREAM");
@@ -88,6 +96,7 @@ export function GenerateScheduleButton({
             ? Math.round(stream.duration / 60)
             : 0;
           console.log(timeStr);
+
           updateScheduleData(`day${dayOffset}_stream_name`, stream.stream_name);
           updateScheduleData(`day${dayOffset}_stream_time`, timeStr);
           updateScheduleData(
@@ -95,14 +104,12 @@ export function GenerateScheduleButton({
             stream.category_id || "Just Chatting"
           );
           updateScheduleData(`day${dayOffset}_duration`, `${durationHours}`);
-          updateScheduleData(`day${dayOffset}_notes`, ""); // You can customize this
+          updateScheduleData(`day${dayOffset}_notes`, "");
         } else {
-          // No stream for this day
+          // No stream for this day - but still populate date information
           updateScheduleData(`day${dayOffset}_stream_name`, "No stream");
           updateScheduleData(`day${dayOffset}_stream_time`, "");
-          updateScheduleData(`day${dayOffset}_game`, "");
           updateScheduleData(`day${dayOffset}_duration`, "");
-          updateScheduleData(`day${dayOffset}_notes`, "");
         }
       }
 
@@ -128,27 +135,21 @@ export function GenerateScheduleButton({
     canvas.discardActiveObject();
     canvas.renderAll();
 
-    // Find polygon objects (they are stored as groups with polygon metadata)
-    const polygonObjects = canvas.getObjects().filter((obj) => {
-      return (obj as any).polygonType || obj.type === "polygon";
-    });
+    const polygons = canvas
+      .getObjects()
+      .filter((obj) => obj.type === "polygon");
+    polygons.forEach((polygon) => polygon.set("visible", false));
 
-    // Hide all polygon objects
-    polygonObjects.forEach((obj) => obj.set("visible", false));
-
-    // Generate image with polygons hidden
+    // Generate image
     const dataURL = canvas.toDataURL();
 
-    // Render the canvas with polygons hidden
+    polygons.forEach((polygon) => polygon.set("visible", true));
     canvas.renderAll();
 
-    // Download the image
     const link = document.createElement("a");
     link.download = `schedule-${format(weekStartDate, "yyyy-MM-dd")}.png`;
     link.href = dataURL;
     link.click();
-
-    // Note: Polygons remain hidden after export - this is the desired behavior
   };
 
   return (
