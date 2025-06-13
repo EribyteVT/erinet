@@ -68,7 +68,6 @@ export function DesignModePanel({
       });
 
       setSavedPolygons(polygons);
-      console.log(`📊 Updated polygon count: ${polygons.length}`); // Debug log
     };
 
     // Update list initially
@@ -98,37 +97,6 @@ export function DesignModePanel({
 
         {/* Polygon Management */}
         <PolygonsList polygons={savedPolygons} />
-
-        {/* Debug Info */}
-        {process.env.NODE_ENV === "development" && (
-          <Card className="bg-gray-700 border-gray-600">
-            <CardHeader>
-              <CardTitle className="text-white text-sm">Debug Info</CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-gray-300">
-              <div>Canvas Objects: {canvas?.getObjects().length || 0}</div>
-              <div>Detected Polygons: {savedPolygons.length}</div>
-              <div>Canvas Initialized: {canvas ? "Yes" : "No"}</div>
-              {canvas && canvas.getObjects().length > 0 && (
-                <div className="mt-2">
-                  <div className="font-semibold">Object Types:</div>
-                  {canvas.getObjects().map((obj, i) => (
-                    <div key={i} className="ml-2">
-                      {i}: {obj.type}
-                      {obj.type === "group" && (
-                        <span>
-                          {" "}
-                          (id: {(obj as any).polygonId || "none"}, type:{" "}
-                          {(obj as any).polygonType || "none"})
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       {/* Template Save Section - Fixed with proper props */}
