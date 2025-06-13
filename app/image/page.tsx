@@ -17,7 +17,11 @@ export default async function ImagePage({
 
   return (
     <>
-      <ScheduleImageGenerator guildId={guildId} defaultMode={mode} />
+      <ScheduleImageGenerator
+        guildId={guildId!}
+        defaultMode={mode}
+        streamerId={3}
+      />
     </>
   );
 }

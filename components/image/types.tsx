@@ -4,6 +4,17 @@ export interface Point {
   y: number;
 }
 
+// Minimal polygon data for storage
+export interface MinimalPolygon {
+  id: string;
+  type: string;
+  points: Point[]; // Will be rounded to integers
+  // Position offset from a base position (for grouped types)
+  offsetX?: number;
+  offsetY?: number;
+}
+
+// Full polygon data for canvas rendering
 export interface TypedPolygon {
   id: string;
   points: Point[];
@@ -117,35 +128,74 @@ export const OFFSET_TYPE_COLORS: Record<string, string> = {
   // Day 5 colors (purple)
   day5_stream_name: "#8800ff",
   day5_stream_time: "#9933ff",
-  day5_game: "#aa66ff",
-  day5_duration: "#bb99ff",
-  day5_notes: "#ddccff",
+  day5_game: "#bb66ff",
+  day5_duration: "#cc99ff",
+  day5_notes: "#e6ccff",
 
-  // Day 6 colors (pink)
-  day6_stream_name: "#ff00ff",
-  day6_stream_time: "#ff33ff",
-  day6_game: "#ff66ff",
-  day6_duration: "#ff99ff",
-  day6_notes: "#ffccff",
-};
+  // Day 6 colors (cyan)
+  day6_stream_name: "#00ffff",
+  day6_stream_time: "#33ffff",
+  day6_game: "#66ffff",
+  day6_duration: "#99ffff",
+  day6_notes: "#ccffff",
+} as const;
 
-// Legacy colors for backward compatibility
-export const LEGACY_TYPE_COLORS: Record<string, string> = {
-  streamTitle: "#ff0000",
-  streamDate: "#00ff00",
-  duration: "#0000ff",
+// Singular type colors
+export const SINGULAR_TYPE_COLORS: Record<string, string> = {
   art: "#ff00ff",
-  logo: "#ffff00",
-  weekday: "#00ffff",
-  "artist name": "#ff8800",
-  "week start": "#8800ff",
-  "week end": "#88ff00",
-};
+  logo: "#00ff00",
+  "artist name": "#ffff00",
+  "week start": "#00ffff",
+  "week end": "#ff8800",
+} as const;
 
 // Combined color mapping
-export const TYPE_COLORS = { ...OFFSET_TYPE_COLORS, ...LEGACY_TYPE_COLORS };
+export const TYPE_COLORS: Record<string, string> = {
+  ...OFFSET_TYPE_COLORS,
+  ...SINGULAR_TYPE_COLORS,
+} as const;
 
-// Fill colors with transparency
+// Default styles for polygon types (to avoid storing repeatedly)
+export const DEFAULT_POLYGON_STYLES = {
+  fill: "rgba(255, 0, 0, 0.3)",
+  stroke: "#ff0000",
+  strokeWidth: 2,
+  scaleX: 1,
+  scaleY: 1,
+  angle: 0,
+  opacity: 1,
+} as const;
+
+// Schedule group template for offset-based storage
+export interface ScheduleDayGroup {
+  dayIndex: number; // 0-6
+  baseX: number; // Base X position for this day's polygons
+  baseY: number; // Base Y position for this day's polygons
+  polygons: {
+    stream_name?: MinimalPolygon;
+    stream_time?: MinimalPolygon;
+    game?: MinimalPolygon;
+    duration?: MinimalPolygon;
+    notes?: MinimalPolygon;
+  };
+}
+
+// Optimized template data structure
+export interface OptimizedTemplateData {
+  version: "2.0"; // Version for migration support
+  canvas: {
+    width: number;
+    height: number;
+  };
+  backgroundUrl?: string; // URL reference instead of embedded image
+  // Group schedule polygons by day for efficient storage
+  scheduleDays?: ScheduleDayGroup[];
+  // Store singular polygons separately
+  singularPolygons?: MinimalPolygon[];
+  // Store any custom style overrides (if different from defaults)
+  styleOverrides?: Record<string, Partial<typeof DEFAULT_POLYGON_STYLES>>;
+}
+
 export const FILL_COLORS: Record<string, string> = {};
 Object.keys(TYPE_COLORS).forEach((key) => {
   FILL_COLORS[key] = TYPE_COLORS[key] + "55"; // Add 55 for transparency

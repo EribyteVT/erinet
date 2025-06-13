@@ -32,17 +32,11 @@ var stream_number_positions = [
 ];
 
 export function DataTypeSelector() {
-  const {
-    currentDataType,
-    setCurrentDataType,
-    customDataTypes,
-    addCustomDataType,
-  } = useDrawing();
+  const { currentDataType, setCurrentDataType } = useDrawing();
   const { canvas } = useCanvas();
 
   const [selectedDay, setSelectedDay] = useState("0");
   const [selectedField, setSelectedField] = useState("stream_name");
-  const [customTypeName, setCustomTypeName] = useState("");
   const [canvasUpdateTrigger, setCanvasUpdateTrigger] = useState(0);
 
   const dayOptions = Array.from({ length: 7 }, (_, i) => ({
@@ -94,11 +88,7 @@ export function DataTypeSelector() {
 
   const singularTypes = [...SINGULAR_POLYGON_TYPES];
 
-  const allDataTypes = [
-    ...OFFSET_STREAM_TYPES,
-    ...singularTypes,
-    ...customDataTypes,
-  ];
+  const allDataTypes = [...OFFSET_STREAM_TYPES, ...singularTypes];
 
   const handleQuickSelectOffsetType = () => {
     const offsetType = `day${selectedDay}_${selectedField}`;
@@ -143,13 +133,6 @@ export function DataTypeSelector() {
       canvas.off("object:removed", handleCanvasChange);
     };
   }, [canvas]);
-
-  const handleAddCustomType = (value: string) => {
-    if (value.trim()) {
-      addCustomDataType(value.trim());
-      setCustomTypeName("");
-    }
-  };
 
   // Group types for better organization
   const offsetTypes = allDataTypes.filter((type) => type.startsWith("day"));
@@ -314,33 +297,6 @@ export function DataTypeSelector() {
             </div>
           </div>
         )}
-
-        {/* Add Custom Type */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-purple-300">
-            Add Custom Type
-          </Label>
-          <div className="flex gap-1">
-            <Input
-              value={customTypeName}
-              onChange={(e) => setCustomTypeName(e.target.value)}
-              placeholder="Custom type name"
-              className="bg-gray-600 border-gray-500 text-white text-xs h-7"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleAddCustomType(customTypeName);
-                }
-              }}
-            />
-            <Button
-              onClick={() => handleAddCustomType(customTypeName)}
-              disabled={!customTypeName.trim()}
-              className="bg-purple-500 hover:bg-purple-600 text-white text-xs h-7 px-2"
-            >
-              Add
-            </Button>
-          </div>
-        </div>
 
         {/* Drawing Controls */}
         {!currentDataTypeUsed ? (

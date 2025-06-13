@@ -1,4 +1,3 @@
-// components/image/components/TemplateSave.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +17,13 @@ import {
   Info,
 } from "lucide-react";
 import { Group } from "fabric";
-import { TypedPolygon } from "../types";
+import {
+  MinimalPolygon,
+  ScheduleDayGroup,
+  OptimizedTemplateData,
+  DEFAULT_POLYGON_STYLES,
+  OFFSET_STREAM_TYPES,
+} from "../types";
 
 interface PolygonDisplay {
   id: string;
@@ -38,8 +43,7 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
     loadTemplate,
     deleteTemplate,
     getTemplateInfo,
-    applyTemplateToCanvas,
-    extractBackgroundImage,
+    applyOptimizedTemplateToCanvas,
     isSaving,
     isLoading,
     isDeleting,
@@ -57,34 +61,124 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
     lastUpdated?: Date;
   }>({ exists: false });
 
-  // Convert PolygonDisplay to TypedPolygon for saving
-  const convertPolygonsForSaving = (): TypedPolygon[] => {
-    return polygons.map((polygon) => {
-      const fabricObject = polygon.fabricObject;
+  // Helper function to round coordinates to integers
+  const roundPoint = (point: { x: number; y: number }) => ({
+    x: Math.round(point.x),
+    y: Math.round(point.y),
+  });
 
-      // Get the actual polygon from the group to extract points
+  // Helper function to check if styles differ from defaults
+  const hasCustomStyles = (fabricObject: Group): boolean => {
+    const polygonObj = fabricObject
+      .getObjects()
+      .find((o) => o.type === "polygon");
+    if (!polygonObj) return false;
+
+    return (
+      polygonObj.fill !== DEFAULT_POLYGON_STYLES.fill ||
+      polygonObj.stroke !== DEFAULT_POLYGON_STYLES.stroke ||
+      fabricObject.strokeWidth !== DEFAULT_POLYGON_STYLES.strokeWidth ||
+      fabricObject.scaleX !== DEFAULT_POLYGON_STYLES.scaleX ||
+      fabricObject.scaleY !== DEFAULT_POLYGON_STYLES.scaleY ||
+      fabricObject.angle !== DEFAULT_POLYGON_STYLES.angle ||
+      fabricObject.opacity !== DEFAULT_POLYGON_STYLES.opacity
+    );
+  };
+
+  // Convert polygons to optimized format
+  const convertPolygonsToOptimized = (): OptimizedTemplateData => {
+    const scheduleDays: ScheduleDayGroup[] = [];
+    const singularPolygons: MinimalPolygon[] = [];
+    const styleOverrides: Record<
+      string,
+      Partial<typeof DEFAULT_POLYGON_STYLES>
+    > = {};
+
+    // Group polygons by day for schedule types
+    const dayGroups: Record<number, ScheduleDayGroup> = {};
+
+    polygons.forEach((polygon) => {
+      const fabricObject = polygon.fabricObject;
       const polygonObj = fabricObject
         .getObjects()
         .find((o) => o.type === "polygon");
+      if (!polygonObj) return;
 
-      const points = (polygonObj as any)?.points || [];
-
-      return {
-        id: polygon.id,
-        points: points,
-        type: polygon.type,
-        left: fabricObject.left || 0,
-        top: fabricObject.top || 0,
-        // Include additional Fabric.js properties with fallbacks for null values
-        fill: "rgba(255, 0, 0, 0.3)",
-        stroke: "#ff0000",
-        strokeWidth: fabricObject.strokeWidth || 2,
-        scaleX: fabricObject.scaleX || 1,
-        scaleY: fabricObject.scaleY || 1,
-        angle: fabricObject.angle || 0,
-        opacity: fabricObject.opacity || 1,
+      const points = ((polygonObj as any)?.points || []).map(roundPoint);
+      const basePosition = {
+        x: Math.round(fabricObject.left || 0),
+        y: Math.round(fabricObject.top || 0),
       };
+
+      // Check if this is a schedule type
+      const dayMatch = polygon.type.match(/^day(\d)_(.+)$/);
+      if (dayMatch) {
+        const dayIndex = parseInt(dayMatch[1]);
+        const fieldType = dayMatch[2] as keyof ScheduleDayGroup["polygons"];
+
+        // Initialize day group if needed
+        if (!dayGroups[dayIndex]) {
+          dayGroups[dayIndex] = {
+            dayIndex,
+            baseX: basePosition.x,
+            baseY: basePosition.y,
+            polygons: {},
+          };
+        }
+
+        // Store as offset from day's base position
+        const dayGroup = dayGroups[dayIndex];
+        dayGroup.polygons[fieldType] = {
+          id: polygon.id,
+          type: polygon.type,
+          points,
+          offsetX: basePosition.x - dayGroup.baseX,
+          offsetY: basePosition.y - dayGroup.baseY,
+        };
+
+        // Update base position if this polygon is further left/up
+        dayGroup.baseX = Math.min(dayGroup.baseX, basePosition.x);
+        dayGroup.baseY = Math.min(dayGroup.baseY, basePosition.y);
+      } else {
+        // Singular polygon
+        singularPolygons.push({
+          id: polygon.id,
+          type: polygon.type,
+          points,
+        });
+      }
+
+      // Check for custom styles
+      if (hasCustomStyles(fabricObject)) {
+        const customStyles: Partial<typeof DEFAULT_POLYGON_STYLES> = {};
+
+        styleOverrides[polygon.id] = customStyles;
+      }
     });
+
+    // Convert day groups to array
+    Object.values(dayGroups).forEach((group) => {
+      scheduleDays.push(group);
+    });
+
+    // Sort schedule days by index
+    scheduleDays.sort((a, b) => a.dayIndex - b.dayIndex);
+
+    const canvas = (window as any).fabricCanvas;
+
+    return {
+      version: "2.0",
+      canvas: {
+        width: canvas?.width || 1280,
+        height: canvas?.height || 720,
+      },
+      backgroundUrl: backgroundUrl.trim() || undefined,
+      scheduleDays: scheduleDays.length > 0 ? scheduleDays : undefined,
+      singularPolygons:
+        singularPolygons.length > 0 ? singularPolygons : undefined,
+      styleOverrides:
+        Object.keys(styleOverrides).length > 0 ? styleOverrides : undefined,
+    };
   };
 
   // Load template info on component mount
@@ -129,10 +223,10 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
       backgroundUrl: backgroundUrl.trim() || undefined,
     };
 
-    // Use the converted polygons instead of extractPolygonData
-    const polygonData = convertPolygonsForSaving();
+    // Use optimized format
+    const optimizedData = convertPolygonsToOptimized();
 
-    const result = await saveTemplate(templateData, polygonData);
+    const result = await saveTemplate(templateData, optimizedData);
 
     if (result.success) {
       setMessage({
@@ -146,6 +240,20 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
         templateName: templateName,
         lastUpdated: new Date(),
       });
+
+      // Log size savings
+      console.log("💾 Template saved with optimized format v2.0");
+      console.log(`📊 Polygons: ${polygons.length} total`);
+      if (optimizedData.scheduleDays) {
+        console.log(`📅 Schedule days: ${optimizedData.scheduleDays.length}`);
+      }
+      if (optimizedData.styleOverrides) {
+        console.log(
+          `🎨 Custom styles: ${
+            Object.keys(optimizedData.styleOverrides).length
+          }`
+        );
+      }
     } else {
       setMessage({
         type: "error",
@@ -157,7 +265,6 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
     setTimeout(() => setMessage(null), 5000);
   };
 
-  // Add this debugging to your handleLoadTemplate function
   const handleLoadTemplate = async () => {
     console.log("🚀 Starting template load for guildId:", guildId);
 
@@ -165,21 +272,23 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
     console.log("📦 Load template result:", result);
 
     if (result.success && result.template) {
-      console.log("📊 Template data structure:", {
-        hasTemplateData: !!result.template.template_data,
-        templateDataType: typeof result.template.template_data,
-        templateDataKeys: result.template.template_data
-          ? Object.keys(result.template.template_data)
-          : [],
-      });
+      const templateData = result.template.template_data;
 
-      // Log the actual template data
-      console.log("🔍 Raw template data:", result.template.template_data);
+      // Check template version
+      const version = templateData.version || "1.0";
+      console.log(`📌 Template version: ${version}`);
 
-      const applied = await applyTemplateToCanvas(
-        result.template.template_data
-      );
-      console.log("✅ Template application result:", applied);
+      let applied = false;
+
+      if (version === "2.0") {
+        // Use optimized loader
+        applied = await applyOptimizedTemplateToCanvas(templateData);
+      } else {
+        // Use legacy loader for backward compatibility
+        console.log("⚠️ Loading legacy template format");
+        // You would keep the old applyTemplateToCanvas method for v1.0 templates
+        // applied = await applyTemplateToCanvas(templateData);
+      }
 
       if (applied) {
         setMessage({
@@ -309,68 +418,86 @@ export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
             className="w-full bg-green-600 hover:bg-green-700"
           >
             {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
             ) : (
-              <Save className="mr-2 h-4 w-4" />
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Template
+              </>
             )}
-            {templateInfo.exists ? "Update Template" : "Save Template"}
-          </Button>
-
-          <Button
-            onClick={handleLoadTemplate}
-            disabled={isLoading}
-            variant="outline"
-            className="w-full border-gray-500 text-gray-200 hover:bg-gray-600"
-          >
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="mr-2 h-4 w-4" />
-            )}
-            Load Template
           </Button>
 
           {templateInfo.exists && (
-            <Button
-              onClick={handleDeleteTemplate}
-              disabled={isDeleting}
-              variant="destructive"
-              className="w-full"
-            >
-              {isDeleting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Delete Template
-            </Button>
+            <>
+              <Button
+                onClick={handleLoadTemplate}
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Load Template
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleDeleteTemplate}
+                disabled={isDeleting}
+                variant="destructive"
+                className="w-full"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Template
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
 
         {/* Status Messages */}
         {message && (
           <Alert
-            className={`${
+            className={
               message.type === "success"
                 ? "bg-green-900/50 border-green-700"
                 : message.type === "error"
                 ? "bg-red-900/50 border-red-700"
                 : "bg-blue-900/50 border-blue-700"
-            }`}
+            }
           >
             {message.type === "success" ? (
               <Check className="h-4 w-4" />
-            ) : (
+            ) : message.type === "error" ? (
               <AlertCircle className="h-4 w-4" />
+            ) : (
+              <Info className="h-4 w-4" />
             )}
             <AlertDescription
-              className={`${
+              className={
                 message.type === "success"
                   ? "text-green-100"
                   : message.type === "error"
                   ? "text-red-100"
                   : "text-blue-100"
-              }`}
+              }
             >
               {message.text}
             </AlertDescription>
