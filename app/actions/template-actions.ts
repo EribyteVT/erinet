@@ -25,8 +25,8 @@ const LegacyPolygonSchema = z.object({
   opacity: z.number().optional(),
 });
 
-// Validation schemas for v2.0 (optimized)
-const MinimalPolygonSchema = z.object({
+// FIXED: Enhanced polygon schema that includes position and styling data
+const EnhancedPolygonSchema = z.object({
   id: z.string(),
   type: z.string(),
   points: z.array(
@@ -35,6 +35,18 @@ const MinimalPolygonSchema = z.object({
       y: z.number().int(),
     })
   ),
+  // Position data (required for proper placement)
+  left: z.number(),
+  top: z.number(),
+  // Styling data (optional, with defaults)
+  fill: z.string().optional(),
+  stroke: z.string().optional(),
+  strokeWidth: z.number().optional(),
+  scaleX: z.number().optional(),
+  scaleY: z.number().optional(),
+  angle: z.number().optional(),
+  opacity: z.number().optional(),
+  // Legacy offset support for backward compatibility
   offsetX: z.number().int().optional(),
   offsetY: z.number().int().optional(),
 });
@@ -44,11 +56,11 @@ const ScheduleDayGroupSchema = z.object({
   baseX: z.number().int(),
   baseY: z.number().int(),
   polygons: z.object({
-    stream_name: MinimalPolygonSchema.optional(),
-    stream_time: MinimalPolygonSchema.optional(),
-    game: MinimalPolygonSchema.optional(),
-    duration: MinimalPolygonSchema.optional(),
-    notes: MinimalPolygonSchema.optional(),
+    stream_name: EnhancedPolygonSchema.optional(),
+    stream_time: EnhancedPolygonSchema.optional(),
+    game: EnhancedPolygonSchema.optional(),
+    duration: EnhancedPolygonSchema.optional(),
+    notes: EnhancedPolygonSchema.optional(),
   }),
 });
 
@@ -83,7 +95,7 @@ const OptimizedTemplateDataSchema = z.object({
   }),
   backgroundUrl: z.string().url().optional(),
   scheduleDays: z.array(ScheduleDayGroupSchema).optional(),
-  singularPolygons: z.array(MinimalPolygonSchema).optional(),
+  singularPolygons: z.array(EnhancedPolygonSchema).optional(), // FIXED: Use enhanced schema
   styleOverrides: StyleOverridesSchema.optional(),
 });
 
@@ -143,8 +155,16 @@ export type LoadTemplateResult =
     };
 
 // Helper function to calculate data size reduction
-function calculateDataSize(data: any): number {
-  return JSON.stringify(data).length;
+function calculateOptimizationStats(
+  originalData: any,
+  optimizedData: any
+): string {
+  const originalSize = JSON.stringify(originalData).length;
+  const optimizedSize = JSON.stringify(optimizedData).length;
+  const reduction = ((originalSize - optimizedSize) / originalSize) * 100;
+  return `Reduced data size by ${reduction.toFixed(
+    1
+  )}% (${originalSize} → ${optimizedSize} bytes)`;
 }
 
 export async function saveTemplateAction(
@@ -154,70 +174,82 @@ export async function saveTemplateAction(
     const validatedData = SaveTemplateSchema.parse(data);
     const { guildId, templateName, templateData } = validatedData;
 
-    // Check if template already exists for this guild
+    console.log("💾 Saving template data:", {
+      guildId,
+      templateName,
+      singularPolygonsCount:
+        templateData.version === "2.0"
+          ? templateData.singularPolygons?.length || 0
+          : 0,
+      templateData: templateData,
+    });
+
+    // Check if template already exists
     const existingTemplate = await prisma.guild_schedule_template.findUnique({
       where: { guild_id: guildId },
     });
 
-    let result;
+    let savedTemplate;
 
     if (existingTemplate) {
-      // Update existing template (preserve file data)
-      result = await prisma.guild_schedule_template.update({
+      // Update existing template
+      savedTemplate = await prisma.guild_schedule_template.update({
         where: { guild_id: guildId },
         data: {
           template_name: templateName,
           template_data: templateData,
           updated_at: new Date(),
-          // Keep existing file data intact
-        },
-        select: {
-          id: true,
-          guild_id: true,
-          template_name: true,
-          background_file_path: true,
-          background_file_name: true,
-          created_at: true,
-          updated_at: true,
         },
       });
     } else {
       // Create new template
-      result = await prisma.guild_schedule_template.create({
+      savedTemplate = await prisma.guild_schedule_template.create({
         data: {
           guild_id: guildId,
           template_name: templateName,
           template_data: templateData,
         },
-        select: {
-          id: true,
-          guild_id: true,
-          template_name: true,
-          background_file_path: true,
-          background_file_name: true,
-          created_at: true,
-          updated_at: true,
-        },
       });
     }
 
+    console.log("✅ Template saved successfully:", {
+      id: savedTemplate.id,
+      dataSize: JSON.stringify(templateData).length,
+    });
+
+    // Revalidate any pages that might display template info
     revalidatePath(`/schedule/${guildId}`);
 
     return {
       success: true,
-      template: result,
+      template: {
+        ...savedTemplate,
+        backgroundImage: savedTemplate.background_file_path,
+      },
       message: existingTemplate
         ? "Template updated successfully!"
         : "Template saved successfully!",
     };
   } catch (error) {
     console.error("Error saving template:", error);
+
+    if (error instanceof z.ZodError) {
+      console.error("Validation errors:", error.errors);
+      return {
+        success: false,
+        error: `Validation error: ${error.errors
+          .map((e) => `${e.path.join(".")}: ${e.message}`)
+          .join(", ")}`,
+      };
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",
     };
   }
 }
+
 export async function loadTemplateAction(
   data: z.infer<typeof LoadTemplateSchema>
 ): Promise<LoadTemplateResult> {
@@ -319,6 +351,7 @@ export async function deleteTemplate(
     };
   }
 }
+
 export async function getTemplateInfoAction(
   data: z.infer<typeof LoadTemplateSchema>
 ): Promise<{
