@@ -1,84 +1,93 @@
+// components/image/hooks/useTemplateSave.tsx - Updated for file-based backgrounds
 "use client";
 
 import { useCallback, useState } from "react";
-import { useCanvas } from "./useCanvas";
-import {
-  TypedPolygon,
-  OptimizedTemplateData,
-  DEFAULT_POLYGON_STYLES,
-  TYPE_COLORS,
-  MinimalPolygon,
-  ScheduleDayGroup,
-} from "../types";
-import {
-  saveTemplate as saveTemplateAction,
-  loadTemplate as loadTemplateAction,
-  deleteTemplate as deleteTemplateAction,
-  getTemplateInfo as getTemplateInfoAction,
-  type SaveTemplateResult,
-  type LoadTemplateResult,
-} from "@/app/actions/template-actions";
 import * as fabric from "fabric";
+import {
+  saveTemplateAction,
+  loadTemplateAction,
+  deleteTemplate,
+  getTemplateInfoAction,
+  getBackgroundImageAction,
+} from "@/app/actions/template-actions";
 
+// Types
 interface SaveTemplateData {
   guildId: string;
   templateName: string;
-  backgroundUrl?: string;
 }
 
-export function useTemplateSave() {
-  const { canvas } = useCanvas();
+interface OptimizedTemplateData {
+  version: "2.0";
+  canvas: {
+    width: number;
+    height: number;
+  };
+  scheduleDays?: any[];
+  singularPolygons?: any[];
+  styleOverrides?: any;
+}
+
+interface SaveTemplateResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  template?: any;
+}
+
+interface LoadTemplateResult {
+  success: boolean;
+  template?: any;
+  error?: string;
+}
+
+export function useTemplateSave(canvas?: fabric.Canvas) {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Extract polygon data from canvas (legacy method kept for backward compatibility)
-  const extractPolygonData = useCallback((): TypedPolygon[] => {
+  // Extract polygons from canvas
+  const extractPolygons = useCallback((): any[] => {
     if (!canvas) return [];
 
-    const polygons: TypedPolygon[] = [];
+    const polygons: any[] = [];
 
     canvas.getObjects().forEach((obj) => {
-      const polygonType = (obj as any).polygonType;
-      const polygonId = (obj as any).polygonId;
-
-      if (polygonType && polygonId && obj.type === "group") {
+      if (obj.type === "group") {
         const group = obj as fabric.Group;
         const polygonObj = group.getObjects().find((o) => o.type === "polygon");
-        const points = polygonObj ? (polygonObj as any).points || [] : [];
 
-        polygons.push({
-          id: polygonId,
-          points: points,
-          type: polygonType,
-          left: group.left || 0,
-          top: group.top || 0,
-          fill: "rgba(255, 0, 0, 0.3)",
-          stroke: "#ff0000",
-          strokeWidth: group.strokeWidth || 2,
-          scaleX: group.scaleX || 1,
-          scaleY: group.scaleY || 1,
-          angle: group.angle || 0,
-          opacity: group.opacity || 1,
-        });
+        if (polygonObj && polygonObj.type === "polygon") {
+          const polygonId = (group as any).polygonId || `polygon_${Date.now()}`;
+          const polygonType = (group as any).polygonType || "default";
+
+          const points = (polygonObj as any).points
+            ? (polygonObj as any).points.map((p: any) => ({ x: p.x, y: p.y }))
+            : (polygonObj as any).points || [];
+
+          polygons.push({
+            id: polygonId,
+            points: points,
+            type: polygonType,
+            left: group.left || 0,
+            top: group.top || 0,
+            fill: "rgba(255, 0, 0, 0.3)",
+            stroke: "#ff0000",
+            strokeWidth: group.strokeWidth || 2,
+            scaleX: group.scaleX || 1,
+            scaleY: group.scaleY || 1,
+            angle: group.angle || 0,
+            opacity: group.opacity || 1,
+          });
+        }
       }
     });
 
     return polygons;
   }, [canvas]);
 
-  // Extract background image from canvas
-  const extractBackgroundImage = useCallback((): string | undefined => {
-    if (!canvas) return undefined;
-
-    const backgroundImage = canvas.backgroundImage;
-    if (backgroundImage && backgroundImage.type === "image") {
-      const imageObj = backgroundImage as fabric.Image;
-      return imageObj.getSrc();
-    }
-
-    return undefined;
-  }, [canvas]);
+  // Get current polygons
+  const polygons = extractPolygons();
 
   // Save template with optimized data
   const saveTemplate = useCallback(
@@ -97,7 +106,6 @@ export function useTemplateSave() {
           guildId: data.guildId,
           templateName: data.templateName,
           templateData,
-          backgroundUrl: data.backgroundUrl,
         };
 
         const result = await saveTemplateAction(payload);
@@ -123,6 +131,25 @@ export function useTemplateSave() {
 
       try {
         const result = await loadTemplateAction({ guildId });
+
+        if (result.success && canvas) {
+          // Apply template to canvas
+          await applyOptimizedTemplateToCanvas(result.template.template_data);
+
+          // Load background image if available
+          if (result.template.backgroundImage) {
+            try {
+              const img = await fabric.FabricImage.fromURL(
+                result.template.backgroundImage
+              );
+              canvas.backgroundImage = img;
+              canvas.renderAll();
+            } catch (imgError) {
+              console.warn("Could not load background image:", imgError);
+            }
+          }
+        }
+
         return result;
       } catch (error) {
         console.error("Error loading template:", error);
@@ -135,7 +162,7 @@ export function useTemplateSave() {
         setIsLoading(false);
       }
     },
-    []
+    [canvas]
   );
 
   // Delete template
@@ -173,6 +200,21 @@ export function useTemplateSave() {
     }
   }, []);
 
+  // Get background image info
+  const getBackgroundImage = useCallback(async (guildId: string) => {
+    try {
+      const result = await getBackgroundImageAction(guildId);
+      return result;
+    } catch (error) {
+      console.error("Error getting background image:", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }, []);
+
   // Apply optimized template to canvas
   const applyOptimizedTemplateToCanvas = useCallback(
     async (templateData: OptimizedTemplateData): Promise<boolean> => {
@@ -195,18 +237,9 @@ export function useTemplateSave() {
           });
         }
 
-        // Load background image if URL provided
-
-        const img = await fabric.FabricImage.fromURL(
-          "http://localhost:3000/template_test.png"
-        );
-        canvas.backgroundImage = img;
-
-        canvas.renderAll();
-
         // Helper function to create polygon from minimal data
         const createPolygonFromMinimal = async (
-          polygonData: MinimalPolygon,
+          polygonData: any,
           baseX: number = 0,
           baseY: number = 0
         ) => {
@@ -215,110 +248,78 @@ export function useTemplateSave() {
           const y = baseY + (polygonData.offsetY || 0);
 
           // Get styles (custom or default)
-          const styles = templateData.styleOverrides?.[polygonData.id] || {};
-          const fill = styles.fill || DEFAULT_POLYGON_STYLES.fill;
-          const stroke = styles.stroke || DEFAULT_POLYGON_STYLES.stroke;
-          const color = TYPE_COLORS[polygonData.type] || stroke;
+          const styles = templateData.styleOverrides?.[polygonData.id] || {
+            fill: "rgba(255, 0, 0, 0.3)",
+            stroke: "#ff0000",
+            strokeWidth: 2,
+          };
 
           // Create polygon
           const polygon = new fabric.Polygon(points, {
-            fill: fill,
-            stroke: color,
-            strokeWidth:
-              styles.strokeWidth || DEFAULT_POLYGON_STYLES.strokeWidth,
-            objectCaching: false,
-            transparentCorners: false,
-            cornerStyle: "circle",
-            cornerSize: 8,
-            cornerColor: color,
-            borderColor: color,
+            left: x,
+            top: y,
+            fill: styles.fill,
+            stroke: styles.stroke,
+            strokeWidth: styles.strokeWidth,
+            selectable: true,
+            evented: true,
+          });
+
+          // Create text label
+          const text = new fabric.Text(polygonData.id, {
+            left: x,
+            top: y - 20,
+            fontSize: 12,
+            fill: "#000",
             selectable: false,
             evented: false,
           });
 
-          // Create label
-          const label = new fabric.FabricText(polygonData.type, {
-            fontSize: 14,
-            fill: "white",
-            backgroundColor: color,
-            padding: 5,
-            selectable: false,
-            evented: false,
-          });
-
-          // Create group
-          const group = new fabric.Group([polygon, label], {
+          // Group polygon and text
+          const group = new fabric.Group([polygon, text], {
             left: x,
             top: y,
             selectable: true,
             evented: true,
-            scaleX: styles.scaleX || DEFAULT_POLYGON_STYLES.scaleX,
-            scaleY: styles.scaleY || DEFAULT_POLYGON_STYLES.scaleY,
-            angle: styles.angle || DEFAULT_POLYGON_STYLES.angle,
-            opacity: styles.opacity || DEFAULT_POLYGON_STYLES.opacity,
           });
 
           // Add metadata
-          (group as any).polygonType = polygonData.type;
           (group as any).polygonId = polygonData.id;
-          (group as any).points = points;
+          (group as any).polygonType = polygonData.type || "default";
 
           return group;
         };
 
-        // Load schedule day groups
-        if (templateData.scheduleDays) {
-          console.log(
-            `📅 Loading ${templateData.scheduleDays.length} schedule days`
-          );
-
-          for (const dayGroup of templateData.scheduleDays) {
-            console.log(`  Day ${dayGroup.dayIndex}:`, dayGroup);
-
-            // Load each polygon in the day group
-            for (const [fieldType, polygonData] of Object.entries(
-              dayGroup.polygons
-            )) {
-              if (polygonData) {
-                try {
-                  const group = await createPolygonFromMinimal(
-                    polygonData,
-                    dayGroup.baseX,
-                    dayGroup.baseY
-                  );
-                  canvas.add(group);
-                } catch (error) {
-                  console.error(
-                    `❌ Error creating ${fieldType} polygon:`,
-                    error
-                  );
-                }
-              }
-            }
+        // Process singular polygons
+        if (templateData.singularPolygons) {
+          for (const polygonData of templateData.singularPolygons) {
+            const group = await createPolygonFromMinimal(polygonData);
+            canvas.add(group);
           }
         }
 
-        // Load singular polygons
-        if (templateData.singularPolygons) {
-          console.log(
-            `🔷 Loading ${templateData.singularPolygons.length} singular polygons`
-          );
+        // Process schedule day groups
+        if (templateData.scheduleDays) {
+          for (const dayGroup of templateData.scheduleDays) {
+            const baseX = dayGroup.basePosition?.x || 0;
+            const baseY = dayGroup.basePosition?.y || 0;
 
-          for (const polygonData of templateData.singularPolygons) {
-            try {
-              const group = await createPolygonFromMinimal(polygonData);
+            for (const polygonData of dayGroup.polygons) {
+              const group = await createPolygonFromMinimal(
+                polygonData,
+                baseX,
+                baseY
+              );
               canvas.add(group);
-            } catch (error) {
-              console.error(`❌ Error creating singular polygon:`, error);
             }
           }
         }
 
         canvas.renderAll();
-        console.log("✅ Optimized template applied successfully!");
+        console.log("✅ Template applied successfully");
         return true;
       } catch (error) {
-        console.error("❌ Error applying optimized template:", error);
+        console.error("❌ Error applying template to canvas:", error);
         return false;
       }
     },
@@ -330,11 +331,11 @@ export function useTemplateSave() {
     loadTemplate,
     deleteTemplate,
     getTemplateInfo,
+    getBackgroundImage,
     applyOptimizedTemplateToCanvas,
-    extractPolygonData,
-    extractBackgroundImage,
     isSaving,
     isLoading,
     isDeleting,
+    polygons,
   };
 }

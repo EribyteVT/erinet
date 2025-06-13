@@ -77,6 +77,10 @@ model guild_schedule_template {
   template_name   String?   @map("template_name")
   template_data   Json      @map("template_data") // Stores the template configuration (polygons, layout, etc.)
   background_url  String?   @map("background_url") // Optional background image URL
+  background_file_name  String?   @map("background_file_name") // Original filename
+  background_file_path  String?   @map("background_file_path") // Server file path
+  background_file_size  Int?      @map("background_file_size") // File size in bytes
+  background_file_type  String?   @map("background_file_type") // MIME type
   created_at      DateTime  @default(now()) @map("created_at")
   updated_at      DateTime  @updatedAt @map("updated_at")
 
