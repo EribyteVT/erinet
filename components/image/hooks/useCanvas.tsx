@@ -12,7 +12,6 @@ import { Canvas, Image, Text } from "fabric";
 interface CanvasContextType {
   canvas: Canvas | null;
   initializeCanvas: (canvasElement: HTMLCanvasElement) => void;
-  exportImage: () => void;
 }
 
 const CanvasContext = createContext<CanvasContextType | undefined>(undefined);
@@ -73,37 +72,11 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     [canvas]
   );
 
-  const exportImage = useCallback(() => {
-    if (!canvas) return;
-
-    // Hide selection indicators
-    canvas.discardActiveObject();
-    canvas.renderAll();
-
-    const polygons = canvas
-      .getObjects()
-      .filter((obj) => obj.type === "polygon");
-    polygons.forEach((polygon) => polygon.set("visible", false));
-
-    // Generate image
-    const dataURL = canvas.toDataURL();
-
-    polygons.forEach((polygon) => polygon.set("visible", true));
-    canvas.renderAll();
-
-    // Create download link
-    const link = document.createElement("a");
-    link.download = `schedule-${new Date().toISOString().split("T")[0]}.png`;
-    link.href = dataURL;
-    link.click();
-  }, [canvas]);
-
   return (
     <CanvasContext.Provider
       value={{
         canvas,
         initializeCanvas,
-        exportImage,
       }}
     >
       {children}

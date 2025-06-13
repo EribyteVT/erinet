@@ -20,7 +20,6 @@ export function ScheduleModePanel({
 }: //   streamerId,
 ScheduleModePanelProps) {
   const streamerId = 3;
-  const { exportImage } = useCanvas();
   const { groupInputsByOffset } = useScheduleData();
 
   const groupedInputs = groupInputsByOffset();
@@ -50,14 +49,6 @@ ScheduleModePanelProps) {
               streamerId={streamerId}
               mode="schedule"
             />
-            <Button
-              onClick={exportImage}
-              variant="outline"
-              className="w-full border-gray-500 hover:bg-gray-600"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Current Image
-            </Button>
           </CardContent>
         </Card>
 
