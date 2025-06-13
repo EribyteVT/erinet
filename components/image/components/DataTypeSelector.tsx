@@ -173,7 +173,7 @@ export function DataTypeSelector() {
                       field;
                     return (
                       <div key={dataType} className="text-xs">
-                        {streamName}'s {fieldLabel}
+                        {streamName}&apos;s {fieldLabel}
                       </div>
                     );
                   }
@@ -304,9 +304,9 @@ export function DataTypeSelector() {
         ) : (
           <div className="text-center p-4 bg-red-900/20 rounded border border-red-500">
             <p className="text-xs text-red-300">
-              Drawing disabled: This specific combination "{getDisplayName()}"
-              is already used. Choose a different day/field combination or
-              delete the existing polygon.
+              Drawing disabled: This specific combination &quot;
+              {getDisplayName()}&quot; is already used. Choose a different
+              day/field combination or delete the existing polygon.
             </p>
           </div>
         )}
