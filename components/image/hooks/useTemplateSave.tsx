@@ -215,6 +215,7 @@ export function useTemplateSave() {
   }, []);
 
   // Apply loaded template data to canvas
+  // Apply loaded template data to canvas
   const applyTemplateToCanvas = useCallback(
     async (data: any): Promise<boolean> => {
       console.log("🔄 Starting applyTemplateToCanvas", data);
@@ -229,60 +230,66 @@ export function useTemplateSave() {
         // Clear existing objects
         canvas.clear();
 
-        // Set canvas dimensions if provided
-        if (data.canvasWidth && data.canvasHeight) {
-          console.log(
-            `📐 Setting canvas dimensions: ${data.canvasWidth}x${data.canvasHeight}`
-          );
-          canvas.setDimensions({
-            width: data.canvasWidth,
-            height: data.canvasHeight,
-          });
-        }
+        // ✅ RESTORE CANVAS PROPERTIES AFTER CLEAR - This is the key fix!
+        canvas.backgroundColor = "#f0f0f0"; // Restore background color
+
+        // Set canvas dimensions if provided, otherwise use defaults
+        const canvasWidth = data.canvasWidth || 1280;
+        const canvasHeight = data.canvasHeight || 720;
+
+        console.log(
+          `📐 Setting canvas dimensions: ${canvasWidth}x${canvasHeight}`
+        );
+        canvas.setDimensions({
+          width: canvasWidth,
+          height: canvasHeight,
+        });
+
+        // ✅ Ensure canvas is visible and properly configured
+        canvas.selection = true;
+        canvas.renderAll(); // Render after setting background and dimensions
 
         // Load background image if provided
-        if (data.backgroundImage) {
-          console.log(
-            "🖼️ Loading background image...",
-            data.backgroundImage.substring(0, 50) + "..."
+
+        try {
+          // Add timeout to prevent hanging
+          const imageLoadPromise = fabric.FabricImage.fromURL(
+            "http://localhost:3000/template_test.png"
           );
-          try {
-            // Add timeout to prevent hanging
-            const imageLoadPromise = fabric.FabricImage.fromURL(
-              data.backgroundImage
-            );
 
-            const timeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Image load timeout")), 10000)
-            );
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Image load timeout")), 10000)
+          );
 
-            const imgObj = (await Promise.race([
-              imageLoadPromise,
-              timeoutPromise,
-            ])) as fabric.FabricImage;
+          const imgObj = (await Promise.race([
+            imageLoadPromise,
+            timeoutPromise,
+          ])) as fabric.FabricImage;
 
-            console.log("✅ Background image loaded successfully");
+          console.log("✅ Background image loaded successfully");
 
-            // Scale to fit canvas
-            const scaleX = canvas.width! / imgObj.getScaledWidth();
-            const scaleY = canvas.height! / imgObj.getScaledHeight();
-            const scale = Math.min(scaleX, scaleY);
+          // Scale to fit canvas
+          const scaleX = canvas.width! / imgObj.getScaledWidth();
+          const scaleY = canvas.height! / imgObj.getScaledHeight();
+          const scale = Math.min(scaleX, scaleY);
 
-            console.log(`🔧 Scaling image: ${scale}`);
-            imgObj.set({ scaleX: scale, scaleY: scale });
-            canvas.add(imgObj);
-            canvas.sendObjectToBack(imgObj);
-            console.log("✅ Background image added to canvas");
-          } catch (imgError) {
-            console.error("❌ Error loading background image:", imgError);
-            // Continue without background image - don't fail the whole operation
-          }
-        } else {
-          console.log("ℹ️ No background image to load");
+          console.log(`🔧 Scaling image: ${scale}`);
+          imgObj.set({
+            scaleX: scale,
+            scaleY: scale,
+            left: 0,
+            top: 0,
+            selectable: false,
+            evented: false,
+            excludeFromExport: false,
+          });
+          canvas.add(imgObj);
+          canvas.sendObjectToBack(imgObj);
+          console.log("✅ Background image added to canvas");
+        } catch (imgError) {
+          console.error("❌ Error loading background image:", imgError);
+          // Continue without background image - don't fail the whole operation
         }
-
-        // Recreate polygons
-        // Replace the polygon recreation section in applyTemplateToCanvas with this:
 
         // Recreate polygons
         if (data.polygons && Array.isArray(data.polygons)) {
@@ -315,7 +322,7 @@ export function useTemplateSave() {
                 evented: true,
               });
 
-              // ✅ CREATE GROUP JUST LIKE ORIGINAL - This is the key fix!
+              // Create group just like original
               const group = new fabric.Group([polygon], {
                 left: polygonData.left,
                 top: polygonData.top,
@@ -323,7 +330,7 @@ export function useTemplateSave() {
                 evented: true,
               });
 
-              // ✅ Add metadata to GROUP, not individual polygon
+              // Add metadata to GROUP, not individual polygon
               (group as any).polygonType = polygonData.type;
               (group as any).polygonId = polygonData.id;
               (group as any).points = polygonData.points;
@@ -342,8 +349,12 @@ export function useTemplateSave() {
           console.log("ℹ️ No polygons to load");
         }
 
-        console.log("🎨 Rendering canvas...");
+        console.log("🎨 Final render...");
         canvas.renderAll();
+
+        // ✅ Add a small delay to ensure everything is rendered properly
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         console.log("✅ Template applied successfully!");
         return true;
       } catch (error) {
