@@ -1,4 +1,4 @@
-// components/image/hooks/useTemplateSave.tsx - Updated for file-based backgrounds
+// components/image/hooks/useTemplateSave.tsx - Fixed version
 "use client";
 
 import { useCallback, useState } from "react";
@@ -46,7 +46,7 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Extract polygons from canvas
+  // Extract polygons from canvas - FIXED VERSION
   const extractPolygons = useCallback((): any[] => {
     if (!canvas) return [];
 
@@ -61,28 +61,39 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
           const polygonId = (group as any).polygonId || `polygon_${Date.now()}`;
           const polygonType = (group as any).polygonType || "default";
 
+          // ✅ PROPERLY extract points from the polygon and round to integers
           const points = (polygonObj as any).points
-            ? (polygonObj as any).points.map((p: any) => ({ x: p.x, y: p.y }))
-            : (polygonObj as any).points || [];
+            ? (polygonObj as any).points.map((p: any) => ({
+                x: Math.round(p.x),
+                y: Math.round(p.y),
+              }))
+            : [];
 
-          polygons.push({
-            id: polygonId,
-            points: points,
-            type: polygonType,
-            left: group.left || 0,
-            top: group.top || 0,
-            fill: "rgba(255, 0, 0, 0.3)",
-            stroke: "#ff0000",
-            strokeWidth: group.strokeWidth || 2,
-            scaleX: group.scaleX || 1,
-            scaleY: group.scaleY || 1,
-            angle: group.angle || 0,
-            opacity: group.opacity || 1,
-          });
+          // ✅ Only save if we have actual points
+          if (points.length > 0) {
+            polygons.push({
+              id: polygonId,
+              points: points,
+              type: polygonType,
+              left: Math.round(group.left || 0),
+              top: Math.round(group.top || 0),
+              fill: polygonObj.fill || "rgba(255, 0, 0, 0.3)",
+              stroke: polygonObj.stroke || "#ff0000",
+              strokeWidth: Math.round(polygonObj.strokeWidth || 2),
+              scaleX: group.scaleX || 1,
+              scaleY: group.scaleY || 1,
+              angle: Math.round(group.angle || 0),
+              opacity: group.opacity || 1,
+            });
+          }
         }
       }
     });
 
+    console.log(
+      `📊 Extracted ${polygons.length} polygons for saving:`,
+      polygons
+    );
     return polygons;
   }, [canvas]);
 
@@ -102,12 +113,19 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
       setIsSaving(true);
 
       try {
+        // ✅ Use the properly extracted polygons instead of the passed templateData
+        const actualPolygons = extractPolygons();
+
         const payload = {
           guildId: data.guildId,
           templateName: data.templateName,
-          templateData,
+          templateData: {
+            ...templateData,
+            singularPolygons: actualPolygons, // Use the real extracted data
+          },
         };
 
+        console.log("💾 Saving template with data:", payload);
         const result = await saveTemplateAction(payload);
         return result;
       } catch (error) {
@@ -121,7 +139,7 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
         setIsSaving(false);
       }
     },
-    [canvas]
+    [canvas, extractPolygons]
   );
 
   // Load template
@@ -133,6 +151,8 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
         const result = await loadTemplateAction({ guildId });
 
         if (result.success && canvas) {
+          console.log("🔄 Loading template:", result.template);
+
           // Apply template to canvas
           await applyOptimizedTemplateToCanvas(result.template.template_data);
 
@@ -215,7 +235,7 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
     }
   }, []);
 
-  // Apply optimized template to canvas
+  // Apply optimized template to canvas - FIXED VERSION
   const applyOptimizedTemplateToCanvas = useCallback(
     async (templateData: OptimizedTemplateData): Promise<boolean> => {
       if (!canvas || !templateData) {
@@ -224,10 +244,17 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
       }
 
       try {
-        console.log("🎨 Applying optimized template v2.0 to canvas...");
+        console.log(
+          "🎨 Applying optimized template v2.0 to canvas...",
+          templateData
+        );
 
-        // Clear existing objects
+        // Clear existing objects (but keep background if any)
+        const backgroundImg = canvas.backgroundImage;
         canvas.clear();
+        if (backgroundImg) {
+          canvas.backgroundImage = backgroundImg;
+        }
 
         // Set canvas dimensions
         if (templateData.canvas) {
@@ -237,30 +264,34 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
           });
         }
 
-        // Helper function to create polygon from minimal data
-        const createPolygonFromMinimal = async (
+        // ✅ FIXED: Helper function to create polygon from saved data
+        const createPolygonFromSavedData = async (
           polygonData: any,
           baseX: number = 0,
           baseY: number = 0
         ) => {
+          console.log("🔧 Creating polygon from data:", polygonData);
+
+          if (!polygonData.points || polygonData.points.length === 0) {
+            console.warn("⚠️ No points found for polygon:", polygonData.id);
+            return null;
+          }
+
           const points = polygonData.points;
-          const x = baseX + (polygonData.offsetX || 0);
-          const y = baseY + (polygonData.offsetY || 0);
+          const x = baseX + (polygonData.left || 0);
+          const y = baseY + (polygonData.top || 0);
 
-          // Get styles (custom or default)
-          const styles = templateData.styleOverrides?.[polygonData.id] || {
-            fill: "rgba(255, 0, 0, 0.3)",
-            stroke: "#ff0000",
-            strokeWidth: 2,
-          };
-
-          // Create polygon
+          // Create polygon with saved properties
           const polygon = new fabric.Polygon(points, {
             left: x,
             top: y,
-            fill: styles.fill,
-            stroke: styles.stroke,
-            strokeWidth: styles.strokeWidth,
+            fill: polygonData.fill || "rgba(255, 0, 0, 0.3)",
+            stroke: polygonData.stroke || "#ff0000",
+            strokeWidth: polygonData.strokeWidth || 2,
+            scaleX: polygonData.scaleX || 1,
+            scaleY: polygonData.scaleY || 1,
+            angle: polygonData.angle || 0,
+            opacity: polygonData.opacity || 1,
             selectable: true,
             evented: true,
           });
@@ -283,34 +314,54 @@ export function useTemplateSave(canvas?: fabric.Canvas) {
             evented: true,
           });
 
-          // Add metadata
+          // ✅ Restore metadata
           (group as any).polygonId = polygonData.id;
           (group as any).polygonType = polygonData.type || "default";
 
+          console.log(
+            "✅ Created polygon group:",
+            polygonData.id,
+            polygonData.type
+          );
           return group;
         };
 
         // Process singular polygons
-        if (templateData.singularPolygons) {
+        if (
+          templateData.singularPolygons &&
+          templateData.singularPolygons.length > 0
+        ) {
+          console.log(
+            `📐 Processing ${templateData.singularPolygons.length} singular polygons`
+          );
+
           for (const polygonData of templateData.singularPolygons) {
-            const group = await createPolygonFromMinimal(polygonData);
-            canvas.add(group);
+            const group = await createPolygonFromSavedData(polygonData);
+            if (group) {
+              canvas.add(group);
+            }
           }
         }
 
-        // Process schedule day groups
-        if (templateData.scheduleDays) {
+        // Process schedule day groups (if any)
+        if (templateData.scheduleDays && templateData.scheduleDays.length > 0) {
+          console.log(
+            `📅 Processing ${templateData.scheduleDays.length} schedule day groups`
+          );
+
           for (const dayGroup of templateData.scheduleDays) {
             const baseX = dayGroup.basePosition?.x || 0;
             const baseY = dayGroup.basePosition?.y || 0;
 
             for (const polygonData of dayGroup.polygons) {
-              const group = await createPolygonFromMinimal(
+              const group = await createPolygonFromSavedData(
                 polygonData,
                 baseX,
                 baseY
               );
-              canvas.add(group);
+              if (group) {
+                canvas.add(group);
+              }
             }
           }
         }

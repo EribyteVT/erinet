@@ -1,4 +1,4 @@
-// components/image/ScheduleImageGenerator.tsx
+// components/image/ScheduleImageGenerator.tsx - Fixed version
 "use client";
 
 import { useState } from "react";
@@ -31,7 +31,7 @@ function ScheduleImageGeneratorInner({
       <TopBar mode={mode} onModeChange={setMode} />
       <div className="flex flex-1 overflow-hidden">
         {mode === "design" ? (
-          <DesignModePanel />
+          <DesignModePanel guildId={guildId} />
         ) : (
           <ScheduleModePanel guild={guildId} streamerId={streamerId} />
         )}

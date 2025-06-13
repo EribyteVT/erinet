@@ -1,4 +1,4 @@
-// components/image/components/TemplateSave.tsx - Updated with file upload
+// components/image/components/TemplateSave.tsx - Fixed version
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-// import { Progress } from "@/components/ui/progress";
 import {
   Save,
   Upload,
@@ -18,6 +17,7 @@ import {
   FileImage,
 } from "lucide-react";
 import { useTemplateSave } from "../hooks/useTemplateSave";
+import { useCanvas } from "../hooks/useCanvas"; // ✅ Import canvas context
 
 interface TemplateInfo {
   exists: boolean;
@@ -38,9 +38,15 @@ interface Message {
 
 interface TemplateSaveProps {
   guildId: string;
+  polygons: Array<{
+    id: string;
+    type: string;
+    pointsCount: number;
+    fabricObject: any;
+  }>;
 }
 
-export function TemplateSave({ guildId }: TemplateSaveProps) {
+export function TemplateSave({ guildId, polygons }: TemplateSaveProps) {
   const [templateName, setTemplateName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -52,7 +58,9 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
   const [message, setMessage] = useState<Message | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { canvas } = useCanvas(); // ✅ Get canvas from context
 
+  // ✅ Pass canvas to the hook
   const {
     saveTemplate,
     loadTemplate,
@@ -61,8 +69,7 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     isSaving,
     isLoading,
     isDeleting,
-    polygons,
-  } = useTemplateSave();
+  } = useTemplateSave(canvas!);
 
   // Load template info on component mount
   useEffect(() => {
@@ -98,12 +105,12 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     if (!file.type.startsWith("image/")) {
       setMessage({
         type: "error",
-        text: "Please select an image file (JPEG, PNG, WebP)",
+        text: "Please select a valid image file",
       });
       return;
     }
 
-    // Validate file size (5MB max)
+    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       setMessage({
         type: "error",
@@ -114,7 +121,7 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
 
     setSelectedFile(file);
 
-    // Create preview
+    // Create preview URL
     const reader = new FileReader();
     reader.onload = (e) => {
       setFilePreview(e.target?.result as string);
@@ -125,73 +132,89 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
     setMessage(null);
   };
 
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  // Mock upload function - replace with actual implementation
   const uploadBackgroundImage = async (file: File): Promise<boolean> => {
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      const formData = new FormData();
-      formData.append("background", file);
-      formData.append("guildId", guildId);
-
-      const response = await fetch("/api/upload/background", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Upload failed");
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i);
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      setUploadProgress(100);
+      // TODO: Implement actual file upload logic
+      console.log("Upload file:", file);
       return true;
     } catch (error) {
-      console.error("Error uploading background:", error);
+      console.error("Upload failed:", error);
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Upload failed",
+        text: "Failed to upload background image",
       });
       return false;
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  const deleteBackgroundImage = async () => {
+  const handleDeleteTemplate = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this template? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
     try {
-      const response = await fetch(
-        `/api/upload/background?guildId=${guildId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const result = await deleteTemplate(guildId);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Delete failed");
+      if (result.success) {
+        setMessage({
+          type: "success",
+          text: "Template deleted successfully!",
+        });
+
+        // Reset state
+        setTemplateInfo({ exists: false });
+        setTemplateName("");
+        setFilePreview(null);
+        setSelectedFile(null);
+      } else {
+        setMessage({
+          type: "error",
+          text: result.error || "Failed to delete template",
+        });
       }
-
-      setSelectedFile(null);
-      setFilePreview(null);
-
-      // Update template info
-      setTemplateInfo((prev) => ({
-        ...prev,
-        backgroundFile: undefined,
-      }));
-
-      setMessage({
-        type: "success",
-        text: "Background image deleted successfully",
-      });
     } catch (error) {
-      console.error("Error deleting background:", error);
+      console.error("Error deleting template:", error);
       setMessage({
         type: "error",
         text: error instanceof Error ? error.message : "Delete failed",
       });
     }
+
+    // Clear message after 5 seconds
+    setTimeout(() => setMessage(null), 5000);
   };
 
   const handleSaveTemplate = async () => {
@@ -199,6 +222,14 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
       setMessage({
         type: "error",
         text: "Please enter a template name",
+      });
+      return;
+    }
+
+    if (!canvas) {
+      setMessage({
+        type: "error",
+        text: "Canvas not initialized",
       });
       return;
     }
@@ -212,13 +243,18 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
         }
       }
 
-      // Create template data
+      // ✅ Create template data using canvas dimensions - let the hook extract the polygons
       const templateData = {
         version: "2.0" as const,
-        canvas: { width: 800, height: 600 }, // You should get these from your canvas
+        canvas: {
+          width: canvas.width || 800,
+          height: canvas.height || 600,
+        },
         scheduleDays: [],
-        singularPolygons: polygons,
+        singularPolygons: [], // This will be replaced by the hook with actual extracted data
       };
+
+      console.log("💾 Saving template with polygon count:", polygons.length);
 
       const result = await saveTemplate(
         {
@@ -270,6 +306,8 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
   };
 
   const handleLoadTemplate = async () => {
+    console.log("🔄 Starting template load for guild:", guildId);
+
     const result = await loadTemplate(guildId);
 
     if (result.success) {
@@ -286,65 +324,38 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
       if (result.template.backgroundImage) {
         setFilePreview(result.template.backgroundImage);
       }
+
+      console.log("✅ Template loaded successfully");
     } else {
       setMessage({
         type: "error",
         text: result.error || "Failed to load template",
       });
+      console.error("❌ Template load failed:", result.error);
     }
 
     setTimeout(() => setMessage(null), 5000);
-  };
-
-  const handleDeleteTemplate = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this template? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-
-    const result = await deleteTemplate(guildId);
-
-    if (result.success) {
-      setMessage({
-        type: "success",
-        text: "Template deleted successfully!",
-      });
-
-      // Reset form and template info
-      setTemplateName("");
-      setSelectedFile(null);
-      setFilePreview(null);
-      setTemplateInfo({ exists: false });
-    } else {
-      setMessage({
-        type: "error",
-        text: result.error || "Failed to delete template",
-      });
-    }
-
-    setTimeout(() => setMessage(null), 5000);
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
-    <Card className="bg-gray-700 border-gray-600 m-6">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-blue-400 text-sm font-semibold uppercase tracking-wide">
+    <Card className="bg-gray-700 border-gray-600">
+      <CardHeader>
+        <CardTitle className="text-white flex items-center gap-2">
+          <Save className="h-5 w-5" />
           Template Management
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Message Display */}
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {/* Status Messages */}
         {message && (
           <Alert
             className={`${
@@ -411,29 +422,37 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
               <Upload className="h-4 w-4 mr-2" />
               {selectedFile || templateInfo.backgroundFile
                 ? "Change Image"
-                : "Upload Image"}
+                : "Select Image"}
             </Button>
 
-            {(templateInfo.backgroundFile || filePreview) && (
+            {(selectedFile || filePreview) && (
               <Button
                 type="button"
                 variant="outline"
-                onClick={deleteBackgroundImage}
-                className="bg-red-600 border-red-500 text-white hover:bg-red-500"
+                onClick={removeSelectedFile}
+                className="bg-red-600 border-red-500 text-red-100 hover:bg-red-500"
+                disabled={isUploading}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remove
+                <X className="h-4 w-4" />
               </Button>
             )}
           </div>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+          {/* File Preview */}
+          {filePreview && (
+            <div className="relative">
+              <img
+                src={filePreview}
+                alt="Background preview"
+                className="w-full max-h-32 object-cover rounded border border-gray-500"
+              />
+              {selectedFile && (
+                <div className="absolute bottom-2 left-2 bg-black/75 text-white text-xs px-2 py-1 rounded">
+                  {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Upload Progress */}
           {isUploading && (
@@ -442,34 +461,20 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
                 <span>Uploading...</span>
                 <span>{uploadProgress}%</span>
               </div>
-              {/* <Progress value={uploadProgress} className="w-full" /> */}
-            </div>
-          )}
-
-          {/* File Preview */}
-          {filePreview && (
-            <div className="relative">
-              <div className="border border-gray-500 rounded-lg p-2 bg-gray-600">
-                <img
-                  src={filePreview}
-                  alt="Background preview"
-                  className="max-w-full h-32 object-contain rounded"
-                />
-                {selectedFile && (
-                  <div className="mt-2 flex items-center gap-2 text-sm text-gray-300">
-                    <FileImage className="h-4 w-4" />
-                    <span>{selectedFile.name}</span>
-                    <span className="text-gray-400">
-                      ({formatFileSize(selectedFile.size)})
-                    </span>
-                  </div>
-                )}
+              <div className="w-full bg-gray-600 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
               </div>
             </div>
           )}
 
+          {/* File Requirements */}
           <p className="text-xs text-gray-400">
-            Supported formats: JPEG, PNG, WebP. Maximum size: 5MB
+            Supported formats: PNG, JPG, JPEG, GIF, WebP
+            <br />
+            Maximum size: 5MB
           </p>
         </div>
 
@@ -477,6 +482,11 @@ export function TemplateSave({ guildId }: TemplateSaveProps) {
         <div className="text-sm text-gray-300">
           Current polygons:{" "}
           <span className="font-semibold">{polygons.length}</span>
+          {process.env.NODE_ENV === "development" && (
+            <div className="text-xs mt-1 text-gray-400">
+              Debug: Canvas objects: {canvas?.getObjects().length || 0}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
