@@ -125,18 +125,20 @@ export function GenerateScheduleButton({
   const exportScheduleImage = () => {
     if (!canvas) return;
 
-    // Hide selection indicators
     canvas.discardActiveObject();
     canvas.renderAll();
 
-    // Export as image with high quality
-    const dataURL = canvas.toDataURL({
-      format: "png",
-      quality: 1,
-      multiplier: 2, // Higher resolution
-    });
+    const polygons = canvas
+      .getObjects()
+      .filter((obj) => obj.type === "polygon");
+    polygons.forEach((polygon) => polygon.set("visible", false));
 
-    // Create download link
+    // Generate image
+    const dataURL = canvas.toDataURL();
+
+    polygons.forEach((polygon) => polygon.set("visible", true));
+    canvas.renderAll();
+
     const link = document.createElement("a");
     link.download = `schedule-${format(weekStartDate, "yyyy-MM-dd")}.png`;
     link.href = dataURL;
