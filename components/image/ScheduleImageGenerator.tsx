@@ -28,7 +28,12 @@ function ScheduleImageGeneratorInner({
 
   return (
     <div className="w-full h-screen flex flex-col bg-gray-900 text-white">
-      <TopBar mode={mode} onModeChange={setMode} />
+      <TopBar
+        mode={mode}
+        onModeChange={setMode}
+        guildId={guildId}
+        streamerId={streamerId}
+      />
       <div className="flex flex-1 overflow-hidden">
         {mode === "design" ? (
           <DesignModePanel guildId={guildId} />
