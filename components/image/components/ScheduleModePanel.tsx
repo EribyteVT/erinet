@@ -99,12 +99,14 @@ export function ScheduleModePanel({
               if (polygon) {
                 const bounds = polygon.getBoundingRect();
 
-                // Update text formatting
+                // Update text formatting properties
                 textObj.set({
                   fontSize: settings.fontSize,
                   textAlign: settings.justification,
                   left: bounds.left + bounds.width / 2,
                   top: bounds.top + bounds.height / 2,
+                  originX: "center",
+                  originY: "center",
                 });
 
                 // Auto-size text to fit within polygon bounds
@@ -164,6 +166,9 @@ export function ScheduleModePanel({
                 };
 
                 fitTextToPolygon(textObj, bounds);
+
+                // Ensure the text alignment is properly applied
+                textObj.setCoords();
               }
             }
           }
@@ -341,7 +346,11 @@ export function ScheduleModePanel({
                           <Select
                             value={settings.timeFormat}
                             onValueChange={(value: TimeFormat) =>
-                              updateTextSetting(textType, "timeFormat", value)
+                              handleTextSettingChange(
+                                textType,
+                                "timeFormat",
+                                value
+                              )
                             }
                           >
                             <SelectTrigger className="bg-gray-500 border-gray-400 text-white text-sm">

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { Text, Group, Polygon } from "fabric";
 import { useCanvas } from "./useCanvas";
-import { useTextFormatting } from "./useTextFormatting";
+import { useTextFormatting, TextJustification } from "./useTextFormatting";
 import {
   getOffsetFromType,
   getFieldFromType,
@@ -57,6 +57,33 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
     monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
     return monday;
   });
+
+  // Helper function to get text positioning based on justification
+  const getTextPosition = useCallback(
+    (bounds: any, justification: TextJustification) => {
+      const padding = bounds.width * 0.05; // 5% padding
+
+      switch (justification) {
+        case "left":
+          return {
+            left: bounds.left + padding,
+            originX: "left" as const,
+          };
+        case "right":
+          return {
+            left: bounds.left + bounds.width - padding,
+            originX: "right" as const,
+          };
+        case "center":
+        default:
+          return {
+            left: bounds.left + bounds.width / 2,
+            originX: "center" as const,
+          };
+      }
+    },
+    []
+  );
 
   // Format time value based on settings
   const formatTimeValue = useCallback(
@@ -110,6 +137,9 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
             ? getTextSettings(field)
             : getTextSettings("default");
 
+          // Get text position based on justification
+          const textPosition = getTextPosition(bounds, settings.justification);
+
           // Format the display value
           let displayValue = formatTimeValue(value, dataType);
 
@@ -129,9 +159,9 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
                 : `[${dataType}]`;
 
             textObj = new Text(textContent, {
-              left: bounds.left + bounds.width / 2,
+              left: textPosition.left,
               top: bounds.top + bounds.height / 2,
-              originX: "center",
+              originX: textPosition.originX,
               originY: "center",
               fontSize: settings.fontSize,
               fill: "#000000",
@@ -154,8 +184,10 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
               text: textContent,
               fontSize: settings.fontSize,
               textAlign: settings.justification,
-              left: bounds.left + bounds.width / 2,
+              left: textPosition.left,
               top: bounds.top + bounds.height / 2,
+              originX: textPosition.originX,
+              originY: "center",
             });
           }
 
@@ -218,12 +250,15 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
           };
 
           fitTextToPolygon(textObj, bounds);
+
+          // Ensure the text coordinates are updated
+          textObj.setCoords();
         }
       });
 
       canvas.renderAll();
     },
-    [canvas, getTextSettings, formatTimeValue]
+    [canvas, getTextSettings, formatTimeValue, getTextPosition]
   );
 
   const updateScheduleData = useCallback(
