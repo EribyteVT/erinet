@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Settings,
   Database,
+  RefreshCw,
 } from "lucide-react";
 import { useCanvas } from "../hooks/useCanvas";
 import { useScheduleData } from "../hooks/useScheduleData";
@@ -31,9 +32,17 @@ import {
   TextJustification,
   TimeFormat,
 } from "../hooks/useTextFormatting";
-import { getFieldFromType, getOffsetFromType } from "../types";
-import { useState, useCallback } from "react";
+import {
+  getFieldFromType,
+  getOffsetFromType,
+  getDateFromOffset,
+  getDayName,
+} from "../types";
+import { useState, useCallback, useEffect } from "react";
 import { Text, Polygon } from "fabric";
+import { fetchStreamsArb } from "@/app/actions/streamActions";
+import { format, startOfDay, addDays } from "date-fns";
+import { Stream } from "@/components/Streams/types";
 
 interface ScheduleModePanelProps {
   guild: string;
@@ -58,6 +67,9 @@ export function ScheduleModePanel({
     groupInputsByOffset,
     scheduleData,
     updateScheduleData,
+    batchUpdateScheduleData,
+    weekStartDate,
+    setWeekStartDate,
   } = useScheduleData();
   const { getTextSettings, updateTextSetting } = useTextFormatting();
 
@@ -69,8 +81,136 @@ export function ScheduleModePanel({
     new Set()
   );
 
+  // State for loading indicator
+  const [isLoadingData, setIsLoadingData] = useState(false);
+
   const scheduleInputs = generateScheduleInputs();
   const groupedInputs = groupInputsByOffset();
+
+  // Function to load schedule data from database (matching GenerateScheduleButton logic)
+  const loadScheduleDataFromDatabase = useCallback(async () => {
+    if (!streamerId || !weekStartDate || isLoadingData) return;
+
+    setIsLoadingData(true);
+    try {
+      // Calculate date range for the week (exactly like GenerateScheduleButton)
+      const fromDate = startOfDay(weekStartDate);
+      const toDate = addDays(fromDate, 7); // 7 days total
+
+      console.log(
+        "Date range:",
+        fromDate.toISOString(),
+        "to",
+        toDate.toISOString()
+      );
+
+      // Fetch streams for the week using the same function as GenerateScheduleButton
+      const streams = await fetchStreamsArb(
+        fromDate.toISOString(),
+        toDate.toISOString(),
+        guild,
+        streamerId.toString()
+      );
+
+      console.log("STREAMS:");
+      console.log(streams);
+
+      // Create a map of streams by day (exactly like GenerateScheduleButton)
+      const streamsByDay = new Map<number, Stream>();
+
+      if (streams && streams.length > 0) {
+        streams.forEach((stream) => {
+          const streamDate = new Date(stream.stream_date);
+          console.log("Processing stream:", streamDate, stream.stream_name);
+          const dayOffset = Math.floor(
+            (streamDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          // Only include streams within our 7-day window
+          if (dayOffset >= 0 && dayOffset <= 6) {
+            // If there's already a stream for this day, keep the earlier one
+            if (
+              !streamsByDay.has(dayOffset) ||
+              streamDate < new Date(streamsByDay.get(dayOffset)!.stream_date)
+            ) {
+              streamsByDay.set(dayOffset, stream);
+            }
+          }
+        });
+      }
+
+      // Prepare batch updates for all days (exactly like GenerateScheduleButton)
+      const batchUpdates: Record<string, string> = {};
+
+      // Update canvas with data for each day (0-6)
+      for (let dayOffset = 0; dayOffset <= 6; dayOffset++) {
+        const stream = streamsByDay.get(dayOffset);
+
+        // Calculate the date for this day offset
+        const dayDate = getDateFromOffset(weekStartDate, dayOffset);
+        const dayName = getDayName(dayOffset, weekStartDate);
+        const formattedDate = format(dayDate, "MM/dd");
+
+        // Add basic day info to batch updates
+        batchUpdates[`day${dayOffset}_stream_date`] = formattedDate;
+        batchUpdates[`day${dayOffset}_day_name`] = dayName;
+
+        if (stream) {
+          console.log(
+            `Processing stream for day ${dayOffset}:`,
+            stream.stream_name
+          );
+
+          // Update with actual stream data
+          const streamDate = new Date(stream.stream_date);
+          const timeStr = format(streamDate, "HH:mm");
+          const durationHours = stream.duration
+            ? Math.round(stream.duration / 60)
+            : 0;
+
+          console.log(
+            `Day ${dayOffset} - Time: ${timeStr}, Duration: ${durationHours}h`
+          );
+
+          // Add stream data to batch updates
+          batchUpdates[`day${dayOffset}_stream_name`] =
+            stream.stream_name || "";
+          batchUpdates[`day${dayOffset}_stream_time`] = timeStr;
+          batchUpdates[`day${dayOffset}_game`] =
+            stream.category_id || "Just Chatting";
+          batchUpdates[`day${dayOffset}_duration`] = `${durationHours}h`;
+          batchUpdates[`day${dayOffset}_notes`] = "";
+        } else {
+          console.log(`No stream for day ${dayOffset}`);
+          // No stream for this day - clear the fields
+          batchUpdates[`day${dayOffset}_stream_name`] = "No stream";
+          batchUpdates[`day${dayOffset}_stream_time`] = "";
+          batchUpdates[`day${dayOffset}_game`] = "";
+          batchUpdates[`day${dayOffset}_duration`] = "";
+          batchUpdates[`day${dayOffset}_notes`] = "";
+        }
+      }
+
+      console.log("Batch updates to apply:", batchUpdates);
+
+      // Apply all updates at once
+      batchUpdateScheduleData(batchUpdates);
+    } catch (error) {
+      console.error("Error loading schedule data from database:", error);
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [streamerId, weekStartDate, guild]); // Removed batchUpdateScheduleData to prevent unnecessary re-runs
+
+  // Auto-load data when component mounts
+  useEffect(() => {
+    loadScheduleDataFromDatabase();
+  }, []); // Empty dependency array - only run on mount
+
+  // Load data when week start date changes
+  useEffect(() => {
+    loadScheduleDataFromDatabase();
+  }, [weekStartDate]); // Only when week date changes
 
   // Helper function to get text positioning based on justification
   const getTextPosition = useCallback(
@@ -99,6 +239,155 @@ export function ScheduleModePanel({
     []
   );
 
+  // Custom function to update polygon text with override settings
+  const updatePolygonTextWithSettings = useCallback(
+    (
+      dataType: string,
+      value: string,
+      overrideSettings?: Partial<{
+        fontSize: number;
+        justification: TextJustification;
+        timeFormat: TimeFormat;
+      }>
+    ) => {
+      if (!canvas) return;
+
+      canvas.getObjects().forEach((obj) => {
+        if ((obj as any).polygonType === dataType) {
+          const polygon = obj as Polygon;
+
+          // Get polygon bounds
+          const bounds = polygon.getBoundingRect();
+
+          // Get field type and combine current settings with overrides
+          const field = getFieldFromType(dataType);
+          const currentSettings = field
+            ? getTextSettings(field)
+            : getTextSettings("default");
+
+          const settings = overrideSettings
+            ? { ...currentSettings, ...overrideSettings }
+            : currentSettings;
+
+          // Get text position based on justification
+          const textPosition = getTextPosition(bounds, settings.justification);
+
+          // Create or find existing text object for this polygon
+          let textObj = canvas
+            .getObjects()
+            .find(
+              (o) => o.type === "text" && (o as any).linkedPolygon === dataType
+            ) as Text;
+
+          if (!textObj) {
+            console.log(`Creating new text object for ${dataType}`);
+            // Create new text object if it doesn't exist
+            const textContent =
+              value !== undefined && value !== null ? value : `[${dataType}]`;
+
+            textObj = new Text(textContent, {
+              left: textPosition.left,
+              top: bounds.top + bounds.height / 2,
+              originX: textPosition.originX,
+              originY: "center",
+              fontSize: settings.fontSize,
+              fill: "#000000",
+              fontFamily: "Arial",
+              textAlign: settings.justification,
+              selectable: false,
+              evented: false,
+            });
+
+            // Link the text to this polygon
+            (textObj as any).linkedPolygon = dataType;
+            canvas.add(textObj);
+          } else {
+            console.log(`Updating existing text object for ${dataType}`);
+            // Update existing text with new formatting
+            const textContent =
+              value !== undefined && value !== null ? value : `[${dataType}]`;
+
+            textObj.set({
+              text: textContent,
+              fontSize: settings.fontSize,
+              textAlign: settings.justification,
+              left: textPosition.left,
+              top: bounds.top + bounds.height / 2,
+              originX: textPosition.originX,
+              originY: "center",
+            });
+          }
+
+          // Auto-size text to fit within polygon bounds
+          const fitTextToPolygon = (textObj: Text, bounds: any) => {
+            const maxWidth = bounds.width * 0.9; // 90% of polygon width for padding
+            const maxHeight = bounds.height * 0.9; // 90% of polygon height for padding
+
+            let fontSize = settings.fontSize;
+
+            // Scale down font size until text fits
+            while (fontSize > 8) {
+              // Minimum font size
+              textObj.set("fontSize", fontSize);
+
+              const textBounds = textObj.getBoundingRect();
+
+              if (
+                textBounds.width <= maxWidth &&
+                textBounds.height <= maxHeight
+              ) {
+                break;
+              }
+
+              fontSize -= 1;
+            }
+
+            // Handle text wrapping for long text
+            const words = (textObj.text || "").split(" ");
+            if (words.length > 1) {
+              let wrappedText = "";
+              let currentLine = "";
+
+              for (const word of words) {
+                const testLine = currentLine ? `${currentLine} ${word}` : word;
+                textObj.set("text", testLine);
+
+                const testBounds = textObj.getBoundingRect();
+
+                if (testBounds.width > maxWidth && currentLine) {
+                  wrappedText += (wrappedText ? "\n" : "") + currentLine;
+                  currentLine = word;
+                } else {
+                  currentLine = testLine;
+                }
+              }
+
+              wrappedText += (wrappedText ? "\n" : "") + currentLine;
+              textObj.set("text", wrappedText);
+
+              // Check if wrapped text still fits, if not reduce font size more
+              while (
+                textObj.getBoundingRect().height > maxHeight &&
+                fontSize > 8
+              ) {
+                fontSize -= 1;
+                textObj.set("fontSize", fontSize);
+              }
+            }
+          };
+
+          fitTextToPolygon(textObj, bounds);
+
+          // Ensure the text coordinates are updated
+          textObj.setCoords();
+        }
+      });
+
+      canvas.renderAll();
+    },
+    [canvas, getTextSettings, getTextPosition]
+  );
+
   // Function to refresh all text objects on canvas with new formatting
   const refreshAllTextFormatting = useCallback(
     (
@@ -111,157 +400,75 @@ export function ScheduleModePanel({
     ) => {
       if (!canvas) return;
 
-      console.log(`Refreshing text formatting for type: ${textType}`);
-      // Use override settings if provided, otherwise get current settings
-      const currentSettings = getTextSettings(textType);
-      const settings = overrideSettings
-        ? { ...currentSettings, ...overrideSettings }
-        : currentSettings;
-      console.log(`Settings:`, settings);
+      console.log(
+        `Refreshing text formatting for type: ${textType}`,
+        overrideSettings
+      );
 
-      let textObjectsUpdated = 0;
+      // Find all text objects that are linked to polygons of this field type
+      const matchingTexts = canvas.getObjects().filter((obj): obj is Text => {
+        if (obj.type !== "text") return false;
 
-      // Find all text objects linked to polygons of this text type
-      canvas.getObjects().forEach((obj) => {
-        if (obj.type === "text") {
-          const textObj = obj as Text;
-          const linkedPolygon = (textObj as any).linkedPolygon;
+        const linkedPolygon = (obj as any).linkedPolygon;
+        if (!linkedPolygon) return false;
 
-          if (linkedPolygon) {
-            const field = getFieldFromType(linkedPolygon);
-            if (field === textType) {
-              console.log(`Updating text object for ${linkedPolygon}`);
-
-              // Find the corresponding polygon to get bounds
-              const polygon = canvas
-                .getObjects()
-                .find(
-                  (polygonObj) =>
-                    (polygonObj as any).polygonType === linkedPolygon
-                ) as Polygon;
-
-              if (polygon) {
-                const bounds = polygon.getBoundingRect();
-                const textPosition = getTextPosition(
-                  bounds,
-                  settings.justification
-                );
-
-                console.log(
-                  `Text position for ${settings.justification}:`,
-                  textPosition
-                );
-
-                // Update text formatting properties including position and alignment
-                textObj.set({
-                  fontSize: settings.fontSize,
-                  textAlign: settings.justification,
-                  left: textPosition.left,
-                  top: bounds.top + bounds.height / 2,
-                  originX: textPosition.originX,
-                  originY: "center",
-                });
-
-                // Auto-size text to fit within polygon bounds
-                const fitTextToPolygon = (textObj: Text, bounds: any) => {
-                  const maxWidth = bounds.width * 0.9; // 90% of polygon width for padding
-                  const maxHeight = bounds.height * 0.9; // 90% of polygon height for padding
-
-                  let fontSize = settings.fontSize;
-
-                  // Scale down font size until text fits
-                  while (fontSize > 8) {
-                    // Minimum font size
-                    textObj.set("fontSize", fontSize);
-
-                    const textBounds = textObj.getBoundingRect();
-
-                    if (
-                      textBounds.width <= maxWidth &&
-                      textBounds.height <= maxHeight
-                    ) {
-                      break;
-                    }
-
-                    fontSize -= 1;
-                  }
-
-                  // Handle text wrapping for long text
-                  const words = (textObj.text || "").split(" ");
-                  if (words.length > 1) {
-                    let wrappedText = "";
-                    let currentLine = "";
-
-                    for (const word of words) {
-                      const testLine = currentLine
-                        ? `${currentLine} ${word}`
-                        : word;
-                      textObj.set("text", testLine);
-
-                      const testBounds = textObj.getBoundingRect();
-
-                      if (testBounds.width > maxWidth && currentLine) {
-                        wrappedText += (wrappedText ? "\n" : "") + currentLine;
-                        currentLine = word;
-                      } else {
-                        currentLine = testLine;
-                      }
-                    }
-
-                    wrappedText += (wrappedText ? "\n" : "") + currentLine;
-                    textObj.set("text", wrappedText);
-
-                    // Check if wrapped text still fits, if not reduce font size more
-                    while (
-                      textObj.getBoundingRect().height > maxHeight &&
-                      fontSize > 8
-                    ) {
-                      fontSize -= 1;
-                      textObj.set("fontSize", fontSize);
-                    }
-                  }
-                };
-
-                fitTextToPolygon(textObj, bounds);
-
-                // Ensure the text alignment is properly applied
-                textObj.setCoords();
-
-                textObjectsUpdated++;
-              }
-            }
-          }
-        }
+        // Extract the field type from the linked polygon (e.g., "day0_stream_name" -> "stream_name")
+        const field = getFieldFromType(linkedPolygon);
+        return field === textType;
       });
 
-      console.log(`Updated ${textObjectsUpdated} text objects`);
-      canvas.renderAll();
+      console.log(`Found ${matchingTexts.length} text objects for ${textType}`);
+
+      // For each matching text object, use our custom function with override settings
+      matchingTexts.forEach((textObj) => {
+        const linkedPolygon = (textObj as any).linkedPolygon;
+        const currentValue = scheduleData[linkedPolygon] || "";
+
+        // Use our custom function that accepts override settings directly
+        updatePolygonTextWithSettings(
+          linkedPolygon,
+          currentValue,
+          overrideSettings
+        );
+      });
     },
-    [canvas, getTextSettings, getTextPosition]
+    [canvas, getFieldFromType, scheduleData, updatePolygonTextWithSettings]
   );
 
-  // Enhanced updateTextSetting that also refreshes canvas
+  // Helper function to update text settings and refresh display
   const handleTextSettingChange = useCallback(
     (
       textType: string,
       setting: "fontSize" | "justification" | "timeFormat",
       value: number | TextJustification | TimeFormat
     ) => {
-      console.log(`Updating ${setting} to ${value} for ${textType}`);
+      console.log(`Changing ${setting} to ${value} for ${textType}`);
 
-      // Update the text setting
+      // Update the stored setting for persistence
       updateTextSetting(textType, setting, value);
 
-      // Create override settings with the new value
-      const overrideSettings = { [setting]: value };
-
-      // Refresh canvas formatting immediately with the new value
-      refreshAllTextFormatting(textType, overrideSettings);
+      // Apply the formatting immediately by passing the new setting directly
+      refreshAllTextFormatting(textType, { [setting]: value } as any);
     },
     [updateTextSetting, refreshAllTextFormatting]
   );
 
-  // Toggle section expansion
+  // Helper function to check if a field is a time field
+  const isTimeField = (textType: string): boolean => {
+    const field = getFieldFromType(textType);
+    return field ? field.includes("time") : false;
+  };
+
+  // Helper function to format field names for display
+  const formatFieldName = (field: string): string => {
+    return field
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase())
+      .replace(/Time$/, "Time")
+      .replace(/Id$/, "ID");
+  };
+
+  // Helper function to toggle section expansion
   const toggleSection = (textType: string) => {
     setExpandedSections((prev) => {
       const newSet = new Set(prev);
@@ -274,38 +481,20 @@ export function ScheduleModePanel({
     });
   };
 
-  // Get unique text types present on canvas
-  const getTextTypes = () => {
-    const types = new Set<string>();
-    scheduleInputs.forEach((input) => {
-      const field = getFieldFromType(input);
-      if (field) {
-        types.add(field);
-      }
-    });
-    return Array.from(types).sort();
-  };
-
-  const formatFieldName = (field: string): string => {
-    return field.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  const isTimeField = (field: string): boolean => {
-    return field.includes("time");
-  };
-
-  const textTypes = getTextTypes();
+  // Get unique text types from schedule inputs
+  const textTypes = Array.from(
+    new Set(scheduleInputs.map((input) => getFieldFromType(input) || input))
+  );
 
   // Render Options Tab Content
   const renderOptionsTab = () => (
     <div className="space-y-6">
-      {/* Text Formatting Controls */}
       {textTypes.length > 0 && (
         <Card className="bg-gray-700 border-gray-600">
           <CardHeader className="pb-3">
             <CardTitle className="text-white flex items-center gap-2">
               <Type className="h-4 w-4" />
-              Text Formatting
+              Text Formatting Options
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -314,60 +503,54 @@ export function ScheduleModePanel({
               const isExpanded = expandedSections.has(textType);
 
               return (
-                <div
-                  key={textType}
-                  className="border border-gray-600 rounded-lg bg-gray-600"
-                >
-                  {/* Header */}
+                <div key={textType} className="border-b border-gray-600 pb-4">
                   <button
                     onClick={() => toggleSection(textType)}
-                    className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-500 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between text-left text-white hover:text-blue-400 transition-colors"
                   >
-                    <span className="text-white font-medium">
+                    <span className="font-medium">
                       {formatFieldName(textType)}
                     </span>
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-gray-300" />
+                      <ChevronDown className="h-4 w-4" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-300" />
+                      <ChevronRight className="h-4 w-4" />
                     )}
                   </button>
 
-                  {/* Collapsible Content */}
                   {isExpanded && (
-                    <div className="px-3 pb-3 space-y-3">
+                    <div className="mt-3 space-y-3 pl-4">
                       {/* Font Size */}
                       <div className="space-y-1">
                         <Label className="text-xs text-gray-300">
                           Font Size
                         </Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            min="8"
-                            max="72"
-                            value={settings.fontSize}
-                            onChange={(e) =>
-                              handleTextSettingChange(
-                                textType,
-                                "fontSize",
-                                parseInt(e.target.value)
-                              )
-                            }
-                            className="w-16 bg-gray-500 border-gray-400 text-white text-sm"
-                          />
-                          <span className="text-xs text-gray-400">px</span>
-                        </div>
+                        <Input
+                          type="number"
+                          min="8"
+                          max="72"
+                          value={settings.fontSize}
+                          onChange={(e) =>
+                            handleTextSettingChange(
+                              textType,
+                              "fontSize",
+                              parseInt(e.target.value)
+                            )
+                          }
+                          className="bg-gray-500 border-gray-400 text-white text-sm"
+                        />
                       </div>
 
                       {/* Text Justification */}
                       <div className="space-y-1">
                         <Label className="text-xs text-gray-300">
-                          Justification
+                          Text Alignment
                         </Label>
                         <div className="flex gap-1">
                           {(
-                            ["left", "center", "right"] as TextJustification[]
+                            Object.keys(
+                              justificationIcons
+                            ) as TextJustification[]
                           ).map((justify) => {
                             const IconComponent = justificationIcons[justify];
                             return (
@@ -454,27 +637,46 @@ export function ScheduleModePanel({
         <CardContent>
           <div className="space-y-2">
             <Label className="text-gray-300">Week Start Date (Monday)</Label>
-            <Input
-              type="date"
-              className="bg-gray-600 border-gray-500 text-white"
-              value={
-                new Date(
-                  new Date().getTime() - new Date().getTimezoneOffset() * 60000
-                )
-                  .toISOString()
-                  .split("T")[0]
-              }
-              onChange={(e) => {
-                const selectedDate = new Date(e.target.value);
-                // Ensure it's a Monday
-                const dayOfWeek = selectedDate.getDay();
-                const monday = new Date(selectedDate);
-                monday.setDate(
-                  selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
-                );
-                // setWeekStartDate(monday);
-              }}
-            />
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                className="bg-gray-600 border-gray-500 text-white flex-1"
+                value={
+                  new Date(
+                    weekStartDate.getTime() -
+                      weekStartDate.getTimezoneOffset() * 60000
+                  )
+                    .toISOString()
+                    .split("T")[0]
+                }
+                onChange={(e) => {
+                  const selectedDate = new Date(e.target.value);
+                  // Ensure it's a Monday
+                  const dayOfWeek = selectedDate.getDay();
+                  const monday = new Date(selectedDate);
+                  monday.setDate(
+                    selectedDate.getDate() -
+                      (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+                  );
+                  setWeekStartDate(monday);
+                }}
+              />
+              <Button
+                onClick={loadScheduleDataFromDatabase}
+                disabled={isLoadingData}
+                className="bg-blue-600 hover:bg-blue-700"
+                size="sm"
+              >
+                {isLoadingData ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            {isLoadingData && (
+              <p className="text-sm text-blue-400">Loading schedule data...</p>
+            )}
           </div>
         </CardContent>
       </Card>

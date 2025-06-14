@@ -173,7 +173,6 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
             (textObj as any).linkedPolygon = dataType;
             canvas.add(textObj);
           } else {
-            console.log(`Updating existing text object for ${dataType}`);
             // Update existing text with new formatting
             const textContent =
               value !== undefined && value !== null
