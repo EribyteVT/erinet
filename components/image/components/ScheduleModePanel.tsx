@@ -26,45 +26,7 @@ ScheduleModePanelProps) {
 
   return (
     <div className="w-100 bg-gray-800 border-r border-gray-700 overflow-y-auto">
-      <div className="p-6 space-y-6">
-        {/* Action Buttons */}
-        <Card className="bg-gray-700 border-gray-600">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <GenerateScheduleButton
-              guild={guild}
-              streamerId={streamerId}
-              mode="schedule"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Schedule Inputs */}
-        {groupedInputs.length > 0 && (
-          <Card className="bg-gray-700 border-gray-600">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Schedule Data</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScheduleInputs />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Instructions */}
-        {groupedInputs.length === 0 && (
-          <Card className="bg-gray-700 border-gray-600">
-            <CardContent className="pt-6">
-              <p className="text-sm text-gray-400 text-center">
-                Switch to Design Mode to create schedule polygons, then return
-                here to fill in your schedule data.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <div className="p-6 space-y-6"></div>
     </div>
   );
 }

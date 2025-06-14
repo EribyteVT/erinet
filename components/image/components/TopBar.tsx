@@ -2,16 +2,29 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AppMode } from "../ScheduleImageGenerator";
 import { Settings, Palette, Calendar, Server } from "lucide-react";
+import { GenerateScheduleButton } from "./GenerateScheduleButton";
+import { useScheduleData } from "../hooks/useScheduleData";
 
 interface TopBarProps {
   mode: AppMode;
   onModeChange: (mode: AppMode) => void;
+  guildId: string;
+  streamerId: number;
 }
 
-export function TopBar({ mode, onModeChange }: TopBarProps) {
+export function TopBar({
+  mode,
+  onModeChange,
+  guildId,
+  streamerId,
+}: TopBarProps) {
+  const { weekStartDate, setWeekStartDate } = useScheduleData();
+
   return (
     <div className="bg-gray-800 border-b border-gray-700 px-6 py-3">
       <div className="flex items-center justify-between">
@@ -51,8 +64,33 @@ export function TopBar({ mode, onModeChange }: TopBarProps) {
           </Button>
         </div>
 
-        {/* Right Side - Settings */}
-        <div className="flex items-center gap-2">
+        {/* Right Side - Week Selector, Generate Button, and Settings */}
+        <div className="flex items-center gap-4">
+          {/* Week Selector - only show in schedule mode */}
+          {mode === "schedule" && (
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium text-green-400 whitespace-nowrap">
+                Week Start:
+              </Label>
+              <Input
+                type="date"
+                value={weekStartDate.toISOString().split("T")[0]}
+                onChange={(e) => setWeekStartDate(new Date(e.target.value))}
+                className="bg-gray-600 border-gray-500 text-white w-36"
+              />
+            </div>
+          )}
+
+          {/* Generate Button - only show in schedule mode */}
+          {mode === "schedule" && (
+            <GenerateScheduleButton
+              guild={guildId}
+              streamerId={streamerId}
+              mode="schedule"
+            />
+          )}
+
+          {/* Settings Button */}
           <Button
             variant="outline"
             size="sm"
