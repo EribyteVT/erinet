@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import {
   Calendar,
-  Download,
   Type,
   AlignLeft,
   AlignCenter,
@@ -30,8 +29,6 @@ import {
   TextJustification,
   TimeFormat,
 } from "../hooks/useTextFormatting";
-import { ScheduleInputs } from "./ScheduleInputs";
-import { GenerateScheduleButton } from "./GenerateScheduleButton";
 import { getFieldFromType } from "../types";
 import { useState } from "react";
 
