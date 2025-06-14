@@ -1,10 +1,11 @@
-// components/image/ScheduleImageGenerator.tsx - Fixed version
+// components/image/ScheduleImageGenerator.tsx
 "use client";
 
 import { useState } from "react";
 import { CanvasProvider } from "./hooks/useCanvas";
 import { ScheduleDataProvider } from "./hooks/useScheduleData";
 import { DrawingProvider } from "./hooks/useDrawing";
+import { TextFormattingProvider } from "./hooks/useTextFormatting";
 import { TopBar } from "./components/TopBar";
 import { DesignModePanel } from "./components/DesignModePanel";
 import { ScheduleModePanel } from "./components/ScheduleModePanel";
@@ -53,15 +54,17 @@ export default function ScheduleImageGenerator({
 }: ScheduleImageGeneratorProps) {
   return (
     <CanvasProvider>
-      <ScheduleDataProvider>
-        <DrawingProvider>
-          <ScheduleImageGeneratorInner
-            guildId={guildId}
-            streamerId={streamerId}
-            defaultMode={defaultMode}
-          />
-        </DrawingProvider>
-      </ScheduleDataProvider>
+      <TextFormattingProvider>
+        <ScheduleDataProvider>
+          <DrawingProvider>
+            <ScheduleImageGeneratorInner
+              guildId={guildId}
+              streamerId={streamerId}
+              defaultMode={defaultMode}
+            />
+          </DrawingProvider>
+        </ScheduleDataProvider>
+      </TextFormattingProvider>
     </CanvasProvider>
   );
 }

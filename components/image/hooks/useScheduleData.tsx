@@ -1,3 +1,4 @@
+// components/image/hooks/useScheduleData.tsx
 "use client";
 
 import {
@@ -9,6 +10,7 @@ import {
 } from "react";
 import { Text, Group, Polygon } from "fabric";
 import { useCanvas } from "./useCanvas";
+import { useTextFormatting } from "./useTextFormatting";
 import {
   getOffsetFromType,
   getFieldFromType,
@@ -45,6 +47,7 @@ const ScheduleDataContext = createContext<ScheduleDataContextType | undefined>(
 
 export function ScheduleDataProvider({ children }: { children: ReactNode }) {
   const { canvas } = useCanvas();
+  const { getTextSettings } = useTextFormatting();
   const [scheduleData, setScheduleData] = useState<ScheduleData>({});
   const [weekStartDate, setWeekStartDate] = useState<Date>(() => {
     // Default to the most recent Monday
@@ -54,6 +57,41 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
     monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
     return monday;
   });
+
+  // Format time value based on settings
+  const formatTimeValue = useCallback(
+    (value: string, dataType: string): string => {
+      const field = getFieldFromType(dataType);
+      if (!field || !field.includes("time") || !value) return value;
+
+      const settings = getTextSettings(field);
+
+      try {
+        // Parse the time value (assuming HH:mm format)
+        const [hours, minutes] = value.split(":").map(Number);
+
+        if (isNaN(hours) || isNaN(minutes)) return value;
+
+        if (settings.timeFormat === "12") {
+          // Convert to 12-hour format
+          const period = hours >= 12 ? "PM" : "AM";
+          const displayHours =
+            hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+          return `${displayHours}:${minutes
+            .toString()
+            .padStart(2, "0")} ${period}`;
+        } else {
+          // Keep 24-hour format
+          return `${hours.toString().padStart(2, "0")}:${minutes
+            .toString()
+            .padStart(2, "0")}`;
+        }
+      } catch (error) {
+        return value; // Return original value if parsing fails
+      }
+    },
+    [getTextSettings]
+  );
 
   const updatePolygonText = useCallback(
     (dataType: string, value: string) => {
@@ -66,8 +104,14 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
           // Get polygon bounds
           const bounds = polygon.getBoundingRect();
 
+          // Get field type and formatting settings
+          const field = getFieldFromType(dataType);
+          const settings = field
+            ? getTextSettings(field)
+            : getTextSettings("default");
+
           // Format the display value
-          let displayValue = value;
+          let displayValue = formatTimeValue(value, dataType);
 
           // Create or find existing text object for this polygon
           let textObj = canvas
@@ -79,20 +123,20 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
           if (!textObj) {
             console.log(`Creating new text object for ${dataType}`);
             // Create new text object if it doesn't exist
-            // Only show placeholder if value is undefined/null, not empty string
             const textContent =
               value !== undefined && value !== null
                 ? displayValue
                 : `[${dataType}]`;
+
             textObj = new Text(textContent, {
               left: bounds.left + bounds.width / 2,
               top: bounds.top + bounds.height / 2,
               originX: "center",
               originY: "center",
-              fontSize: 16,
+              fontSize: settings.fontSize,
               fill: "#000000",
               fontFamily: "Arial",
-              textAlign: "center",
+              textAlign: settings.justification,
             });
 
             // Link the text to this polygon
@@ -100,16 +144,16 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
             canvas.add(textObj);
           } else {
             console.log(`Updating existing text object for ${dataType}`);
-            // Update existing text
-            // Only show placeholder if value is undefined/null, not empty string
+            // Update existing text with new formatting
             const textContent =
               value !== undefined && value !== null
                 ? displayValue
                 : `[${dataType}]`;
-            textObj.set("text", textContent);
 
-            // Reposition text to center of polygon
             textObj.set({
+              text: textContent,
+              fontSize: settings.fontSize,
+              textAlign: settings.justification,
               left: bounds.left + bounds.width / 2,
               top: bounds.top + bounds.height / 2,
             });
@@ -120,7 +164,7 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
             const maxWidth = bounds.width * 0.9; // 90% of polygon width for padding
             const maxHeight = bounds.height * 0.9; // 90% of polygon height for padding
 
-            let fontSize = parseInt(textObj.fontSize?.toString() || "16");
+            let fontSize = settings.fontSize;
 
             // Scale down font size until text fits
             while (fontSize > 8) {
@@ -179,7 +223,7 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
 
       canvas.renderAll();
     },
-    [canvas]
+    [canvas, getTextSettings, formatTimeValue]
   );
 
   const updateScheduleData = useCallback(
@@ -269,6 +313,11 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
     return Object.values(grouped).sort((a, b) => a.offset - b.offset);
   }, [weekStartDate, generateScheduleInputs]);
 
+  const loadPreset = useCallback((presetType: string) => {
+    // Implementation for loading presets can be added here
+    console.log(`Loading preset: ${presetType}`);
+  }, []);
+
   const clearAllScheduleData = useCallback(() => {
     const emptyData: ScheduleData = {};
     generateScheduleInputs().forEach((type) => {
@@ -289,6 +338,7 @@ export function ScheduleDataProvider({ children }: { children: ReactNode }) {
         batchUpdateScheduleData,
         generateScheduleInputs,
         groupInputsByOffset,
+        loadPreset,
         clearAllScheduleData,
       }}
     >
