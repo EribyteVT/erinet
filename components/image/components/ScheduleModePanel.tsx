@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Download } from "lucide-react";
 import { useCanvas } from "../hooks/useCanvas";
 import { useScheduleData } from "../hooks/useScheduleData";
-// import { ScheduleInputs } from "./ScheduleInputs";
+import { ScheduleInputs } from "./ScheduleInputs";
 // import { WeekSelector } from "./WeekSelector";
 import { GenerateScheduleButton } from "./GenerateScheduleButton";
 
@@ -27,17 +27,6 @@ ScheduleModePanelProps) {
   return (
     <div className="w-100 bg-gray-800 border-r border-gray-700 overflow-y-auto">
       <div className="p-6 space-y-6">
-        {/* Week Selection */}
-        <Card className="bg-gray-700 border-gray-600">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Schedule Week
-            </CardTitle>
-          </CardHeader>
-          <CardContent>{/* <WeekSelector /> */}</CardContent>
-        </Card>
-
         {/* Action Buttons */}
         <Card className="bg-gray-700 border-gray-600">
           <CardHeader className="pb-3">
@@ -58,7 +47,9 @@ ScheduleModePanelProps) {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Schedule Data</CardTitle>
             </CardHeader>
-            <CardContent>{/* <ScheduleInputs /> */}</CardContent>
+            <CardContent>
+              <ScheduleInputs />
+            </CardContent>
           </Card>
         )}
 

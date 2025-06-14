@@ -33,7 +33,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
       setCanvas(fabricCanvas);
 
       // Add background image
-      Image.fromURL("template_test.png")
+      Image.fromURL("uploads/backgrounds/1298744996199137290_1749784104312.png")
         .then((backgroundImg) => {
           backgroundImg.scaleToWidth(fabricCanvas.width!);
           backgroundImg.scaleToHeight(fabricCanvas.height!);

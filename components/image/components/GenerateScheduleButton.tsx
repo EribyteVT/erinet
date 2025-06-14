@@ -37,7 +37,7 @@ export function GenerateScheduleButton({
     try {
       // Calculate date range for the week
       const fromDate = startOfDay(weekStartDate);
-      const toDate = addDays(fromDate, 6); // 7 days total
+      const toDate = addDays(fromDate, 7); // 7 days total
 
       console.log(
         "Date range:",
