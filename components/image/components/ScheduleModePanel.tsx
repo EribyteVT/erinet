@@ -72,12 +72,54 @@ export function ScheduleModePanel({
   const scheduleInputs = generateScheduleInputs();
   const groupedInputs = groupInputsByOffset();
 
+  // Helper function to get text positioning based on justification
+  const getTextPosition = useCallback(
+    (bounds: any, justification: TextJustification) => {
+      const padding = bounds.width * 0.05; // 5% padding
+
+      switch (justification) {
+        case "left":
+          return {
+            left: bounds.left + padding,
+            originX: "left" as const,
+          };
+        case "right":
+          return {
+            left: bounds.left + bounds.width - padding,
+            originX: "right" as const,
+          };
+        case "center":
+        default:
+          return {
+            left: bounds.left + bounds.width / 2,
+            originX: "center" as const,
+          };
+      }
+    },
+    []
+  );
+
   // Function to refresh all text objects on canvas with new formatting
   const refreshAllTextFormatting = useCallback(
-    (textType: string) => {
+    (
+      textType: string,
+      overrideSettings?: Partial<{
+        fontSize: number;
+        justification: TextJustification;
+        timeFormat: TimeFormat;
+      }>
+    ) => {
       if (!canvas) return;
 
-      const settings = getTextSettings(textType);
+      console.log(`Refreshing text formatting for type: ${textType}`);
+      // Use override settings if provided, otherwise get current settings
+      const currentSettings = getTextSettings(textType);
+      const settings = overrideSettings
+        ? { ...currentSettings, ...overrideSettings }
+        : currentSettings;
+      console.log(`Settings:`, settings);
+
+      let textObjectsUpdated = 0;
 
       // Find all text objects linked to polygons of this text type
       canvas.getObjects().forEach((obj) => {
@@ -88,6 +130,8 @@ export function ScheduleModePanel({
           if (linkedPolygon) {
             const field = getFieldFromType(linkedPolygon);
             if (field === textType) {
+              console.log(`Updating text object for ${linkedPolygon}`);
+
               // Find the corresponding polygon to get bounds
               const polygon = canvas
                 .getObjects()
@@ -98,26 +142,38 @@ export function ScheduleModePanel({
 
               if (polygon) {
                 const bounds = polygon.getBoundingRect();
+                const textPosition = getTextPosition(
+                  bounds,
+                  settings.justification
+                );
 
-                // Update text formatting properties
+                console.log(
+                  `Text position for ${settings.justification}:`,
+                  textPosition
+                );
+
+                // Update text formatting properties including position and alignment
                 textObj.set({
                   fontSize: settings.fontSize,
                   textAlign: settings.justification,
-                  left: bounds.left + bounds.width / 2,
+                  left: textPosition.left,
                   top: bounds.top + bounds.height / 2,
-                  originX: "center",
+                  originX: textPosition.originX,
                   originY: "center",
                 });
 
                 // Auto-size text to fit within polygon bounds
                 const fitTextToPolygon = (textObj: Text, bounds: any) => {
-                  const maxWidth = bounds.width * 0.9;
-                  const maxHeight = bounds.height * 0.9;
+                  const maxWidth = bounds.width * 0.9; // 90% of polygon width for padding
+                  const maxHeight = bounds.height * 0.9; // 90% of polygon height for padding
+
                   let fontSize = settings.fontSize;
 
                   // Scale down font size until text fits
                   while (fontSize > 8) {
+                    // Minimum font size
                     textObj.set("fontSize", fontSize);
+
                     const textBounds = textObj.getBoundingRect();
 
                     if (
@@ -126,6 +182,7 @@ export function ScheduleModePanel({
                     ) {
                       break;
                     }
+
                     fontSize -= 1;
                   }
 
@@ -169,15 +226,18 @@ export function ScheduleModePanel({
 
                 // Ensure the text alignment is properly applied
                 textObj.setCoords();
+
+                textObjectsUpdated++;
               }
             }
           }
         }
       });
 
+      console.log(`Updated ${textObjectsUpdated} text objects`);
       canvas.renderAll();
     },
-    [canvas, getTextSettings]
+    [canvas, getTextSettings, getTextPosition]
   );
 
   // Enhanced updateTextSetting that also refreshes canvas
@@ -187,11 +247,16 @@ export function ScheduleModePanel({
       setting: "fontSize" | "justification" | "timeFormat",
       value: number | TextJustification | TimeFormat
     ) => {
+      console.log(`Updating ${setting} to ${value} for ${textType}`);
+
       // Update the text setting
       updateTextSetting(textType, setting, value);
 
-      // Refresh canvas formatting for this text type
-      refreshAllTextFormatting(textType);
+      // Create override settings with the new value
+      const overrideSettings = { [setting]: value };
+
+      // Refresh canvas formatting immediately with the new value
+      refreshAllTextFormatting(textType, overrideSettings);
     },
     [updateTextSetting, refreshAllTextFormatting]
   );
@@ -238,31 +303,29 @@ export function ScheduleModePanel({
       {textTypes.length > 0 && (
         <Card className="bg-gray-700 border-gray-600">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-blue-400 flex items-center gap-2">
+            <CardTitle className="text-white flex items-center gap-2">
               <Type className="h-4 w-4" />
               Text Formatting
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-4">
             {textTypes.map((textType) => {
               const settings = getTextSettings(textType);
-              const fieldName = formatFieldName(textType);
-              const isTime = isTimeField(textType);
               const isExpanded = expandedSections.has(textType);
 
               return (
                 <div
                   key={textType}
-                  className="overflow-hidden border rounded-lg"
+                  className="border border-gray-600 rounded-lg bg-gray-600"
                 >
-                  {/* Collapsible Header */}
+                  {/* Header */}
                   <button
                     onClick={() => toggleSection(textType)}
-                    className="w-full p-3 flex items-center justify-between hover:bg-gray-500 transition-colors"
+                    className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-500 rounded-lg transition-colors"
                   >
-                    <h4 className="text-sm font-medium text-white">
-                      {fieldName}
-                    </h4>
+                    <span className="text-white font-medium">
+                      {formatFieldName(textType)}
+                    </span>
                     {isExpanded ? (
                       <ChevronDown className="h-4 w-4 text-gray-300" />
                     ) : (
@@ -318,8 +381,8 @@ export function ScheduleModePanel({
                                 size="sm"
                                 className={`flex-1 h-8 ${
                                   settings.justification === justify
-                                    ? "bg-blue-600 hover:bg-blue-700"
-                                    : "bg-gray-600 hover:bg-gray-500"
+                                    ? "bg-blue-600 hover:bg-blue-700 border-blue-600"
+                                    : "bg-gray-500 hover:bg-gray-400 border-gray-400 text-gray-200"
                                 }`}
                                 onClick={() =>
                                   handleTextSettingChange(
@@ -329,7 +392,7 @@ export function ScheduleModePanel({
                                   )
                                 }
                               >
-                                <IconComponent className="h-4 w-4" />
+                                <IconComponent className="h-3 w-3" />
                               </Button>
                             );
                           })}
@@ -337,10 +400,9 @@ export function ScheduleModePanel({
                       </div>
 
                       {/* Time Format (only for time fields) */}
-                      {isTime && (
+                      {isTimeField(textType) && (
                         <div className="space-y-1">
-                          <Label className="text-xs text-gray-300 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <Label className="text-xs text-gray-300">
                             Time Format
                           </Label>
                           <Select
@@ -356,18 +418,12 @@ export function ScheduleModePanel({
                             <SelectTrigger className="bg-gray-500 border-gray-400 text-white text-sm">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-gray-600 border-gray-500">
-                              <SelectItem
-                                value="24"
-                                className="text-white hover:bg-gray-500"
-                              >
-                                24 Hour (14:30)
+                            <SelectContent>
+                              <SelectItem value="24">
+                                24-hour (14:30)
                               </SelectItem>
-                              <SelectItem
-                                value="12"
-                                className="text-white hover:bg-gray-500"
-                              >
-                                12 Hour (2:30 PM)
+                              <SelectItem value="12">
+                                12-hour (2:30 PM)
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -381,111 +437,105 @@ export function ScheduleModePanel({
           </CardContent>
         </Card>
       )}
-
-      {/* Quick Actions */}
-      <Card className="bg-gray-700 border-gray-600">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-purple-400">
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Button
-            onClick={() => {
-              // Refresh all text formatting on canvas
-              textTypes.forEach((textType) => {
-                refreshAllTextFormatting(textType);
-              });
-            }}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm"
-          >
-            Refresh All Text Formatting
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 
   // Render Data Tab Content
   const renderDataTab = () => (
     <div className="space-y-6">
-      {/* Schedule Data by Day */}
-      {groupedInputs.length > 0 ? (
-        <Card className="bg-gray-700 border-gray-600">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-green-400 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Weekly Schedule
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {groupedInputs.map((dayData) => (
-              <div key={dayData.offset} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-white">
-                    {dayData.dayName}
-                  </h4>
-                  <span className="text-xs text-gray-400">
-                    {dayData.date.toLocaleDateString()}
-                  </span>
-                </div>
+      {/* Week Start Date */}
+      <Card className="bg-gray-700 border-gray-600">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Week Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label className="text-gray-300">Week Start Date (Monday)</Label>
+            <Input
+              type="date"
+              className="bg-gray-600 border-gray-500 text-white"
+              value={
+                new Date(
+                  new Date().getTime() - new Date().getTimezoneOffset() * 60000
+                )
+                  .toISOString()
+                  .split("T")[0]
+              }
+              onChange={(e) => {
+                const selectedDate = new Date(e.target.value);
+                // Ensure it's a Monday
+                const dayOfWeek = selectedDate.getDay();
+                const monday = new Date(selectedDate);
+                monday.setDate(
+                  selectedDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+                );
+                // setWeekStartDate(monday);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-                <div className="space-y-2">
-                  {dayData.inputs.map((inputType) => {
-                    const field = getFieldFromType(inputType);
-                    const fieldName = field
-                      ? formatFieldName(field)
-                      : inputType;
-
-                    return (
-                      <div key={inputType} className="space-y-1">
-                        <Label className="text-xs text-gray-300">
-                          {fieldName}
-                        </Label>
-                        <Input
-                          type={field === "stream_time" ? "time" : "text"}
-                          value={scheduleData[inputType] || ""}
-                          onChange={(e) => {
-                            updateScheduleData(inputType, e.target.value);
-                          }}
-                          placeholder={`Enter ${fieldName.toLowerCase()}`}
-                          className="bg-gray-500 border-gray-400 text-white text-sm"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+      {/* Schedule Data Inputs */}
+      <Card className="bg-gray-700 border-gray-600">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Schedule Data
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {groupedInputs.map((group) => (
+            <div key={group.offset} className="space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-600">
+                <Clock className="h-4 w-4 text-blue-400" />
+                <span className="text-white font-medium">
+                  {group.dayName} - {group.date.toLocaleDateString()}
+                </span>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="bg-gray-700 border-gray-600">
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-400 text-sm">
-              No schedule polygons found. Switch to Design Mode to create
-              schedule template polygons.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+              <div className="grid gap-3">
+                {group.inputs.map((input) => {
+                  const field = getFieldFromType(input);
+                  const fieldName = field
+                    ? formatFieldName(field)
+                    : formatFieldName(input);
+
+                  return (
+                    <div key={input} className="space-y-1">
+                      <Label className="text-gray-300 text-sm">
+                        {fieldName}
+                      </Label>
+                      <Input
+                        type={field?.includes("time") ? "time" : "text"}
+                        value={scheduleData[input] || ""}
+                        onChange={(e) =>
+                          updateScheduleData(input, e.target.value)
+                        }
+                        className="bg-gray-600 border-gray-500 text-white"
+                        placeholder={`Enter ${fieldName.toLowerCase()}`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 
   return (
-    <div className="w-80 bg-gray-800 border-r border-gray-700 overflow-y-auto">
+    <div className="w-100 bg-gray-800 border-r border-gray-700 overflow-y-auto">
       <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-green-400" />
-          <h2 className="text-lg font-semibold text-white">Schedule Mode</h2>
-        </div>
-
         {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-700 p-1 rounded-lg">
+        <div className="flex bg-gray-700 rounded-lg p-1">
           <button
             onClick={() => setActiveTab("options")}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === "options"
                 ? "bg-blue-600 text-white"
                 : "text-gray-300 hover:text-white hover:bg-gray-600"
@@ -496,9 +546,9 @@ export function ScheduleModePanel({
           </button>
           <button
             onClick={() => setActiveTab("data")}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === "data"
-                ? "bg-green-600 text-white"
+                ? "bg-blue-600 text-white"
                 : "text-gray-300 hover:text-white hover:bg-gray-600"
             }`}
           >

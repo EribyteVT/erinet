@@ -57,8 +57,8 @@ export function TextFormattingProvider({ children }: { children: ReactNode }) {
       setTextSettings((prev) => ({
         ...prev,
         [dataType]: {
-          ...prev[dataType],
           ...defaultSettings,
+          ...prev[dataType],
           [setting]: value,
         },
       }));
