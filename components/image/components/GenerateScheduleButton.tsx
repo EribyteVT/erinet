@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar, Loader2, Download } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { useCanvas } from "../hooks/useCanvas";
 import { useScheduleData } from "../hooks/useScheduleData";
 import { format, startOfDay, addDays } from "date-fns";
@@ -157,14 +157,19 @@ export function GenerateScheduleButton({
     canvas.discardActiveObject();
     canvas.renderAll();
 
+    // Hide all polygons before generating the image
     const polygons = canvas
       .getObjects()
-      .filter((obj) => obj.type === "polygon");
+      .filter((obj) => (obj as any).polygonType);
     polygons.forEach((polygon) => polygon.set("visible", false));
 
-    // Generate image
+    // Re-render canvas to ensure polygons are hidden
+    canvas.renderAll();
+
+    // Generate image without polygons
     const dataURL = canvas.toDataURL();
 
+    // Restore polygon visibility after image generation
     polygons.forEach((polygon) => polygon.set("visible", true));
     canvas.renderAll();
 
