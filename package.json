@@ -19,6 +19,7 @@
     "@hookform/resolvers": "^3.3.4",
     "@iconify/react": "^4.1.1",
     "@mui/material": "^6.4.9",
+    "@mui/system": "^7.3.7",
     "@mui/x-date-pickers": "^7.28.2",
     "@neondatabase/serverless": "^0.10.4",
     "@prisma/client": "^6.5.0",
