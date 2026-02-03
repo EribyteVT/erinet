@@ -124,7 +124,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
       {
-        name: "NightRose",
+        name: "Night Rose",
         role: "Beta Tester",
         description:
           "Found a bug with website generation, thank her for it working well",
@@ -139,6 +139,14 @@ const creditData: CreditCategory[] = [
           "Found a bug with date entry that caused a crash",
         imageUrl: "/notso.png",
         websiteUrl: "https://www.twitch.tv/notsounhappy",
+        websiteLabel: "Visit Website",
+      },
+      {
+        name: "Luna Baroness",
+        role: "Beta Tester",
+        description: "helped improve the readme for website hosting",
+        imageUrl: "/Luna.png",
+        websiteUrl: "https://www.twitch.tv/LunaBaroness",
         websiteLabel: "Visit Website",
       },
     ],

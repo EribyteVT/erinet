@@ -5,7 +5,7 @@ export async function downloadWebsiteZip(
   html: string,
   css: string,
   js: string,
-  siteName: string = "my-website"
+  siteName: string = "my-website",
 ) {
   try {
     // Create a new zip file
@@ -49,18 +49,21 @@ export async function downloadWebsiteZip(
     
     ### 3. Upload Your Website Files
     
-    1. In your new repository, click on "uploading an existing file" link
-    2. Drag and drop all the files from the ZIP you downloaded (index.html, index.css, index.js)
-    3. Add a commit message like "Initial website upload"
-    4. Click "Commit changes"
+    1. UNZIP your zip file
+    2. In your new repository, click on "uploading an existing file" link
+    3. Drag and drop all the files from the ZIP you downloaded (index.html, index.css, index.js), do not drag the whole folder
+    4. Add a commit message like "Initial website upload"
+    5. Click "Commit changes"
         
     ### 4. Enable GitHub Pages
     
     1. Click on "Settings" in the top menu of your repository
-    2. Scroll down to the "GitHub Pages" section
-    3. Under "Source", select "main" from the dropdown menu
-    4. Click "Save"
-    5. Wait a few minutes for GitHub to publish your site ( you can click actions to see when it's)
+    2. go to pages on the left menu
+    3. Under "Source", select "Deploy from a branch"
+    4. under branch it should say main and '/ root', keep it like that
+    5. Click "Save"
+    6. Wait a few minutes for GitHub to publish your site ( you can click actions to see when it's done)
+
         
     ### 5. View Your Live Website
     

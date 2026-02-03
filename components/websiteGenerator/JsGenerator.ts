@@ -15,7 +15,7 @@ type WebsiteConfig = {
 export function generateJS(
   config: WebsiteConfig,
   streamer: Streamer,
-  crudUrl: string
+  crudUrl: string,
 ): string {
   return `Date.prototype.addDays = function (days) {
         let date = new Date(this.valueOf());
@@ -235,7 +235,7 @@ export function generateJS(
       streamRow.innerHTML = \`
               <div class="scheduleDay">\${dayName}</div>
               <div class="scheduleDate">\${chosen_stream.date}</div>
-              <div class="scheduleStream"><a href=https://twitch.tv/NightroseVT>\${chosen_stream.name}</a> at \${chosen_stream.time}</div>
+              <div class="scheduleStream"><a href=${streamer.streamer_link}>\${chosen_stream.name}</a> at \${chosen_stream.time}</div>
             \`;
       gridSchedule.appendChild(streamRow);
     } else {
