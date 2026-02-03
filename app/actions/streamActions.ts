@@ -31,7 +31,7 @@ async function addStreamActionImpl(
   timestamp: string,
   streamName: string,
   duration: string,
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<Stream>> {
   try {
     console.log(`DURATION: ${duration}`);
@@ -77,12 +77,12 @@ async function addStreamActionImpl(
 export const addStreamAction = createRateLimitedStructuredAction(
   "addStream",
   addStreamActionImpl,
-  "stream"
+  "stream",
 );
 
 async function deleteStreamActionImpl(
   streamId: string,
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
@@ -131,7 +131,7 @@ async function deleteStreamActionImpl(
           await deleteTwitchSegment(
             streamer.twitch_user_id,
             existingStream.twitch_segment_id,
-            twitchAccessToken.accessToken
+            twitchAccessToken.accessToken,
           );
         } catch (error) {
           console.error("Failed to delete Twitch segment:", error);
@@ -157,13 +157,13 @@ async function deleteStreamActionImpl(
 export const deleteStreamAction = createRateLimitedStructuredAction(
   "deleteStream",
   deleteStreamActionImpl,
-  "stream"
+  "stream",
 );
 
 async function fetchStreamsActionImpl(
   streamerId: string,
   dateStart: Date,
-  dateEnd?: Date
+  dateEnd?: Date,
 ): Promise<NormalizedResponse<Stream[]>> {
   try {
     // Create start date from timestamp
@@ -201,7 +201,7 @@ async function fetchStreamsActionImpl(
 export const fetchStreamsAction = createRateLimitedStructuredAction(
   "fetchStreams",
   fetchStreamsActionImpl,
-  "stream"
+  "stream",
 );
 
 async function editStreamActionImpl(
@@ -210,7 +210,7 @@ async function editStreamActionImpl(
   newName: string,
   newTime: string,
   newDuration: number,
-  location: string
+  location: string,
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
@@ -275,7 +275,7 @@ async function editStreamActionImpl(
           newName,
           streamDate.toISOString(),
           endTime.toISOString(),
-          location
+          location,
         );
       } catch (error) {
         console.error("Failed to update Discord event:", error);
@@ -294,7 +294,7 @@ async function editStreamActionImpl(
           newName,
           streamDate.toISOString(),
           newDuration,
-          twitchAccessToken
+          twitchAccessToken,
         );
       } catch (error) {
         console.error("Failed to update Twitch segment:", error);
@@ -315,14 +315,14 @@ async function editStreamActionImpl(
 export const editStreamAction = createRateLimitedStructuredAction(
   "editStream",
   editStreamActionImpl,
-  "stream"
+  "stream",
 );
 
 export async function fetchStreamsArb(
   from: string,
   to: string,
   guild: string,
-  streamerId: string
+  streamerId: string,
 ): Promise<Stream[]> {
   try {
     const streams = await prisma.stream_table_tied.findMany({
@@ -341,7 +341,7 @@ export async function fetchStreamsArb(
     // Convert to Stream type format
     return streams.map((stream) => ({
       stream_id: stream.stream_id,
-      stream_date: stream.stream_date.toISOString(),
+      stream_date: stream.stream_date,
       stream_name: stream.stream_name,
       streamer_id: stream.streamer_id,
       event_id: stream.event_id,
