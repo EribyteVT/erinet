@@ -124,7 +124,7 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
       {
-        name: "NightRose",
+        name: "Night Rose",
         role: "Beta Tester",
         description:
           "Found a bug with website generation, thank her for it working well",
