@@ -60,7 +60,7 @@ export default function StreamPage({
 
         const streamData = await fetchStreamsAction(
           streamer.streamer_id.toString(),
-          new Date()
+          new Date(),
         );
 
         if (streamData.data) {
@@ -108,13 +108,13 @@ export default function StreamPage({
                 discordAvatar={avatarUrl}
                 crudUrl={crudUrl}
               />
-              <Button
+              {/* <Button
                 onClick={handleOpenScheduleImageMaker}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Schedule Image Maker
-              </Button>
+              </Button> */}
             </div>
           </div>
 
