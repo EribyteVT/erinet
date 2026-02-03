@@ -76,12 +76,6 @@ export default function StreamPage({
     checkTwitchIntegration();
   }, [guild.id, streamer.twitch_user_id]);
 
-  const handleOpenScheduleImageMaker = () => {
-    // Open in new tab with guild ID
-    const url = `/image?guildId=${guild.id}&mode=schedule`;
-    window.open(url, "_blank");
-  };
-
   return (
     <PageContainer maxWidth="full">
       {isLoading && (
@@ -108,13 +102,6 @@ export default function StreamPage({
                 discordAvatar={avatarUrl}
                 crudUrl={crudUrl}
               />
-              {/* <Button
-                onClick={handleOpenScheduleImageMaker}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Schedule Image Maker
-              </Button> */}
             </div>
           </div>
 

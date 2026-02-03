@@ -14,11 +14,6 @@ on:
         options:
           - stage
           - prod
-      image_tag:
-        description: "Docker image tag to deploy (leave empty for latest)"
-        required: false
-        default: "latest"
-        type: string
       skip_build:
         description: "Skip building new image (deploy existing image)"
         required: false
@@ -47,12 +42,9 @@ jobs:
             # Manual deployment
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
             
-            # Use provided image tag or generate new one
-            if [[ "${{ github.event.inputs.image_tag }}" == "latest" ]] || [[ -z "${{ github.event.inputs.image_tag }}" ]]; then
-              echo "image-tag=latest" >> $GITHUB_OUTPUT
-            else
-              echo "image-tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
-            fi
+
+            echo "image-tag=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            
             
             echo "skip-build=${{ github.event.inputs.skip_build }}" >> $GITHUB_OUTPUT
           else
