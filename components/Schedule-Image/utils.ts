@@ -1,4 +1,4 @@
-import { Field, Zone, ScheduleRow } from './types'
+import { Field, Zone, ScheduleRow, TemplateZone, TemplateData } from './types'
 import { mockSchedule } from './constants'
 
 // Build field list from schedule data
@@ -97,4 +97,96 @@ export const clampPosition = (
     x: Math.max(0, Math.min(x, 100 - width)),
     y: Math.max(0, Math.min(y, 100 - height)),
   }
+}
+
+// ─── Template conversion utilities ──────────────────────────────────────────
+
+/**
+ * Convert live zones → saveable template.
+ * Strips the resolved `field` object and runtime `id`, keeping only the
+ * fieldId reference (e.g. "0_day", "2_game", "text_1234") plus all
+ * layout and styling properties.
+ */
+export const zonesToTemplate = (zones: Zone[], globalFontSize: number): TemplateData => {
+  const templateZones: TemplateZone[] = zones.map((zone) => ({
+    fieldId: zone.fieldId,
+    x: zone.x,
+    y: zone.y,
+    width: zone.width,
+    height: zone.height,
+    options: zone.options,
+    fontSize: zone.fontSize,
+    fontSizeOverride: zone.fontSizeOverride,
+    color: zone.color,
+    bold: zone.bold,
+    align: zone.align,
+    // Only persist customText for text zones
+    ...(zone.customText !== undefined ? { customText: zone.customText } : {}),
+  }))
+
+  return { zones: templateZones, globalFontSize }
+}
+
+/**
+ * Rebuild live zones from a saved template using the current schedule data.
+ *
+ * For each TemplateZone:
+ * - Data fields ("0_day", "3_time", etc.) are matched to the current
+ *   fieldList built from the supplied schedule. If the schedule has
+ *   fewer rows than the template references, those zones are skipped
+ *   (graceful degradation).
+ * - Text zones ("text_*") get a fresh synthetic Field.
+ */
+export const templateToZones = (
+  template: TemplateData,
+  schedule: ScheduleRow[]
+): { zones: Zone[]; globalFontSize: number } => {
+  const fieldList = buildFieldList(schedule)
+  const fieldMap = new Map(fieldList.map((f) => [f.id, f]))
+
+  const zones: Zone[] = []
+
+  template.zones.forEach((tz, index) => {
+    const isText = tz.fieldId.startsWith('text_')
+
+    let field: Field
+
+    if (isText) {
+      // Rebuild a synthetic text field
+      field = {
+        id: tz.fieldId,
+        dayIndex: -1,
+        type: 'text',
+        label: 'Text',
+        value: null,
+      }
+    } else {
+      // Look up the field in current schedule data
+      const found = fieldMap.get(tz.fieldId)
+      if (!found) {
+        // Schedule doesn't have this index any more — skip gracefully
+        return
+      }
+      field = found
+    }
+
+    zones.push({
+      id: Date.now() + index, // unique runtime id
+      fieldId: tz.fieldId,
+      field,
+      x: tz.x,
+      y: tz.y,
+      width: tz.width,
+      height: tz.height,
+      options: tz.options,
+      fontSize: tz.fontSize,
+      fontSizeOverride: tz.fontSizeOverride,
+      color: tz.color,
+      bold: tz.bold,
+      align: tz.align,
+      ...(tz.customText !== undefined ? { customText: tz.customText } : {}),
+    })
+  })
+
+  return { zones, globalFontSize: template.globalFontSize }
 }

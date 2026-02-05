@@ -2,15 +2,20 @@
 
 import React, { useState, useCallback, useMemo } from 'react'
 import { Type } from 'lucide-react'
-import { Zone, DrawingState, MovingZoneState, ResizingZoneState } from './types'
+import { Zone, TemplateData, DrawingState, MovingZoneState, ResizingZoneState } from './types'
 import { mockSchedule, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT } from './constants'
-import { buildFieldList, clampPosition } from './utils'
-import { Header } from './Header'
+import { buildFieldList, clampPosition, zonesToTemplate, templateToZones } from './utils'
+import { Header, SaveStatus, LoadStatus } from './Header'
 import { FieldGrid } from './Fieldgrid'
 import { PlacedList } from './Placedlist'
 import { Canvas } from './Canvas'
+import { saveScheduleTemplateAction, loadScheduleTemplateAction } from '@/app/actions/templateActions'
 
-export default function ScheduleBuilder() {
+interface ScheduleBuilderProps {
+  guildId?: string
+}
+
+export default function ScheduleBuilder({ guildId }: ScheduleBuilderProps) {
   // State
   const [bgImage, setBgImage] = useState<string | null>(null)
   const [zones, setZones] = useState<Zone[]>([])
@@ -22,12 +27,86 @@ export default function ScheduleBuilder() {
   const [resizingZone, setResizingZone] = useState<ResizingZoneState | null>(null)
   const [globalFontSize, setGlobalFontSize] = useState<number>(16)
   const [textPlaceMode, setTextPlaceMode] = useState<boolean>(false)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>('idle')
 
   // Derived state
   const fieldList = useMemo(() => buildFieldList(mockSchedule), [])
   const usedFieldIds = useMemo(() => new Set(zones.map((z) => z.fieldId)), [zones])
 
-  // Handlers
+  // ─── Template save/load ─────────────────────────────────────────────────
+
+  const handleSave = useCallback(async () => {
+    guildId = '101010000111'
+
+    setSaveStatus('saving')
+    try {
+      const templateData = zonesToTemplate(zones, globalFontSize)
+      const result = await saveScheduleTemplateAction(guildId, templateData)
+
+      console.log(result)
+
+      if (!result.success) {
+        throw new Error(result.message)
+      }
+
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus('idle'), 2000)
+    } catch (err) {
+      console.error('Error saving template:', err)
+      setSaveStatus('error')
+      setTimeout(() => setSaveStatus('idle'), 3000)
+    }
+  }, [guildId, zones, globalFontSize])
+
+  const handleLoad = useCallback(async () => {
+    guildId = '101010000111'
+
+    setLoadStatus('loading')
+    try {
+      const result = await loadScheduleTemplateAction(guildId)
+
+      if (!result.success) {
+        throw new Error(result.message)
+      }
+
+      if (!result.data || !result.data.templateData) {
+        setLoadStatus('empty')
+        setTimeout(() => setLoadStatus('idle'), 2000)
+        return
+      }
+
+      const templateData = result.data.templateData as TemplateData
+
+      // Validate that it has the expected shape
+      if (!templateData.zones || !Array.isArray(templateData.zones)) {
+        setLoadStatus('empty')
+        setTimeout(() => setLoadStatus('idle'), 2000)
+        return
+      }
+
+      // Rebuild zones from template using current schedule data
+      const loaded = templateToZones(templateData, mockSchedule)
+
+      setZones(loaded.zones)
+      setGlobalFontSize(loaded.globalFontSize)
+
+      // If the template had a background saved, load it
+      if (result.data.backgroundFilePath) {
+        setBgImage(result.data.backgroundFilePath)
+      }
+
+      setLoadStatus('loaded')
+      setTimeout(() => setLoadStatus('idle'), 2000)
+    } catch (err) {
+      console.error('Error loading template:', err)
+      setLoadStatus('error')
+      setTimeout(() => setLoadStatus('idle'), 3000)
+    }
+  }, [guildId])
+
+  // ─── Field handlers ─────────────────────────────────────────────────────
+
   const handleFieldClick = useCallback((fieldId: string) => {
     if (usedFieldIds.has(fieldId)) return
     setTextPlaceMode(false)
@@ -143,7 +222,14 @@ export default function ScheduleBuilder() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Header onExport={handleExport} />
+      <Header
+        onExport={handleExport}
+        onSave={handleSave}
+        onLoad={handleLoad}
+        saveStatus={saveStatus}
+        loadStatus={loadStatus}
+        guildId={guildId}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}

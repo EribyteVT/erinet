@@ -61,3 +61,37 @@ export interface ResizingZoneState {
   startWidth: number
   startHeight: number
 }
+
+// ─── Template types (for saving/loading layouts) ────────────────────────────
+// These store what the zone *should contain* (via fieldId reference)
+// rather than storing the actual resolved text values.
+
+/**
+ * A zone stripped of resolved data — only stores the layout, styling,
+ * and a fieldId reference like "0_day" or "2_game" that encodes
+ * which stream index + field type this zone represents.
+ *
+ * For text zones, fieldId is "text_<n>" and customText is preserved.
+ */
+export interface TemplateZone {
+  fieldId: string
+  x: number
+  y: number
+  width: number
+  height: number
+  options: Record<string, string>
+  fontSize: number
+  fontSizeOverride: boolean
+  color: string
+  bold: boolean
+  align: 'left' | 'center' | 'right'
+  customText?: string
+}
+
+/**
+ * The full template payload stored in the database's template_data JSON column.
+ */
+export interface TemplateData {
+  zones: TemplateZone[]
+  globalFontSize: number
+}
