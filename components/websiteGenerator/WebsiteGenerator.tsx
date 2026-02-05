@@ -122,7 +122,7 @@ const IconSelector = ({
       </Button>
 
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-md border shadow-lg p-3 w-[280px]">
+        <div className="absolute z-50 top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-md border shadow-lg p-3 w-70">
           <div className="grid grid-cols-4 gap-2">
             {socialMediaIcons.map((icon) => (
               <div key={icon.value} className="flex flex-col items-center">
@@ -695,7 +695,7 @@ export function WebsiteGenerator({
             </CardHeader>
             <CardContent>
               <div className="border rounded-md overflow-hidden">
-                <div className="h-[500px] overflow-auto">
+                <div className="h-125 overflow-auto">
                   <WebsitePreview
                     html={generatedHTML}
                     css={generatedCSS}

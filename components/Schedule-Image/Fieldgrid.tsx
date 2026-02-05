@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { GripVertical } from 'lucide-react'
-import { ScheduleRow } from './types'
+import React from "react";
+import { GripVertical } from "lucide-react";
+import { ScheduleRow } from "./types";
 
 interface FieldGridProps {
-  schedule: ScheduleRow[]
-  selectedField: string | null
-  usedFieldIds: Set<string>
-  onFieldClick: (fieldId: string) => void
-  onDragStart: (e: React.DragEvent, fieldId: string) => void
-  onDragEnd: () => void
+  schedule: ScheduleRow[];
+  selectedField: string | null;
+  usedFieldIds: Set<string>;
+  onFieldClick: (fieldId: string) => void;
+  onDragStart: (e: React.DragEvent, fieldId: string) => void;
+  onDragEnd: () => void;
 }
 
 export function FieldGrid({
@@ -22,18 +22,19 @@ export function FieldGrid({
   onDragEnd,
 }: FieldGridProps) {
   const getFieldClassName = (fieldId: string, hasValue: boolean = true) => {
-    const baseClass = 'bg-card px-3 py-2 flex items-center gap-2 transition-all select-none'
-    
+    const baseClass =
+      "bg-card px-3 py-2 flex items-center gap-2 transition-all select-none";
+
     if (usedFieldIds.has(fieldId)) {
-      return `${baseClass} opacity-40 cursor-not-allowed`
+      return `${baseClass} opacity-40 cursor-not-allowed`;
     }
-    
+
     if (selectedField === fieldId) {
-      return `${baseClass} bg-primary/30 ring-2 ring-primary ring-inset cursor-pointer`
+      return `${baseClass} bg-primary/30 ring-2 ring-primary ring-inset cursor-pointer`;
     }
-    
-    return `${baseClass} hover:bg-secondary cursor-grab active:cursor-grabbing ${!hasValue ? 'text-muted-foreground' : ''}`
-  }
+
+    return `${baseClass} hover:bg-secondary cursor-grab active:cursor-grabbing ${!hasValue ? "text-muted-foreground" : ""}`;
+  };
 
   return (
     <div className="grid grid-cols-3 gap-px bg-border rounded-lg overflow-hidden">
@@ -76,7 +77,7 @@ export function FieldGrid({
             {!usedFieldIds.has(`${i}_time`) && (
               <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
-            <span className="text-sm truncate">{row.time || 'OFF'}</span>
+            <span className="text-sm truncate">{row.time || "OFF"}</span>
           </div>
 
           {/* Game */}
@@ -90,10 +91,10 @@ export function FieldGrid({
             {!usedFieldIds.has(`${i}_game`) && (
               <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
-            <span className="text-sm truncate">{row.game || '—'}</span>
+            <span className="text-sm truncate">{row.game || "—"}</span>
           </div>
         </React.Fragment>
       ))}
     </div>
-  )
+  );
 }
