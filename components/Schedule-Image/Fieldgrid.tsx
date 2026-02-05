@@ -60,7 +60,7 @@ export function FieldGrid({
             className={getFieldClassName(`${i}_day`)}
           >
             {!usedFieldIds.has(`${i}_day`) && (
-              <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+              <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
             <span className="text-sm truncate">{row.day.slice(0, 3)}</span>
           </div>
@@ -74,7 +74,7 @@ export function FieldGrid({
             className={getFieldClassName(`${i}_time`, !!row.time)}
           >
             {!usedFieldIds.has(`${i}_time`) && (
-              <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+              <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
             <span className="text-sm truncate">{row.time || 'OFF'}</span>
           </div>
@@ -88,7 +88,7 @@ export function FieldGrid({
             className={getFieldClassName(`${i}_game`, !!row.game)}
           >
             {!usedFieldIds.has(`${i}_game`) && (
-              <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+              <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
             )}
             <span className="text-sm truncate">{row.game || '—'}</span>
           </div>

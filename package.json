@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
+    "@aws-sdk/client-s3": "^3.984.0",
+    "@aws-sdk/s3-request-presigner": "^3.984.0",
     "@base-ui/react": "^1.1.0",
     "@discordjs/core": "^2.4.0",
     "@discordjs/next": "0.1.1-dev.1673526225-a580768.0",

@@ -221,14 +221,57 @@ export function Canvas({
     onPlaceField(fieldId, coords.x - DEFAULT_ZONE_WIDTH / 2, coords.y - DEFAULT_ZONE_HEIGHT / 2, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT)
   }, [bgImage, usedFieldIds, onPlaceField])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const guildId = "101010000111"
     const file = e.target.files?.[0]
-    if (file) {
+    if (!file) return
+
+    // Show loading state (you'll need to add this state)
+    // setIsUploading(true)
+
+    try {
+      // First, show preview immediately for better UX
       const reader = new FileReader()
       reader.onload = (e) => onSetBgImage(e.target?.result as string)
       reader.readAsDataURL(file)
+
+      // Upload to API
+      const formData = new FormData()
+      formData.append('background', file)
+      formData.append('guildId', guildId) // You'll need to pass guildId as a prop
+
+      console.log("sending")
+
+      const response = await fetch('/api/background', {
+        method: 'POST',
+        body: formData,
+      })
+
+      console.log("sent")
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Upload failed')
+      }
+
+      const data = await response.json()
+      
+      // Update with the actual S3 URL
+      onSetBgImage(data.file.url)
+      
+      // Optionally show success message
+      console.log('Image uploaded successfully:', data.file.url)
+      
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      // Show error message to user
+      alert('Failed to upload image. Please try again.')
+      // Clear the preview
+      // onSetBgImage(null)
+    } finally {
+      // setIsUploading(false)
     }
-  }
+}
 
   // Determine cursor based on current state
   const getCursorClass = () => {
