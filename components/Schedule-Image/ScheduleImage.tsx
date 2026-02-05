@@ -91,9 +91,11 @@ export default function ScheduleBuilder({ guildId }: ScheduleBuilderProps) {
       setZones(loaded.zones)
       setGlobalFontSize(loaded.globalFontSize)
 
-      // If the template had a background saved, load it
-      if (result.data.backgroundFilePath) {
-        setBgImage(result.data.backgroundFilePath)
+      // Load background - check both URL and file path
+      const backgroundImage = result.data.backgroundUrl || result.data.backgroundFilePath
+      if (backgroundImage) {
+        console.log('Setting background image:', backgroundImage) // Add this for debugging
+        setBgImage(backgroundImage)
       }
 
       setLoadStatus('loaded')

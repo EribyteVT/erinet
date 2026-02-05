@@ -102,13 +102,17 @@ async function loadScheduleTemplateImpl(
       return successResponse(null, "NO_TEMPLATE");
     }
 
+    // Prioritize S3 URL over local file path
+    const backgroundImage = template.background_url || template.background_file_path;
+
     return successResponse(
       {
         id: template.id,
         guildId: template.guild_id,
         templateName: template.template_name,
         templateData: template.template_data,
-        backgroundFilePath: template.background_file_path,
+        backgroundFilePath: backgroundImage, // This will be either S3 URL or local path
+        backgroundUrl: template.background_url, // Also include this separately if needed
       },
       "OKAY"
     );
