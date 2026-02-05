@@ -13,7 +13,7 @@ import {
   mockSchedule,
   DEFAULT_ZONE_WIDTH,
   DEFAULT_ZONE_HEIGHT,
-} from "./constants";
+} from "../websiteGenerator/constants";
 import {
   buildFieldList,
   clampPosition,

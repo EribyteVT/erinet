@@ -1,5 +1,5 @@
 import { Field, Zone, ScheduleRow, TemplateZone, TemplateData } from "./types";
-import { mockSchedule } from "./constants";
+import { mockSchedule } from "../websiteGenerator/constants";
 
 // Build field list from schedule data
 export const buildFieldList = (
