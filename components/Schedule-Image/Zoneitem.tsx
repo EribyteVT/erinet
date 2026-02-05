@@ -1,17 +1,20 @@
 'use client'
 
 import React from 'react'
-import { MoreVertical, Trash2, Move } from 'lucide-react'
+import { MoreVertical, Trash2 } from 'lucide-react'
 import { Zone, FieldOptions } from './types'
 import { getDisplayValue } from './utils'
-import { fieldOptions } from './Constants'
+import { fieldOptions } from './constants'
+
+export type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
 
 interface ZoneItemProps {
   zone: Zone
-  preview: boolean
   isMoving: boolean
+  isResizing: boolean
   menuOpen: boolean
   onMoveStart: (e: React.MouseEvent) => void
+  onResizeStart: (e: React.MouseEvent, handle: ResizeHandle) => void
   onMenuToggle: () => void
   onUpdateZone: (updates: Partial<Zone>) => void
   onUpdateOption: (key: string, value: string) => void
@@ -20,10 +23,11 @@ interface ZoneItemProps {
 
 export function ZoneItem({
   zone,
-  preview,
   isMoving,
+  isResizing,
   menuOpen,
   onMoveStart,
+  onResizeStart,
   onMenuToggle,
   onUpdateZone,
   onUpdateOption,
@@ -32,12 +36,21 @@ export function ZoneItem({
   const displayValue = getDisplayValue(zone.field, zone.options)
   const menuFieldOpts: FieldOptions | null = fieldOptions[zone.field?.type] || null
 
+  const handleCursors: Record<ResizeHandle, string> = {
+    nw: 'cursor-nwse-resize',
+    ne: 'cursor-nesw-resize',
+    sw: 'cursor-nesw-resize',
+    se: 'cursor-nwse-resize',
+    n: 'cursor-ns-resize',
+    s: 'cursor-ns-resize',
+    e: 'cursor-ew-resize',
+    w: 'cursor-ew-resize',
+  }
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className={`absolute group ${
-        preview ? '' : 'border-2 border-primary/50 bg-primary/10'
-      } ${isMoving ? 'ring-2 ring-primary z-50' : ''}`}
+      className={`absolute group ${isMoving || isResizing ? 'ring-2 ring-primary z-50' : ''}`}
       style={{
         left: `${zone.x}%`,
         top: `${zone.y}%`,
@@ -45,17 +58,18 @@ export function ZoneItem({
         height: `${zone.height}%`,
       }}
     >
-      {/* Move handle - covers entire zone when not in preview */}
-      {!preview && (
-        <div
-          onMouseDown={onMoveStart}
-          className={`absolute inset-0 cursor-grab active:cursor-grabbing ${
-            isMoving ? 'cursor-grabbing' : ''
-          }`}
-        />
-      )}
+      {/* Border overlay - visible on hover */}
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-primary/50 pointer-events-none transition-colors" />
 
-      {/* Content display */}
+      {/* Move handle - covers entire zone */}
+      <div
+        onMouseDown={onMoveStart}
+        className={`absolute inset-0 cursor-grab active:cursor-grabbing ${
+          isMoving ? 'cursor-grabbing' : ''
+        }`}
+      />
+
+      {/* Content display - always shows preview */}
       <div
         className="w-full h-full flex items-center px-1 overflow-hidden pointer-events-none"
         style={{
@@ -68,36 +82,53 @@ export function ZoneItem({
           fontSize: `${zone.fontSize}px`,
           color: zone.color,
           fontWeight: zone.bold ? 'bold' : 'normal',
-          textShadow: preview ? '1px 1px 3px rgba(0,0,0,0.9)' : 'none',
+          textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
         }}
       >
-        {preview ? (
-          displayValue
-        ) : (
-          <span className="text-xs bg-black/70 px-1.5 py-0.5 rounded truncate flex items-center gap-1">
-            <Move className="w-3 h-3 opacity-60" />
-            {displayValue}
-          </span>
-        )}
+        {displayValue}
       </div>
 
+      {/* Resize handles - corners */}
+      {(['nw', 'ne', 'sw', 'se'] as const).map((handle) => (
+        <div
+          key={handle}
+          onMouseDown={(e) => onResizeStart(e, handle)}
+          className={`absolute w-3 h-3 bg-primary border-2 border-background rounded-sm opacity-0 group-hover:opacity-100 transition-opacity z-20 ${handleCursors[handle]} ${
+            handle.includes('n') ? '-top-1.5' : '-bottom-1.5'
+          } ${handle.includes('w') ? '-left-1.5' : '-right-1.5'}`}
+        />
+      ))}
+
+      {/* Resize handles - edges */}
+      {(['n', 's', 'e', 'w'] as const).map((handle) => (
+        <div
+          key={handle}
+          onMouseDown={(e) => onResizeStart(e, handle)}
+          className={`absolute opacity-0 group-hover:opacity-100 transition-opacity z-10 ${handleCursors[handle]} ${
+            handle === 'n' || handle === 's'
+              ? 'left-3 right-3 h-2'
+              : 'top-3 bottom-3 w-2'
+          } ${handle === 'n' ? '-top-1' : ''} ${handle === 's' ? '-bottom-1' : ''} ${
+            handle === 'w' ? '-left-1' : ''
+          } ${handle === 'e' ? '-right-1' : ''}`}
+        />
+      ))}
+
       {/* 3-dot menu button */}
-      {!preview && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onMenuToggle()
-          }}
-          className={`absolute -right-1 -top-1 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center shadow-lg transition-opacity z-10 ${
-            menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          }`}
-        >
-          <MoreVertical className="w-3.5 h-3.5" />
-        </button>
-      )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onMenuToggle()
+        }}
+        className={`absolute -right-1 -top-1 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center shadow-lg transition-opacity z-30 ${
+          menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        <MoreVertical className="w-3.5 h-3.5" />
+      </button>
 
       {/* Contextual Menu */}
-      {menuOpen && !preview && (
+      {menuOpen && (
         <ZoneMenu
           zone={zone}
           fieldOpts={menuFieldOpts}

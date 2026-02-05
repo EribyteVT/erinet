@@ -1,5 +1,5 @@
 import { Field, ScheduleRow } from './types'
-import { mockSchedule } from './Constants'
+import { mockSchedule } from './constants'
 
 // Build field list from schedule data
 export const buildFieldList = (schedule: ScheduleRow[] = mockSchedule): Field[] => {
@@ -52,7 +52,7 @@ export const getDisplayValue = (field: Field, opts: Record<string, string> = {})
       timeStr = field.value
     }
     const tz = opts.showTz || 'Hide'
-    return tz !== 'Hide' ? `${timeStr} CST` : timeStr
+    return tz !== 'Hide' ? `${timeStr} ${tz}` : timeStr
   }
   
   if (field.type === 'game') {

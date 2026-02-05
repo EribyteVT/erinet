@@ -48,3 +48,14 @@ export interface MovingZoneState {
   offsetX: number
   offsetY: number
 }
+
+export interface ResizingZoneState {
+  id: number
+  handle: 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
+  startX: number
+  startY: number
+  startZoneX: number
+  startZoneY: number
+  startWidth: number
+  startHeight: number
+}

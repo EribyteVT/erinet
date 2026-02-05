@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Zone, Field, DrawingState, MovingZoneState } from './types'
-import { mockSchedule } from './Constants'
+import { Zone, DrawingState, MovingZoneState, ResizingZoneState } from './types'
+import { mockSchedule } from './constants'
 import { buildFieldList, clampPosition } from './utils'
 import { Header } from './Header'
 import { FieldGrid } from './Fieldgrid'
@@ -15,10 +15,10 @@ export default function ScheduleBuilder() {
   const [zones, setZones] = useState<Zone[]>([])
   const [selectedField, setSelectedField] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<number | null>(null)
-  const [preview, setPreview] = useState(false)
   const [drawing, setDrawing] = useState<DrawingState>({ active: false, start: null, current: null })
   const [draggedField, setDraggedField] = useState<string | null>(null)
   const [movingZone, setMovingZone] = useState<MovingZoneState | null>(null)
+  const [resizingZone, setResizingZone] = useState<ResizingZoneState | null>(null)
 
   // Derived state
   const fieldList = useMemo(() => buildFieldList(mockSchedule), [])
@@ -86,13 +86,14 @@ export default function ScheduleBuilder() {
     setMenuOpen(null)
   }, [])
 
-  const togglePreview = useCallback(() => {
-    setPreview((prev) => !prev)
+  const handleExport = useCallback(() => {
+    // TODO: Implement export functionality
+    console.log('Export clicked')
   }, [])
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Header preview={preview} onTogglePreview={togglePreview} />
+      <Header onExport={handleExport} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
@@ -123,15 +124,16 @@ export default function ScheduleBuilder() {
           zones={zones}
           fieldList={fieldList}
           selectedField={selectedField}
-          preview={preview}
           menuOpen={menuOpen}
           drawing={drawing}
           movingZone={movingZone}
+          resizingZone={resizingZone}
           draggedField={draggedField}
           usedFieldIds={usedFieldIds}
           onSetBgImage={setBgImage}
           onSetDrawing={setDrawing}
           onSetMovingZone={setMovingZone}
+          onSetResizingZone={setResizingZone}
           onSetMenuOpen={setMenuOpen}
           onPlaceField={placeField}
           onUpdateZone={updateZone}

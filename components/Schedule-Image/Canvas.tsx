@@ -2,25 +2,26 @@
 
 import React, { useRef, useCallback } from 'react'
 import { Upload } from 'lucide-react'
-import { Zone, Field, DrawingState, MovingZoneState } from './types'
+import { Zone, Field, DrawingState, MovingZoneState, ResizingZoneState } from './types'
 import { getCoords, clampPosition } from './utils'
-import { DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT } from './Constants'
-import { ZoneItem } from './Zoneitem'
+import { DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT } from './constants'
+import { ZoneItem, ResizeHandle } from './Zoneitem'
 
 interface CanvasProps {
   bgImage: string | null
   zones: Zone[]
   fieldList: Field[]
   selectedField: string | null
-  preview: boolean
   menuOpen: number | null
   drawing: DrawingState
   movingZone: MovingZoneState | null
+  resizingZone: ResizingZoneState | null
   draggedField: string | null
   usedFieldIds: Set<string>
   onSetBgImage: (image: string) => void
   onSetDrawing: (drawing: DrawingState) => void
   onSetMovingZone: (state: MovingZoneState | null) => void
+  onSetResizingZone: (state: ResizingZoneState | null) => void
   onSetMenuOpen: (id: number | null) => void
   onPlaceField: (fieldId: string, x: number, y: number, width: number, height: number) => void
   onUpdateZone: (id: number, updates: Partial<Zone>) => void
@@ -29,20 +30,24 @@ interface CanvasProps {
   onSetZones: (zones: Zone[]) => void
 }
 
+const MIN_ZONE_WIDTH = 5
+const MIN_ZONE_HEIGHT = 3
+
 export function Canvas({
   bgImage,
   zones,
   fieldList,
   selectedField,
-  preview,
   menuOpen,
   drawing,
   movingZone,
+  resizingZone,
   draggedField,
   usedFieldIds,
   onSetBgImage,
   onSetDrawing,
   onSetMovingZone,
+  onSetResizingZone,
   onSetMenuOpen,
   onPlaceField,
   onUpdateZone,
@@ -53,13 +58,53 @@ export function Canvas({
   const canvasRef = useRef<HTMLDivElement>(null)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (movingZone) return
+    if (movingZone || resizingZone) return
     if (!selectedField || !bgImage) return
     const coords = getCoords(e, canvasRef)
     onSetDrawing({ active: true, start: coords, current: coords })
-  }, [movingZone, selectedField, bgImage, onSetDrawing])
+  }, [movingZone, resizingZone, selectedField, bgImage, onSetDrawing])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Handle resizing a zone
+    if (resizingZone) {
+      const coords = getCoords(e, canvasRef)
+      const deltaX = coords.x - resizingZone.startX
+      const deltaY = coords.y - resizingZone.startY
+      const handle = resizingZone.handle
+
+      let newX = resizingZone.startZoneX
+      let newY = resizingZone.startZoneY
+      let newWidth = resizingZone.startWidth
+      let newHeight = resizingZone.startHeight
+
+      // Handle horizontal resizing
+      if (handle.includes('w')) {
+        const maxDeltaX = resizingZone.startWidth - MIN_ZONE_WIDTH
+        const clampedDeltaX = Math.min(deltaX, maxDeltaX)
+        newX = Math.max(0, resizingZone.startZoneX + clampedDeltaX)
+        newWidth = resizingZone.startWidth - (newX - resizingZone.startZoneX)
+      } else if (handle.includes('e')) {
+        newWidth = Math.max(MIN_ZONE_WIDTH, Math.min(resizingZone.startWidth + deltaX, 100 - resizingZone.startZoneX))
+      }
+
+      // Handle vertical resizing
+      if (handle.includes('n')) {
+        const maxDeltaY = resizingZone.startHeight - MIN_ZONE_HEIGHT
+        const clampedDeltaY = Math.min(deltaY, maxDeltaY)
+        newY = Math.max(0, resizingZone.startZoneY + clampedDeltaY)
+        newHeight = resizingZone.startHeight - (newY - resizingZone.startZoneY)
+      } else if (handle.includes('s')) {
+        newHeight = Math.max(MIN_ZONE_HEIGHT, Math.min(resizingZone.startHeight + deltaY, 100 - resizingZone.startZoneY))
+      }
+
+      onSetZones(zones.map(z =>
+        z.id === resizingZone.id
+          ? { ...z, x: newX, y: newY, width: newWidth, height: newHeight }
+          : z
+      ))
+      return
+    }
+
     // Handle moving a zone
     if (movingZone) {
       const coords = getCoords(e, canvasRef)
@@ -84,9 +129,15 @@ export function Canvas({
     if (!drawing.active) return
     const coords = getCoords(e, canvasRef)
     onSetDrawing({ ...drawing, current: coords })
-  }, [movingZone, zones, drawing, onSetZones, onSetDrawing])
+  }, [resizingZone, movingZone, zones, drawing, onSetZones, onSetDrawing])
 
   const handleMouseUp = useCallback(() => {
+    // Handle finishing resize
+    if (resizingZone) {
+      onSetResizingZone(null)
+      return
+    }
+
     // Handle finishing zone move
     if (movingZone) {
       onSetMovingZone(null)
@@ -104,12 +155,12 @@ export function Canvas({
       onPlaceField(selectedField, Math.min(start.x, current.x), Math.min(start.y, current.y), w, h)
     }
     onSetDrawing({ active: false, start: null, current: null })
-  }, [movingZone, drawing, selectedField, onSetMovingZone, onPlaceField, onSetDrawing])
+  }, [resizingZone, movingZone, drawing, selectedField, onSetResizingZone, onSetMovingZone, onPlaceField, onSetDrawing])
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     onSetMenuOpen(null)
     
-    if (movingZone) return
+    if (movingZone || resizingZone) return
     
     if (selectedField && bgImage && !drawing.active) {
       const coords = getCoords(e, canvasRef)
@@ -121,10 +172,9 @@ export function Canvas({
       )
       onPlaceField(selectedField, x, y, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT)
     }
-  }, [movingZone, selectedField, bgImage, drawing.active, onSetMenuOpen, onPlaceField])
+  }, [movingZone, resizingZone, selectedField, bgImage, drawing.active, onSetMenuOpen, onPlaceField])
 
   const handleZoneMoveStart = useCallback((e: React.MouseEvent, zone: Zone) => {
-    if (preview) return
     e.stopPropagation()
     e.preventDefault()
     
@@ -135,7 +185,25 @@ export function Canvas({
       offsetY: coords.y - zone.y,
     })
     onSetMenuOpen(null)
-  }, [preview, onSetMovingZone, onSetMenuOpen])
+  }, [onSetMovingZone, onSetMenuOpen])
+
+  const handleZoneResizeStart = useCallback((e: React.MouseEvent, zone: Zone, handle: ResizeHandle) => {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    const coords = getCoords(e, canvasRef)
+    onSetResizingZone({
+      id: zone.id,
+      handle,
+      startX: coords.x,
+      startY: coords.y,
+      startZoneX: zone.x,
+      startZoneY: zone.y,
+      startWidth: zone.width,
+      startHeight: zone.height,
+    })
+    onSetMenuOpen(null)
+  }, [onSetResizingZone, onSetMenuOpen])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     if (!bgImage) return
@@ -169,6 +237,14 @@ export function Canvas({
     }
   }
 
+  // Determine cursor based on current state
+  const getCursorClass = () => {
+    if (resizingZone) return ''
+    if (movingZone) return 'cursor-grabbing'
+    if (selectedField && bgImage) return 'cursor-crosshair'
+    return ''
+  }
+
   return (
     <div className="flex-1 p-6 overflow-auto bg-secondary/30">
       <div className="mb-4">
@@ -198,16 +274,15 @@ export function Canvas({
         onMouseLeave={() => {
           if (drawing.active) handleMouseUp()
           if (movingZone) onSetMovingZone(null)
+          if (resizingZone) onSetResizingZone(null)
         }}
         onClick={handleCanvasClick}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`relative bg-card rounded-lg overflow-hidden shadow-lg ${
-          selectedField && bgImage ? 'cursor-crosshair' : ''
-        } ${draggedField && bgImage ? 'ring-2 ring-primary ring-dashed' : ''} ${
-          movingZone ? 'cursor-grabbing' : ''
+        className={`relative bg-card rounded-lg overflow-hidden shadow-lg ${getCursorClass()} ${
+          draggedField && bgImage ? 'ring-2 ring-primary ring-dashed' : ''
         }`}
-        style={{ width: '100%', maxWidth: '900px', aspectRatio: '16/9' }}
+        style={{ width: '80%',  aspectRatio: '16/9' }}
       >
         {bgImage ? (
           <img
@@ -229,10 +304,11 @@ export function Canvas({
           <ZoneItem
             key={zone.id}
             zone={zone}
-            preview={preview}
             isMoving={movingZone?.id === zone.id}
+            isResizing={resizingZone?.id === zone.id}
             menuOpen={menuOpen === zone.id}
             onMoveStart={(e) => handleZoneMoveStart(e, zone)}
+            onResizeStart={(e, handle) => handleZoneResizeStart(e, zone, handle)}
             onMenuToggle={() => onSetMenuOpen(menuOpen === zone.id ? null : zone.id)}
             onUpdateZone={(updates) => onUpdateZone(zone.id, updates)}
             onUpdateOption={(key, value) => onUpdateZoneOption(zone.id, key, value)}
