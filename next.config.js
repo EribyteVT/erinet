@@ -15,6 +15,9 @@ const nextConfig = {
     ],
   },
 
+  turbopack: {
+  },
+
   experimental: {
     serverActions: {
       allowedOrigins: [

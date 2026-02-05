@@ -64,7 +64,7 @@ export default async function HowToPage() {
                       </p>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-blue-500 shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             Eribot only requests the permissions it needs to
                             function, such knowledge of servers you&apos;re in.
@@ -143,7 +143,7 @@ export default async function HowToPage() {
                       </p>
                       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-amber-500 shrink-0" />
                           <p className="text-sm text-amber-700 dark:text-amber-300">
                             Servers with a &quot;Setup Needed&quot; badge
                             require you to complete the onboarding process
@@ -253,7 +253,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-green-500 shrink-0" />
                           <p className="text-sm text-green-700 dark:text-green-300">
                             If you&apos;ve enabled auto-publish to Discord or
                             Twitch, the stream will automatically be added to
@@ -301,7 +301,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-blue-500 shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             When you edit a stream, any associated Discord
                             events and Twitch schedule segments will be
@@ -353,7 +353,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-amber-500 shrink-0" />
                           <p className="text-sm text-amber-700 dark:text-amber-300">
                             When you delete a stream, any associated Discord
                             events and Twitch schedule segments will also be
@@ -460,7 +460,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-purple-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-purple-500 shrink-0" />
                           <p className="text-sm text-purple-700 dark:text-purple-300">
                             You must be the owner of the Twitch account or have
                             permission to manage its schedule to complete this
@@ -495,7 +495,7 @@ export default async function HowToPage() {
                       </p>
                       <ul className="space-y-4">
                         <li className="flex items-start gap-2">
-                          <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700 mt-0.5 flex-shrink-0"></div>
+                          <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700 mt-0.5 shrink-0"></div>
                           <div>
                             <p className="font-medium">
                               Auto Publish Discord Event
@@ -507,7 +507,7 @@ export default async function HowToPage() {
                           </div>
                         </li>
                         <li className="flex items-start gap-2">
-                          <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700 mt-0.5 flex-shrink-0"></div>
+                          <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700 mt-0.5 shrink-0"></div>
                           <div>
                             <p className="font-medium">
                               Auto Publish Twitch Event
@@ -566,7 +566,7 @@ export default async function HowToPage() {
                       </ul>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-blue-500 shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             Once a stream has been published to a platform, the
                             button will change to a checkmark to indicate
@@ -634,7 +634,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-blue-500 shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             The website generator creates a static website that
                             automatically updates when you change your stream
@@ -674,7 +674,7 @@ export default async function HowToPage() {
                       </p>
                       <ul className="space-y-3">
                         <li className="text-muted-foreground flex gap-2">
-                          <Layout className="h-5 w-5 text-purple-500 flex-shrink-0" />
+                          <Layout className="h-5 w-5 text-purple-500 shrink-0" />
                           <div>
                             <span className="font-medium text-foreground">
                               Basic Settings:
@@ -684,7 +684,7 @@ export default async function HowToPage() {
                           </div>
                         </li>
                         <li className="text-muted-foreground flex gap-2">
-                          <Globe className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Globe className="h-5 w-5 text-blue-500 shrink-0" />
                           <div>
                             <span className="font-medium text-foreground">
                               Social Media Links:
@@ -745,7 +745,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-green-500 shrink-0" />
                           <p className="text-sm text-green-700 dark:text-green-300">
                             The download includes a detailed README.md file with
                             instructions on how to set up your website using
@@ -824,7 +824,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
                         <div className="flex gap-2">
-                          <GitHubLogoIcon className="h-5 w-5 text-purple-500 flex-shrink-0" />
+                          <GitHubLogoIcon className="h-5 w-5 text-purple-500 shrink-0" />
                           <p className="text-sm text-purple-700 dark:text-purple-300">
                             Your website will be available at{" "}
                             <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-xs">
@@ -889,7 +889,7 @@ export default async function HowToPage() {
                       </ol>
                       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-amber-500 shrink-0" />
                           <p className="text-sm text-amber-700 dark:text-amber-300">
                             DNS changes can take up to 48 hours to fully
                             propagate. The README.md file includes specific
@@ -924,7 +924,7 @@ export default async function HowToPage() {
                       </p>
                       <ul className="space-y-3">
                         <li className="text-muted-foreground flex gap-2">
-                          <Archive className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          <Archive className="h-5 w-5 text-green-500 shrink-0" />
                           <div>
                             <span className="font-medium text-foreground">
                               Automatic Schedule:
@@ -935,7 +935,7 @@ export default async function HowToPage() {
                           </div>
                         </li>
                         <li className="text-muted-foreground flex gap-2">
-                          <Layout className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Layout className="h-5 w-5 text-blue-500 shrink-0" />
                           <div>
                             <span className="font-medium text-foreground">
                               Manual Customization:
@@ -948,7 +948,7 @@ export default async function HowToPage() {
                       </ul>
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="flex gap-2">
-                          <Info className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          <Info className="h-5 w-5 text-blue-500 shrink-0" />
                           <p className="text-sm text-blue-700 dark:text-blue-300">
                             If you regenerate your website with new settings,
                             you&apos;ll need to re-upload the updated files to
@@ -1093,7 +1093,7 @@ export default async function HowToPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
               <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700 flex gap-4">
-                <div className="rounded-full bg-primary/10 p-3 flex-shrink-0">
+                <div className="rounded-full bg-primary/10 p-3 shrink-0">
                   <DiscordLogoIcon className="h-6 w-6 text-primary" />
                 </div>
                 <div>

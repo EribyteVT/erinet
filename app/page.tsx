@@ -45,7 +45,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="max-w-7xl mx-auto mb-12 px-4">
-          <Card className="mb-8 bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-200 dark:border-purple-800">
+          <Card className="mb-8 bg-linear-to-r from-purple-500/20 to-blue-500/20 border border-purple-200 dark:border-purple-800">
             <CardHeader>
               <CardTitle className="text-2xl text-center">
                 What is Eribot?

@@ -213,7 +213,7 @@ export function generateCSS(config: WebsiteConfig): string {
     .socials,
     .gridSchedule,
     #NextStreamCountdown {
-      flex-grow: 0;
+      grow: 0;
       width: 100%;
     }
     

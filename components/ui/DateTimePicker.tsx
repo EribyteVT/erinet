@@ -85,20 +85,22 @@ export function DateTimePicker({
             <TimeField
               value={time}
               onChange={handleTimeChange}
-              className="flex-grow"
+              className="grow text-white"
               sx={{
                 "& .MuiInputBase-root": {
                   backgroundColor: "transparent",
-                  color: "currentColor",
                   borderRadius: "0.375rem",
                   borderColor: "white",
                   borderWidth: "1px",
                 },
                 "& .MuiInputBase-input": {
-                  color: "currentColor",
+                  color: "#E9DB5D",
                   padding: "0.5rem",
                   borderColor: "white",
                 },
+                ".css-vycme6-MuiPickersInputBase-root-MuiPickersOutlinedInput-root": {
+                  color: "#FFFFFF"
+                }
               }}
               format="hh:mm a"
               // Add error handling

@@ -11,7 +11,7 @@ export default function CreditsPage() {
       <div className="py-12 md:py-16">
         <Card className="border shadow-md rounded-xl overflow-hidden max-w-3xl mx-auto">
           <CardContent className="p-0">
-            <div className="bg-gradient-to-b from-purple-50 to-white dark:from-slate-900 dark:to-slate-950 p-8 md:p-10">
+            <div className="bg-linear-to-b from-purple-50 to-white dark:from-slate-900 dark:to-slate-950 p-8 md:p-10">
               <FontAwesomeLoader />
 
               <div className="text-center space-y-6">

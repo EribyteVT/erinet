@@ -119,7 +119,7 @@ export default function Guild(props: any) {
         {/* Banner section */}
         <div
           className={`w-full ${
-            !hasBanner ? `bg-gradient-to-r ${gradientFrom} ${gradientTo}` : ""
+            !hasBanner ? `bg-linear-to-r ${gradientFrom} ${gradientTo}` : ""
           }`}
           style={bannerStyle}
         />

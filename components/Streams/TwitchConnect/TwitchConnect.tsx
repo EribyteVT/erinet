@@ -54,7 +54,7 @@ export const TwitchConnect = ({
         <div>
           <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800 p-4 mb-6">
             <div className="flex gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-medium text-amber-900 dark:text-amber-300">
                   Connect Twitch Account

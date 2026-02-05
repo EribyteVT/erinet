@@ -207,7 +207,7 @@ export const AddRow: React.FC<{
           placeholder="Duration (seconds)"
           value={duration}
           onChange={(e) => setDuration(e.target.value)}
-          className="max-w-[120px]"
+          className="max-w-30"
         />
       </TableCell>
       <TableCell>-</TableCell>

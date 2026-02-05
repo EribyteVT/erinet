@@ -8,10 +8,10 @@ interface PageContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const maxWidthClasses = {
-  sm: "max-w-screen-sm",
-  md: "max-w-screen-md",
-  lg: "max-w-screen-lg",
-  xl: "max-w-screen-xl",
+  sm: "max-w-(--breakpoint-sm)",
+  md: "max-w-(--breakpoint-md)",
+  lg: "max-w-(--breakpoint-lg)",
+  xl: "max-w-(--breakpoint-xl)",
   full: "max-w-full",
 };
 
