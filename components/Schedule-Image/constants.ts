@@ -1,4 +1,4 @@
-import { ScheduleRow, FieldOptions } from "../Schedule-Image/types";
+import { ScheduleRow, FieldOptions } from "./types";
 
 // Mock schedule data - replace with actual data source
 export const mockSchedule: ScheduleRow[] = [

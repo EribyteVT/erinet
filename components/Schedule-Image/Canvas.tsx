@@ -10,10 +10,7 @@ import {
   ResizingZoneState,
 } from "./types";
 import { getCoords, clampPosition } from "./utils";
-import {
-  DEFAULT_ZONE_WIDTH,
-  DEFAULT_ZONE_HEIGHT,
-} from "../websiteGenerator/constants";
+import { DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT } from "./constants";
 import { ZoneItem, ResizeHandle } from "./Zoneitem";
 
 interface CanvasProps {

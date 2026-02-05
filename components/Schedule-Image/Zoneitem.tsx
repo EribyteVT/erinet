@@ -4,7 +4,7 @@ import React from "react";
 import { MoreVertical, Trash2 } from "lucide-react";
 import { Zone, FieldOptions } from "./types";
 import { getDisplayValue } from "./utils";
-import { fieldOptions } from "../websiteGenerator/constants";
+import { fieldOptions } from "./constants";
 
 export type ResizeHandle = "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w";
 
