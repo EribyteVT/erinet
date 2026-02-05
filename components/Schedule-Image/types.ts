@@ -7,7 +7,7 @@ export interface ScheduleRow {
 export interface Field {
   id: string
   dayIndex: number
-  type: 'day' | 'time' | 'game'
+  type: 'day' | 'time' | 'game' | 'text'
   label: string
   value: string | null
 }
@@ -22,9 +22,11 @@ export interface Zone {
   height: number
   options: Record<string, string>
   fontSize: number
+  fontSizeOverride: boolean
   color: string
   bold: boolean
   align: 'left' | 'center' | 'right'
+  customText?: string
 }
 
 export interface FieldOption {

@@ -1,4 +1,4 @@
-import { Field, ScheduleRow } from './types'
+import { Field, Zone, ScheduleRow } from './types'
 import { mockSchedule } from './constants'
 
 // Build field list from schedule data
@@ -31,7 +31,12 @@ export const buildFieldList = (schedule: ScheduleRow[] = mockSchedule): Field[] 
 }
 
 // Get display value based on field type and options
-export const getDisplayValue = (field: Field, opts: Record<string, string> = {}): string => {
+// For text zones, pass the zone's customText via the zone parameter
+export const getDisplayValue = (field: Field, opts: Record<string, string> = {}, zone?: Zone): string => {
+  if (field.type === 'text') {
+    return zone?.customText || 'Text'
+  }
+
   if (field.type === 'day') {
     const len = opts.length || 'Full'
     if (len === 'Short') return field.value?.slice(0, 3) || ''

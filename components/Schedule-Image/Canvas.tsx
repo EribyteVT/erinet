@@ -18,12 +18,15 @@ interface CanvasProps {
   resizingZone: ResizingZoneState | null
   draggedField: string | null
   usedFieldIds: Set<string>
+  globalFontSize: number
+  textPlaceMode: boolean
   onSetBgImage: (image: string) => void
   onSetDrawing: (drawing: DrawingState) => void
   onSetMovingZone: (state: MovingZoneState | null) => void
   onSetResizingZone: (state: ResizingZoneState | null) => void
   onSetMenuOpen: (id: number | null) => void
   onPlaceField: (fieldId: string, x: number, y: number, width: number, height: number) => void
+  onPlaceTextBox: (x: number, y: number, width: number, height: number) => void
   onUpdateZone: (id: number, updates: Partial<Zone>) => void
   onUpdateZoneOption: (id: number, key: string, value: string) => void
   onDeleteZone: (id: number) => void
@@ -44,12 +47,15 @@ export function Canvas({
   resizingZone,
   draggedField,
   usedFieldIds,
+  globalFontSize,
+  textPlaceMode,
   onSetBgImage,
   onSetDrawing,
   onSetMovingZone,
   onSetResizingZone,
   onSetMenuOpen,
   onPlaceField,
+  onPlaceTextBox,
   onUpdateZone,
   onUpdateZoneOption,
   onDeleteZone,
@@ -57,12 +63,15 @@ export function Canvas({
 }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
 
+  // Can place if a field is selected OR in text place mode
+  const canPlace = (selectedField || textPlaceMode) && bgImage
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (movingZone || resizingZone) return
-    if (!selectedField || !bgImage) return
+    if (!canPlace) return
     const coords = getCoords(e, canvasRef)
     onSetDrawing({ active: true, start: coords, current: coords })
-  }, [movingZone, resizingZone, selectedField, bgImage, onSetDrawing])
+  }, [movingZone, resizingZone, canPlace, onSetDrawing])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     // Handle resizing a zone
@@ -77,107 +86,102 @@ export function Canvas({
       let newWidth = resizingZone.startWidth
       let newHeight = resizingZone.startHeight
 
-      // Handle horizontal resizing
+      if (handle.includes('e')) newWidth = Math.max(MIN_ZONE_WIDTH, resizingZone.startWidth + deltaX)
       if (handle.includes('w')) {
-        const maxDeltaX = resizingZone.startWidth - MIN_ZONE_WIDTH
-        const clampedDeltaX = Math.min(deltaX, maxDeltaX)
-        newX = Math.max(0, resizingZone.startZoneX + clampedDeltaX)
-        newWidth = resizingZone.startWidth - (newX - resizingZone.startZoneX)
-      } else if (handle.includes('e')) {
-        newWidth = Math.max(MIN_ZONE_WIDTH, Math.min(resizingZone.startWidth + deltaX, 100 - resizingZone.startZoneX))
+        newWidth = Math.max(MIN_ZONE_WIDTH, resizingZone.startWidth - deltaX)
+        newX = resizingZone.startZoneX + (resizingZone.startWidth - newWidth)
       }
-
-      // Handle vertical resizing
+      if (handle.includes('s')) newHeight = Math.max(MIN_ZONE_HEIGHT, resizingZone.startHeight + deltaY)
       if (handle.includes('n')) {
-        const maxDeltaY = resizingZone.startHeight - MIN_ZONE_HEIGHT
-        const clampedDeltaY = Math.min(deltaY, maxDeltaY)
-        newY = Math.max(0, resizingZone.startZoneY + clampedDeltaY)
-        newHeight = resizingZone.startHeight - (newY - resizingZone.startZoneY)
-      } else if (handle.includes('s')) {
-        newHeight = Math.max(MIN_ZONE_HEIGHT, Math.min(resizingZone.startHeight + deltaY, 100 - resizingZone.startZoneY))
+        newHeight = Math.max(MIN_ZONE_HEIGHT, resizingZone.startHeight - deltaY)
+        newY = resizingZone.startZoneY + (resizingZone.startHeight - newHeight)
       }
 
-      onSetZones(zones.map(z =>
-        z.id === resizingZone.id
-          ? { ...z, x: newX, y: newY, width: newWidth, height: newHeight }
-          : z
-      ))
+      const clamped = clampPosition(newX, newY, newWidth, newHeight)
+      onUpdateZone(resizingZone.id, {
+        x: clamped.x,
+        y: clamped.y,
+        width: Math.min(newWidth, 100 - clamped.x),
+        height: Math.min(newHeight, 100 - clamped.y),
+      })
       return
     }
 
     // Handle moving a zone
     if (movingZone) {
       const coords = getCoords(e, canvasRef)
-      const zone = zones.find(z => z.id === movingZone.id)
-      if (zone) {
-        const { x: newX, y: newY } = clampPosition(
-          coords.x - movingZone.offsetX,
-          coords.y - movingZone.offsetY,
-          zone.width,
-          zone.height
-        )
-        onSetZones(zones.map(z => 
-          z.id === movingZone.id 
-            ? { ...z, x: newX, y: newY }
-            : z
-        ))
-      }
+      const zone = zones.find((z) => z.id === movingZone.id)
+      if (!zone) return
+      const newX = coords.x - movingZone.offsetX
+      const newY = coords.y - movingZone.offsetY
+      const clamped = clampPosition(newX, newY, zone.width, zone.height)
+      onUpdateZone(movingZone.id, { x: clamped.x, y: clamped.y })
       return
     }
 
     // Handle drawing
-    if (!drawing.active) return
-    const coords = getCoords(e, canvasRef)
-    onSetDrawing({ ...drawing, current: coords })
-  }, [resizingZone, movingZone, zones, drawing, onSetZones, onSetDrawing])
+    if (drawing.active) {
+      const coords = getCoords(e, canvasRef)
+      onSetDrawing({ ...drawing, current: coords })
+    }
+  }, [resizingZone, movingZone, drawing, zones, onUpdateZone, onSetDrawing])
 
   const handleMouseUp = useCallback(() => {
-    // Handle finishing resize
     if (resizingZone) {
       onSetResizingZone(null)
       return
     }
 
-    // Handle finishing zone move
     if (movingZone) {
       onSetMovingZone(null)
       return
     }
 
-    // Handle finishing drawing
-    if (!drawing.active || !selectedField) return
-    const { start, current } = drawing
-    if (!start || !current) return
-    const w = Math.abs(current.x - start.x)
-    const h = Math.abs(current.y - start.y)
+    if (drawing.active && drawing.start && drawing.current) {
+      const x = Math.min(drawing.start.x, drawing.current.x)
+      const y = Math.min(drawing.start.y, drawing.current.y)
+      const w = Math.abs(drawing.current.x - drawing.start.x)
+      const h = Math.abs(drawing.current.y - drawing.start.y)
 
-    if (w > 2 && h > 1) {
-      onPlaceField(selectedField, Math.min(start.x, current.x), Math.min(start.y, current.y), w, h)
+      if (w > 2 && h > 2) {
+        if (textPlaceMode) {
+          onPlaceTextBox(x, y, w, h)
+        } else if (selectedField) {
+          onPlaceField(selectedField, x, y, w, h)
+        }
+      }
+      onSetDrawing({ active: false, start: null, current: null })
     }
-    onSetDrawing({ active: false, start: null, current: null })
-  }, [resizingZone, movingZone, drawing, selectedField, onSetResizingZone, onSetMovingZone, onPlaceField, onSetDrawing])
+  }, [resizingZone, movingZone, drawing, selectedField, textPlaceMode, onSetResizingZone, onSetMovingZone, onPlaceField, onPlaceTextBox, onSetDrawing])
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    onSetMenuOpen(null)
-    
-    if (movingZone || resizingZone) return
-    
-    if (selectedField && bgImage && !drawing.active) {
-      const coords = getCoords(e, canvasRef)
-      const { x, y } = clampPosition(
+    if (!canPlace) return
+    if (drawing.active) return
+
+    const target = e.target as HTMLElement
+    if (target.closest('[data-zone]')) return
+
+    const coords = getCoords(e, canvasRef)
+    if (textPlaceMode) {
+      onPlaceTextBox(
         coords.x - DEFAULT_ZONE_WIDTH / 2,
         coords.y - DEFAULT_ZONE_HEIGHT / 2,
         DEFAULT_ZONE_WIDTH,
         DEFAULT_ZONE_HEIGHT
       )
-      onPlaceField(selectedField, x, y, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT)
+    } else if (selectedField) {
+      onPlaceField(
+        selectedField,
+        coords.x - DEFAULT_ZONE_WIDTH / 2,
+        coords.y - DEFAULT_ZONE_HEIGHT / 2,
+        DEFAULT_ZONE_WIDTH,
+        DEFAULT_ZONE_HEIGHT
+      )
     }
-  }, [movingZone, resizingZone, selectedField, bgImage, drawing.active, onSetMenuOpen, onPlaceField])
+  }, [canPlace, drawing.active, selectedField, textPlaceMode, onPlaceField, onPlaceTextBox])
 
   const handleZoneMoveStart = useCallback((e: React.MouseEvent, zone: Zone) => {
     e.stopPropagation()
-    e.preventDefault()
-    
     const coords = getCoords(e, canvasRef)
     onSetMovingZone({
       id: zone.id,
@@ -190,7 +194,6 @@ export function Canvas({
   const handleZoneResizeStart = useCallback((e: React.MouseEvent, zone: Zone, handle: ResizeHandle) => {
     e.stopPropagation()
     e.preventDefault()
-    
     const coords = getCoords(e, canvasRef)
     onSetResizingZone({
       id: zone.id,
@@ -206,27 +209,17 @@ export function Canvas({
   }, [onSetResizingZone, onSetMenuOpen])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (!bgImage) return
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
-  }, [bgImage])
+  }, [])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    if (!bgImage) return
-    
-    const fieldId = e.dataTransfer.getData('text/plain') || draggedField
-    if (!fieldId || usedFieldIds.has(fieldId)) return
-
+    const fieldId = e.dataTransfer.getData('text/plain')
+    if (!fieldId || !bgImage || usedFieldIds.has(fieldId)) return
     const coords = getCoords(e, canvasRef)
-    const { x, y } = clampPosition(
-      coords.x - DEFAULT_ZONE_WIDTH / 2,
-      coords.y - DEFAULT_ZONE_HEIGHT / 2,
-      DEFAULT_ZONE_WIDTH,
-      DEFAULT_ZONE_HEIGHT
-    )
-    onPlaceField(fieldId, x, y, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT)
-  }, [bgImage, draggedField, usedFieldIds, onPlaceField])
+    onPlaceField(fieldId, coords.x - DEFAULT_ZONE_WIDTH / 2, coords.y - DEFAULT_ZONE_HEIGHT / 2, DEFAULT_ZONE_WIDTH, DEFAULT_ZONE_HEIGHT)
+  }, [bgImage, usedFieldIds, onPlaceField])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -241,7 +234,7 @@ export function Canvas({
   const getCursorClass = () => {
     if (resizingZone) return ''
     if (movingZone) return 'cursor-grabbing'
-    if (selectedField && bgImage) return 'cursor-crosshair'
+    if (canPlace) return 'cursor-crosshair'
     return ''
   }
 
@@ -258,9 +251,11 @@ export function Canvas({
             className="hidden"
           />
         </label>
-        {selectedField && bgImage && (
+        {canPlace && (
           <span className="ml-4 text-sm text-primary">
-            Click on the image to place, or drag to draw a custom size
+            {textPlaceMode
+              ? 'Click on the image to place a text box, or drag to draw a custom size'
+              : 'Click on the image to place, or drag to draw a custom size'}
           </span>
         )}
       </div>
@@ -304,6 +299,7 @@ export function Canvas({
           <ZoneItem
             key={zone.id}
             zone={zone}
+            globalFontSize={globalFontSize}
             isMoving={movingZone?.id === zone.id}
             isResizing={resizingZone?.id === zone.id}
             menuOpen={menuOpen === zone.id}
@@ -319,7 +315,7 @@ export function Canvas({
         {/* Drawing preview */}
         {drawing.active && drawing.start && drawing.current && (
           <div
-            className="absolute border-2 border-dashed border-primary bg-primary/20 pointer-events-none"
+            className="absolute border-2 border-dashed border-primary bg-primary/10 pointer-events-none"
             style={{
               left: `${Math.min(drawing.start.x, drawing.current.x)}%`,
               top: `${Math.min(drawing.start.y, drawing.current.y)}%`,

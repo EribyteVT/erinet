@@ -18,7 +18,7 @@ export const fieldOptions: Record<string, FieldOptions> = {
   },
   time: {
     format: { label: 'Format', choices: ['12-hour', '24-hour'], default: '12-hour' },
-    showTz: { label: 'Timezone', choices: ['Hide', 'EST', 'PST', 'CST', 'UTC'], default: 'Hide' },
+    showTz: { label: 'Timezone', choices: ['Hide', 'Show'], default: 'Hide' },
     offText: { label: 'If OFF', choices: ['OFF', 'Day Off', '—'], default: 'OFF' },
   },
   game: {

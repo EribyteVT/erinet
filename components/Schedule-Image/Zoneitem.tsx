@@ -10,6 +10,7 @@ export type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
 
 interface ZoneItemProps {
   zone: Zone
+  globalFontSize: number
   isMoving: boolean
   isResizing: boolean
   menuOpen: boolean
@@ -23,6 +24,7 @@ interface ZoneItemProps {
 
 export function ZoneItem({
   zone,
+  globalFontSize,
   isMoving,
   isResizing,
   menuOpen,
@@ -33,8 +35,12 @@ export function ZoneItem({
   onUpdateOption,
   onDelete,
 }: ZoneItemProps) {
-  const displayValue = getDisplayValue(zone.field, zone.options)
-  const menuFieldOpts: FieldOptions | null = fieldOptions[zone.field?.type] || null
+  const isTextZone = zone.field?.type === 'text'
+  const displayValue = getDisplayValue(zone.field, zone.options, zone)
+  const menuFieldOpts: FieldOptions | null = isTextZone ? null : (fieldOptions[zone.field?.type] || null)
+
+  // Use the zone's own fontSize if overridden, otherwise use globalFontSize
+  const effectiveFontSize = zone.fontSizeOverride ? zone.fontSize : globalFontSize
 
   const handleCursors: Record<ResizeHandle, string> = {
     nw: 'cursor-nwse-resize',
@@ -49,6 +55,7 @@ export function ZoneItem({
 
   return (
     <div
+      data-zone
       onClick={(e) => e.stopPropagation()}
       className={`absolute group ${isMoving || isResizing ? 'ring-2 ring-primary z-50' : ''}`}
       style={{
@@ -79,7 +86,7 @@ export function ZoneItem({
               : zone.align === 'right'
               ? 'flex-end'
               : 'center',
-          fontSize: `${zone.fontSize}px`,
+          fontSize: `${effectiveFontSize}px`,
           color: zone.color,
           fontWeight: zone.bold ? 'bold' : 'normal',
           textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
@@ -131,6 +138,9 @@ export function ZoneItem({
       {menuOpen && (
         <ZoneMenu
           zone={zone}
+          globalFontSize={globalFontSize}
+          effectiveFontSize={effectiveFontSize}
+          isTextZone={isTextZone}
           fieldOpts={menuFieldOpts}
           onUpdateZone={onUpdateZone}
           onUpdateOption={onUpdateOption}
@@ -143,19 +153,39 @@ export function ZoneItem({
 
 interface ZoneMenuProps {
   zone: Zone
+  globalFontSize: number
+  effectiveFontSize: number
+  isTextZone: boolean
   fieldOpts: FieldOptions | null
   onUpdateZone: (updates: Partial<Zone>) => void
   onUpdateOption: (key: string, value: string) => void
   onDelete: () => void
 }
 
-function ZoneMenu({ zone, fieldOpts, onUpdateZone, onUpdateOption, onDelete }: ZoneMenuProps) {
+function ZoneMenu({ zone, globalFontSize, effectiveFontSize, isTextZone, fieldOpts, onUpdateZone, onUpdateOption, onDelete }: ZoneMenuProps) {
   return (
     <div
       className="absolute right-0 top-7 bg-card rounded-lg shadow-2xl border border-border w-52 z-50 overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Field-specific options */}
+      {/* Text content input for text zones */}
+      {isTextZone && (
+        <div className="p-3 border-b border-border">
+          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-2">
+            Text Content
+          </div>
+          <textarea
+            value={zone.customText || ''}
+            onChange={(e) => onUpdateZone({ customText: e.target.value })}
+            placeholder="Enter your text…"
+            className="w-full bg-secondary border border-border rounded px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+            rows={3}
+            autoFocus
+          />
+        </div>
+      )}
+
+      {/* Field-specific options (not shown for text zones) */}
       {fieldOpts && (
         <div className="p-3 border-b border-border space-y-3">
           <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
@@ -192,14 +222,6 @@ function ZoneMenu({ zone, fieldOpts, onUpdateZone, onUpdateOption, onDelete }: Z
             onChange={(e) => onUpdateZone({ color: e.target.value })}
             className="w-8 h-8 rounded cursor-pointer border-0"
           />
-          <input
-            type="number"
-            value={zone.fontSize}
-            onChange={(e) => onUpdateZone({ fontSize: parseInt(e.target.value) || 16 })}
-            className="w-14 bg-secondary border border-border rounded px-2 py-1 text-sm"
-            min="8"
-            max="72"
-          />
           <button
             onClick={() => onUpdateZone({ bold: !zone.bold })}
             className={`w-8 h-8 rounded text-sm font-bold ${
@@ -209,6 +231,46 @@ function ZoneMenu({ zone, fieldOpts, onUpdateZone, onUpdateOption, onDelete }: Z
             B
           </button>
         </div>
+
+        {/* Font size with override toggle */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">Font Size</span>
+            <button
+              onClick={() => {
+                if (zone.fontSizeOverride) {
+                  // Switching back to global — reset fontSize to match global
+                  onUpdateZone({ fontSizeOverride: false, fontSize: globalFontSize })
+                } else {
+                  // Switching to override — keep current effective size as starting point
+                  onUpdateZone({ fontSizeOverride: true, fontSize: effectiveFontSize })
+                }
+              }}
+              className={`text-xs px-2 py-0.5 rounded ${
+                zone.fontSizeOverride
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {zone.fontSizeOverride ? 'Override' : 'Global'}
+            </button>
+          </div>
+          <input
+            type="number"
+            value={effectiveFontSize}
+            onChange={(e) => {
+              const newSize = parseInt(e.target.value) || 16
+              onUpdateZone({ fontSize: newSize, fontSizeOverride: true })
+            }}
+            disabled={!zone.fontSizeOverride}
+            className={`w-full bg-secondary border border-border rounded px-2 py-1 text-sm ${
+              !zone.fontSizeOverride ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            min="8"
+            max="72"
+          />
+        </div>
+
         <div className="flex mt-2 bg-secondary rounded overflow-hidden">
           {(['left', 'center', 'right'] as const).map((a) => (
             <button
