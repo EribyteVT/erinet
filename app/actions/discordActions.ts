@@ -232,11 +232,11 @@ async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
   const cachedGuilds = cache.get<GuildData[]>(cacheKey);
 
   if (cachedGuilds) {
-    console.log(`cache hit for ${cacheKey}`);
+    // console.log(`cache hit for ${cacheKey}`);
     return successResponse(cachedGuilds, "OKAY");
   }
 
-  console.log(`cache miss for ${cacheKey}`);
+  // console.log(`cache miss for ${cacheKey}`);
 
   // If not in cache, fetch from Discord API
   const token = await getDiscordToken(session.user.id);

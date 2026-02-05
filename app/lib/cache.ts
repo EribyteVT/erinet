@@ -24,7 +24,7 @@ export class SimpleCache {
 
     // Set up expiration
     const timeout = setTimeout(() => {
-      console.log(`Cache expired for key: ${key}`);
+      // console.log(`Cache expired for key: ${key}`);
       this.cache.delete(key);
       this.timeouts.delete(key);
     }, expirationMs);
