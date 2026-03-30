@@ -25,7 +25,7 @@ async function createDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<any> {
   try {
     const response = await fetch(
@@ -46,14 +46,14 @@ async function createDiscordEvent(
             location,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Discord API error:", errorData);
       throw new Error(
-        `Failed to create Discord event: ${JSON.stringify(errorData)}`
+        `Failed to create Discord event: ${JSON.stringify(errorData)}`,
       );
     }
 
@@ -70,7 +70,7 @@ export async function updateDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<boolean> {
   try {
     const response = await fetch(
@@ -91,7 +91,7 @@ export async function updateDiscordEvent(
             location,
           },
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -109,7 +109,7 @@ export async function updateDiscordEvent(
 
 export async function deleteDiscordEvent(
   guildId: string,
-  eventId: string
+  eventId: string,
 ): Promise<boolean> {
   try {
     const response = await fetch(
@@ -120,7 +120,7 @@ export async function deleteDiscordEvent(
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     return response.ok;
@@ -146,7 +146,7 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -171,7 +171,7 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
 export const getBotGuilds = createRateLimitedStructuredAction(
   "getBotGuilds",
   getBotGuildsImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
@@ -222,11 +222,11 @@ async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
 export const fetchUserGuilds = createRateLimitedStructuredAction(
   "fetchUserGuilds",
   fetchUserGuildsImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchSpecificUserGuildImpl(
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<GuildData | null>> {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1 second delay between retries
@@ -266,13 +266,13 @@ async function fetchSpecificUserGuildImpl(
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
           const errorStatus = response.status;
           console.error(
-            `Discord API error on attempt ${attempt + 1}: ${errorStatus}`
+            `Discord API error on attempt ${attempt + 1}: ${errorStatus}`,
           );
 
           // Check if we should retry based on status code
@@ -303,13 +303,13 @@ async function fetchSpecificUserGuildImpl(
           // This was our last attempt, rethrow the error
           console.error(
             `Failed to fetch guilds after ${MAX_RETRIES} attempts:`,
-            error
+            error,
           );
           throw error;
         }
 
         console.log(
-          `Attempt ${attempt + 1} failed, retrying after ${RETRY_DELAY}ms`
+          `Attempt ${attempt + 1} failed, retrying after ${RETRY_DELAY}ms`,
         );
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       }
@@ -333,7 +333,7 @@ async function fetchSpecificUserGuildImpl(
 export const fetchSpecificUserGuild = createRateLimitedStructuredAction(
   "fetchSpecificUserGuild",
   fetchSpecificUserGuildImpl,
-  "discord"
+  "discord",
 );
 
 async function createDiscordEventActionImpl(
@@ -342,7 +342,7 @@ async function createDiscordEventActionImpl(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
@@ -369,7 +369,7 @@ async function createDiscordEventActionImpl(
       name,
       startTime,
       endTime,
-      location
+      location,
     );
 
     const updatedStream = await prisma.stream_table_tied.update({
@@ -387,11 +387,11 @@ async function createDiscordEventActionImpl(
 export const createDiscordEventAction = createRateLimitedStructuredAction(
   "createDiscordEventAction",
   createDiscordEventActionImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchGuildChannelsImpl(
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<any[]>> {
   try {
     // Get the current user session
@@ -410,7 +410,7 @@ async function fetchGuildChannelsImpl(
     const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
       return errorResponse(
-        "Forbidden: User does not have admin permission for this guild"
+        "Forbidden: User does not have admin permission for this guild",
       );
     }
 
@@ -422,7 +422,7 @@ async function fetchGuildChannelsImpl(
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -433,7 +433,9 @@ async function fetchGuildChannelsImpl(
     const channels = await response.json();
 
     // Filter to only text channels (type 0)
-    const textChannels = channels.filter((channel: any) => channel.type === 0);
+    const textChannels = channels.filter(
+      (channel: any) => channel.type === 0 || channel.type === 5,
+    );
 
     return successResponse(textChannels, "Channels fetched successfully");
   } catch (error) {
@@ -445,13 +447,13 @@ async function fetchGuildChannelsImpl(
 export const fetchGuildChannels = createRateLimitedStructuredAction(
   "fetchGuildChannels",
   fetchGuildChannelsImpl,
-  "discord"
+  "discord",
 );
 
 async function sendScheduleMessageImpl(
   guildId: string,
   channelId: string,
-  streamerId: number
+  streamerId: number,
 ): Promise<NormalizedResponse<any>> {
   try {
     // Get the current user session
@@ -470,7 +472,7 @@ async function sendScheduleMessageImpl(
     const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
       return errorResponse(
-        "Forbidden: User does not have admin permission for this guild"
+        "Forbidden: User does not have admin permission for this guild",
       );
     }
 
@@ -536,14 +538,14 @@ async function sendScheduleMessageImpl(
         body: JSON.stringify({
           content: messageContent,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error("Discord API error:", errorData);
       return errorResponse(
-        `Failed to send message: ${JSON.stringify(errorData)}`
+        `Failed to send message: ${JSON.stringify(errorData)}`,
       );
     }
 
@@ -565,5 +567,5 @@ async function sendScheduleMessageImpl(
 export const sendScheduleMessage = createRateLimitedStructuredAction(
   "sendScheduleMessage",
   sendScheduleMessageImpl,
-  "discord"
+  "discord",
 );
