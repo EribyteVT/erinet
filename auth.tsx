@@ -11,7 +11,7 @@ const getCallbackUrl = () => {
   if (process.env.AUTH_DISCORD_REDIRECT_URI) {
     return new URL(
       "/api/auth/callback/discord",
-      process.env.AUTH_DISCORD_REDIRECT_URI
+      process.env.AUTH_DISCORD_REDIRECT_URI,
     ).toString();
   }
 
@@ -51,6 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     DiscordProvider({
       id: "discord",
       name: "Discord",
+      issuer: "https://discord.com",
       authorization: getAuthorizationUrl(),
       token: "https://discord.com/api/oauth2/token",
       userinfo: "https://discord.com/api/users/@me",
@@ -86,7 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               user.id!,
               account.access_token,
               account.expires_in || 604800, // 1 week default,
-              "access"
+              "access",
             );
           }
 
@@ -95,7 +96,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               user.id!,
               account.refresh_token,
               account.expires_in,
-              "refresh"
+              "refresh",
             );
           }
 
