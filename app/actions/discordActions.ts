@@ -108,9 +108,32 @@ async function createDiscordEvent(
         entity_metadata: {
           location,
         },
-      }),
-    }),
-  );
+        body: JSON.stringify({
+          name,
+          scheduled_start_time: startTime,
+          scheduled_end_time: endTime,
+          entity_type: 3, // External event
+          privacy_level: 2, // Guild only (only option for now)
+          entity_metadata: {
+            location,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Discord API error:", errorData);
+      throw new Error(
+        `Failed to create Discord event: ${JSON.stringify(errorData)}`,
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error creating Discord event:", error);
+    throw error;
+  }
 }
 
 export async function updateDiscordEvent(
@@ -131,18 +154,8 @@ export async function updateDiscordEvent(
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            name,
-            scheduled_start_time: startTime,
-            scheduled_end_time: endTime,
-            entity_type: 3, // External event
-            privacy_level: 2, // Guild only
-            entity_metadata: {
-              location,
-            },
-          }),
-        },
-      ),
+        }),
+      },
     );
     return true;
   } catch (error) {
@@ -166,7 +179,7 @@ export async function deleteDiscordEvent(
             "Content-Type": "application/json",
           },
         },
-      ),
+      },
     );
     return true;
   } catch (error) {
@@ -191,7 +204,7 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-        }),
+        },
       );
 
       // Cache the result
@@ -288,26 +301,67 @@ async function fetchSpecificUserGuildImpl(
 
   // If not in cache, fetch from Discord API with retry logic
   if (!guilds) {
-    try {
-      const token = await getDiscordToken(session.user.id);
-      if (!token) {
-        throw new Error("Discord token not found or expired");
-      }
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const token = await getDiscordToken(session.user.id);
+        if (!token) {
+          throw new Error("Discord token not found or expired");
+        }
 
-      guilds = await retryDiscordApiCall(() =>
-        fetch("https://discord.com/api/v10/users/@me/guilds", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+        const response = await fetch(
+          "https://discord.com/api/v10/users/@me/guilds",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           },
-        }),
-      );
+        );
 
-      // Cache all guilds
-      cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
-    } catch (error) {
-      console.error("Failed to fetch guilds:", error);
-      throw error;
+        if (!response.ok) {
+          const errorStatus = response.status;
+          console.error(
+            `Discord API error on attempt ${attempt + 1}: ${errorStatus}`,
+          );
+
+          // Check if we should retry based on status code
+          if (
+            errorStatus === 429 ||
+            (errorStatus >= 500 && errorStatus < 600)
+          ) {
+            // Rate limit or server error - worth retrying
+            if (attempt < MAX_RETRIES - 1) {
+              console.log(`Waiting ${RETRY_DELAY}ms before retry...`);
+              await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+              continue;
+            }
+          }
+
+          throw new Error(`Discord API error: ${errorStatus}`);
+        }
+
+        guilds = await response.json();
+
+        // Cache all guilds
+        cache.set(allGuildsCacheKey, guilds, GUILD_CACHE_DURATION);
+
+        // Success, break out of retry loop
+        break;
+      } catch (error) {
+        if (attempt === MAX_RETRIES - 1) {
+          // This was our last attempt, rethrow the error
+          console.error(
+            `Failed to fetch guilds after ${MAX_RETRIES} attempts:`,
+            error,
+          );
+          throw error;
+        }
+
+        console.log(
+          `Attempt ${attempt + 1} failed, retrying after ${RETRY_DELAY}ms`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      }
     }
   }
 
@@ -416,7 +470,7 @@ async function fetchGuildChannelsImpl(
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }),
+      },
     );
 
     // Filter to only text channels (type 0)
@@ -524,8 +578,18 @@ async function sendScheduleMessageImpl(
         body: JSON.stringify({
           content: messageContent,
         }),
-      }),
+      },
     );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Discord API error:", errorData);
+      return errorResponse(
+        `Failed to send message: ${JSON.stringify(errorData)}`,
+      );
+    }
+
+    const messageData = await response.json();
 
     // Update the streamer_lookup table with the message ID
     await prisma.streamer_lookup.update({
