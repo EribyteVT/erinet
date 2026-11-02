@@ -80,12 +80,11 @@ const creditData: CreditCategory[] = [
     },
     people: [
       {
-        name: "Eribyte",
+        name: "sleepycrea",
         role: "Artist",
-        description:
-          "Im getting a new one soon, my ms paint doodles don't cut it",
-        imageUrl: "/Eribyte.png",
-        websiteUrl: "https://eribyte.net",
+        description: "created the pfp for Eribot!",
+        imageUrl: "/Eribot_face.png",
+        websiteUrl: "https://sleepycrea.carrd.co/",
         websiteLabel: "Visit Portfolio",
       },
     ],
@@ -125,12 +124,28 @@ const creditData: CreditCategory[] = [
         websiteLabel: "Visit Website",
       },
       {
-        name: "NightRose",
+        name: "Night Rose",
         role: "Beta Tester",
         description:
           "Found a bug with website generation, thank her for it working well",
         imageUrl: "/nightRose.png",
-        websiteUrl: "https://nightrosevt.github.io/nightrose/",
+        websiteUrl: "https://nightrose.live",
+        websiteLabel: "Visit Website",
+      },
+      {
+        name: "NotsoUnhappy",
+        role: "Beta Tester",
+        description: "Found a bug with date entry that caused a crash",
+        imageUrl: "/notso.png",
+        websiteUrl: "https://www.twitch.tv/notsounhappy",
+        websiteLabel: "Visit Website",
+      },
+      {
+        name: "Luna Baroness",
+        role: "Beta Tester",
+        description: "helped improve the readme for website hosting",
+        imageUrl: "/Luna.png",
+        websiteUrl: "https://www.twitch.tv/LunaBaroness",
         websiteLabel: "Visit Website",
       },
     ],

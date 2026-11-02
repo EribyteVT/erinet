@@ -28,8 +28,8 @@ export default async function DashboardPage() {
       <div className=" relative">
         <h1 className=" text-6xl text-center py-7">Welcome to Eribot!</h1>
         <Image
-          className="rounded-full mx-auto"
-          src="/Eribyte.png"
+          className="rounded-3xl mx-auto"
+          src="/Eribot_face.png"
           alt=" a photo of eribyte"
           height={600}
           width={600}
@@ -38,9 +38,9 @@ export default async function DashboardPage() {
           art by:{" "}
           <a
             className=" border-b-2 border-white"
-            href="https://twitch.tv/eribytevt"
+            href="https://sleepycrea.carrd.co/"
           >
-            no one
+            @sleepycrea
           </a>
         </div>
 

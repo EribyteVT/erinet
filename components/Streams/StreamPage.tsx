@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, Undo2 } from "lucide-react";
+import { Globe, Undo2, ImageIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { StreamTable } from "@/components/Streams/StreamTable/streamTable";
@@ -60,7 +60,7 @@ export default function StreamPage({
 
         const streamData = await fetchStreamsAction(
           streamer.streamer_id.toString(),
-          new Date()
+          new Date(),
         );
 
         if (streamData.data) {
@@ -88,28 +88,28 @@ export default function StreamPage({
 
       {/* Header with back button and guild info */}
       <div className="mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/guilds">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full"
-              aria-label="Back to guild list"
-            >
-              <Undo2 className="h-5 w-5" />
-            </Button>
-          </Link>
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center gap-4">
+            <Link href="/guilds">
+              <Button variant="outline" size="sm">
+                <Undo2 className="h-4 w-4 mr-2" />
+                Back to Servers
+              </Button>
+            </Link>
+            <div className="flex gap-2">
+              <WebsiteGenerator
+                streamer={streamer}
+                discordAvatar={avatarUrl}
+                crudUrl={crudUrl}
+              />
+            </div>
+          </div>
+
           <GuildHeader guild={guild} />
         </div>
 
         <div className="mt-2 border-b border-border" />
       </div>
-
-      <WebsiteGenerator
-        streamer={streamer}
-        discordAvatar={avatarUrl}
-        crudUrl={crudUrl}
-      />
 
       {/* Stream table */}
       <div className="mb-8">

@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["schedules", "public"]
 }
 
 model auth_state {
@@ -14,6 +16,7 @@ model auth_state {
   created_at DateTime @default(now())
 
   @@index([expires_at])
+  @@schema("public")
 }
 
 model EncryptedToken {
@@ -30,6 +33,7 @@ model EncryptedToken {
   @@unique([guildId, service, tokenType])
   @@index([guildId, service])
   @@map("encrypted_tokens")
+  @@schema("public")
 }
 
 model stream_table_tied {
@@ -43,6 +47,7 @@ model stream_table_tied {
   category_id       String?  @db.VarChar
 
   @@unique([stream_date, streamer_id], map: "stream_table_tied_stream_date_idx")
+  @@schema("schedules")
 }
 
 model streamer_lookup {
@@ -61,6 +66,8 @@ model streamer_lookup {
   auto_change_schedule String? @db.VarChar
   image_message_id     String? @db.VarChar
   streamer_link        String? @db.VarChar
+
+  @@schema("schedules")
 }
 
 model streamer_refresh_tokens {
@@ -69,4 +76,23 @@ model streamer_refresh_tokens {
   refresh_salt   String @db.VarChar
   access_token   String @db.VarChar
   access_salt    String @db.VarChar
+
+  @@schema("schedules")
+}
+
+model guild_schedule_template {
+  id              String    @id @default(cuid())
+  guild_id        String    @unique @map("guild_id") // One template per guild
+  template_name   String?   @map("template_name")
+  template_data   Json      @map("template_data") // Stores the template configuration (polygons, layout, etc.)
+  background_url  String?   @map("background_url") // Optional background image URL
+  background_file_name  String?   @map("background_file_name") // Original filename
+  background_file_path  String?   @map("background_file_path") // Server file path
+  background_file_size  Int?      @map("background_file_size") // File size in bytes
+  background_file_type  String?   @map("background_file_type") // MIME type
+  created_at      DateTime  @default(now()) @map("created_at")
+  updated_at      DateTime  @updatedAt @map("updated_at")
+
+  @@map("guild_schedule_template")
+  @@schema("schedules")
 }
