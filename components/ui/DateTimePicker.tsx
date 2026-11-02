@@ -57,7 +57,7 @@ export function DateTimePicker({
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground"
+            !date && "text-muted-foreground",
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -85,31 +85,30 @@ export function DateTimePicker({
             <TimeField
               value={time}
               onChange={handleTimeChange}
-              className="grow text-white"
-              sx={{
-                "& .MuiInputBase-root": {
-                  backgroundColor: "transparent",
-                  borderRadius: "0.375rem",
-                  borderColor: "white",
-                  borderWidth: "1px",
-                },
-                "& .MuiInputBase-input": {
-                  color: "#E9DB5D",
-                  padding: "0.5rem",
-                  borderColor: "white",
-                },
-                ".css-vycme6-MuiPickersInputBase-root-MuiPickersOutlinedInput-root": {
-                  color: "#FFFFFF"
-                }
-              }}
               format="hh:mm a"
-              // Add error handling
+              slotProps={{
+                textField: {
+                  InputProps: {
+                    style: {
+                      color: "#FFFFFF",
+                      WebkitTextFillColor: "#FFFFFF",
+                      backgroundColor: "transparent",
+                      borderRadius: "0.375rem",
+                      border: "1px solid white",
+                    },
+                  },
+                  inputProps: {
+                    style: {
+                      color: "#FFFFFF",
+                      WebkitTextFillColor: "#FFFFFF",
+                      padding: "0.5rem",
+                    },
+                  },
+                },
+              }}
               onError={(error) => {
                 console.log("Time field error:", error);
-                // Reset to current time if there's an error
-                if (error) {
-                  setTime(dayjs());
-                }
+                if (error) setTime(dayjs());
               }}
             />
           </LocalizationProvider>

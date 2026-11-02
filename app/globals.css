@@ -89,7 +89,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
@@ -148,4 +150,8 @@
   .center-size {
     @apply mx-auto p-2.5;
   }
+}
+
+.MuiTimeField-root {
+  color: #ffffff;
 }

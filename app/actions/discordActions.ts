@@ -26,7 +26,7 @@ const DEFAULT_RETRY_DELAY = 1000; // Fallback delay in ms
 // Utility function for retrying Discord API calls with proper retry_after handling
 async function retryDiscordApiCall<T>(
   apiCall: () => Promise<Response>,
-  maxRetries: number = DEFAULT_MAX_RETRIES
+  maxRetries: number = DEFAULT_MAX_RETRIES,
 ): Promise<T> {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
@@ -38,20 +38,17 @@ async function retryDiscordApiCall<T>(
 
       const errorStatus = response.status;
       console.error(
-        `Discord API error on attempt ${attempt + 1}: ${errorStatus}`
+        `Discord API error on attempt ${attempt + 1}: ${errorStatus}`,
       );
 
       // Check if we should retry based on status code
-      if (
-        errorStatus === 429 ||
-        (errorStatus >= 500 && errorStatus < 600)
-      ) {
+      if (errorStatus === 429 || (errorStatus >= 500 && errorStatus < 600)) {
         // Rate limit or server error - worth retrying
         if (attempt < maxRetries - 1) {
           // Get retry delay from Discord's retry_after header or use default
           let retryDelay = DEFAULT_RETRY_DELAY;
-          
-          const retryAfterHeader = response.headers.get('retry-after');
+
+          const retryAfterHeader = response.headers.get("retry-after");
           if (retryAfterHeader) {
             // Discord returns retry_after in seconds, convert to milliseconds
             retryDelay = parseInt(retryAfterHeader) * 1000;
@@ -72,13 +69,13 @@ async function retryDiscordApiCall<T>(
         // This was our last attempt, rethrow the error
         console.error(
           `Failed Discord API call after ${maxRetries} attempts:`,
-          error
+          error,
         );
         throw error;
       }
 
       console.log(
-        `Attempt ${attempt + 1} failed, retrying after ${DEFAULT_RETRY_DELAY}ms`
+        `Attempt ${attempt + 1} failed, retrying after ${DEFAULT_RETRY_DELAY}ms`,
       );
       await new Promise((resolve) => setTimeout(resolve, DEFAULT_RETRY_DELAY));
     }
@@ -93,29 +90,26 @@ async function createDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<any> {
   return retryDiscordApiCall(() =>
-    fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/scheduled-events`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-          "Content-Type": "application/json",
+    fetch(`https://discord.com/api/v10/guilds/${guildId}/scheduled-events`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        scheduled_start_time: startTime,
+        scheduled_end_time: endTime,
+        entity_type: 3, // External event
+        privacy_level: 2, // Guild only (only option for now)
+        entity_metadata: {
+          location,
         },
-        body: JSON.stringify({
-          name,
-          scheduled_start_time: startTime,
-          scheduled_end_time: endTime,
-          entity_type: 3, // External event
-          privacy_level: 2, // Guild only (only option for now)
-          entity_metadata: {
-            location,
-          },
-        }),
-      }
-    )
+      }),
+    }),
   );
 }
 
@@ -125,7 +119,7 @@ export async function updateDiscordEvent(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<boolean> {
   try {
     await retryDiscordApiCall(() =>
@@ -147,8 +141,8 @@ export async function updateDiscordEvent(
               location,
             },
           }),
-        }
-      )
+        },
+      ),
     );
     return true;
   } catch (error) {
@@ -159,7 +153,7 @@ export async function updateDiscordEvent(
 
 export async function deleteDiscordEvent(
   guildId: string,
-  eventId: string
+  eventId: string,
 ): Promise<boolean> {
   try {
     await retryDiscordApiCall(() =>
@@ -171,8 +165,8 @@ export async function deleteDiscordEvent(
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-        }
-      )
+        },
+      ),
     );
     return true;
   } catch (error) {
@@ -190,14 +184,14 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
     // If not in cache, fetch fresh data
     if (!guilds) {
       console.log("Cache miss for botGuilds, fetching from Discord API");
-      
+
       guilds = await retryDiscordApiCall(() =>
         fetch("https://discord.com/api/v10/users/@me/guilds", {
           headers: {
             Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
             "Content-Type": "application/json",
           },
-        })
+        }),
       );
 
       // Cache the result
@@ -216,7 +210,7 @@ async function getBotGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
 export const getBotGuilds = createRateLimitedStructuredAction(
   "getBotGuilds",
   getBotGuildsImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
@@ -251,7 +245,7 @@ async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-      })
+      }),
     );
 
     // Store in cache for future use
@@ -267,11 +261,11 @@ async function fetchUserGuildsImpl(): Promise<NormalizedResponse<GuildData[]>> {
 export const fetchUserGuilds = createRateLimitedStructuredAction(
   "fetchUserGuilds",
   fetchUserGuildsImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchSpecificUserGuildImpl(
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<GuildData | null>> {
   const session = await auth();
   if (!session?.user?.id) {
@@ -306,7 +300,7 @@ async function fetchSpecificUserGuildImpl(
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        })
+        }),
       );
 
       // Cache all guilds
@@ -334,7 +328,7 @@ async function fetchSpecificUserGuildImpl(
 export const fetchSpecificUserGuild = createRateLimitedStructuredAction(
   "fetchSpecificUserGuild",
   fetchSpecificUserGuildImpl,
-  "discord"
+  "discord",
 );
 
 async function createDiscordEventActionImpl(
@@ -343,7 +337,7 @@ async function createDiscordEventActionImpl(
   name: string,
   startTime: string,
   endTime: string,
-  location: string
+  location: string,
 ): Promise<NormalizedResponse<Stream>> {
   try {
     // Get the current user session
@@ -370,7 +364,7 @@ async function createDiscordEventActionImpl(
       name,
       startTime,
       endTime,
-      location
+      location,
     );
 
     const updatedStream = await prisma.stream_table_tied.update({
@@ -388,11 +382,11 @@ async function createDiscordEventActionImpl(
 export const createDiscordEventAction = createRateLimitedStructuredAction(
   "createDiscordEventAction",
   createDiscordEventActionImpl,
-  "discord"
+  "discord",
 );
 
 async function fetchGuildChannelsImpl(
-  guildId: string
+  guildId: string,
 ): Promise<NormalizedResponse<any[]>> {
   try {
     // Get the current user session
@@ -411,7 +405,7 @@ async function fetchGuildChannelsImpl(
     const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
       return errorResponse(
-        "Forbidden: User does not have admin permission for this guild"
+        "Forbidden: User does not have admin permission for this guild",
       );
     }
 
@@ -422,11 +416,13 @@ async function fetchGuildChannelsImpl(
           Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
           "Content-Type": "application/json",
         },
-      })
+      }),
     );
 
     // Filter to only text channels (type 0)
-    const textChannels = channels.filter((channel: any) => channel.type === 0);
+    const textChannels = channels.filter(
+      (channel: any) => channel.type === 0 || channel.type === 5,
+    );
 
     return successResponse(textChannels, "Channels fetched successfully");
   } catch (error) {
@@ -438,13 +434,13 @@ async function fetchGuildChannelsImpl(
 export const fetchGuildChannels = createRateLimitedStructuredAction(
   "fetchGuildChannels",
   fetchGuildChannelsImpl,
-  "discord"
+  "discord",
 );
 
 async function sendScheduleMessageImpl(
   guildId: string,
   channelId: string,
-  streamerId: number
+  streamerId: number,
 ): Promise<NormalizedResponse<any>> {
   try {
     // Get the current user session
@@ -463,7 +459,7 @@ async function sendScheduleMessageImpl(
     const hasPermission = await isAllowedGuild(null, guildId);
     if (!hasPermission) {
       return errorResponse(
-        "Forbidden: User does not have admin permission for this guild"
+        "Forbidden: User does not have admin permission for this guild",
       );
     }
 
@@ -528,7 +524,7 @@ async function sendScheduleMessageImpl(
         body: JSON.stringify({
           content: messageContent,
         }),
-      })
+      }),
     );
 
     // Update the streamer_lookup table with the message ID
@@ -547,5 +543,5 @@ async function sendScheduleMessageImpl(
 export const sendScheduleMessage = createRateLimitedStructuredAction(
   "sendScheduleMessage",
   sendScheduleMessageImpl,
-  "discord"
+  "discord",
 );
