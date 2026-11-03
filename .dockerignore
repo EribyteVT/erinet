@@ -13,6 +13,8 @@ build
 # Misc
 .DS_Store
 *.pem
+# public AWS RDS CA bundle (not a secret), needed for DB SSL
+!certs/rds-global-bundle.pem
 
 # Debug
 npm-debug.log*

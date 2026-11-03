@@ -1,6 +1,7 @@
 import Guild from "@/components/guild/Guild";
 import { fetchUserGuilds, getBotGuilds } from "@/app/actions/discordActions";
 import { GuildData } from "../Streams/types";
+import { hasAdminPermission } from "@/utils/discordPermissions";
 
 async function GetGuildData({}: {}) {
   const guilds = (await fetchUserGuilds()).data;
@@ -12,8 +13,7 @@ async function GetGuildData({}: {}) {
   });
 
   const admin_guilds = guilds.filter((value: GuildData) => {
-    // console.log(parseInt(value.permissions) & 0x0000000000000008);
-    return (parseInt(value.permissions) & 0x0000000000000008) != 0;
+    return hasAdminPermission(value.permissions);
   });
 
   admin_guilds.sort((a: GuildData, b: GuildData) => {

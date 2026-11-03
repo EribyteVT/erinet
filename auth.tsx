@@ -82,9 +82,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Initial sign in
       if (account && user) {
         if (account.provider === "discord") {
+          // Auth.js gives `user.id` a random UUID on every login when there's no
+          // database adapter, so key everything on the real Discord user ID.
+          const discordId = account.providerAccountId;
+          token.sub = discordId;
+
           if (account.access_token) {
             await storeDiscordToken(
-              user.id!,
+              discordId,
               account.access_token,
               account.expires_in || 604800, // 1 week default,
               "access",
@@ -93,7 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (account.refresh_token) {
             await storeDiscordToken(
-              user.id!,
+              discordId,
               account.refresh_token,
               account.expires_in,
               "refresh",
@@ -102,7 +107,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           // Store user info
           token.discordAccount = {
-            id: user.id,
+            id: discordId,
             username: user.name || "",
             email: user.email || "",
             avatar: user.image,

@@ -4,6 +4,9 @@ const nextConfig = {
   assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || "",
 
   output: "standalone",
+  // Pin the project root so a stray lockfile in a parent folder
+  // (e.g. C:\Users\<you>\pnpm-lock.yaml) doesn't change standalone file tracing.
+  outputFileTracingRoot: __dirname,
   reactStrictMode: true,
   images: {
     remotePatterns: [

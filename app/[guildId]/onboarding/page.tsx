@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/discordActions";
 import { getStreamerByGuildAction } from "@/app/actions/streameractions";
 import { GuildData } from "@/components/Streams/types";
+import { hasAdminPermission } from "@/utils/discordPermissions";
 
 export default async function OnboardingPage({
   params,
@@ -40,7 +41,7 @@ export default async function OnboardingPage({
   const guilds = guildsResponse.data;
 
   const userHasPermission = guilds.some(
-    (g: GuildData) => g.id === guildId && (parseInt(g.permissions) & 0x8) !== 0
+    (g: GuildData) => g.id === guildId && hasAdminPermission(g.permissions)
   );
 
   if (!userHasPermission) return redirect("/guilds");

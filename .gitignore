@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+# public AWS RDS CA bundle (not a secret), needed for DB SSL
+!certs/rds-global-bundle.pem
 
 # debug
 npm-debug.log*
@@ -35,3 +37,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma generated client
+/app/generated/prisma

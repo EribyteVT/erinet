@@ -1,6 +1,7 @@
 "use client";
 import { fetchUserGuilds, getBotGuilds } from "@/app/actions/discordActions";
 import { GuildData } from "../Streams/types";
+import { hasAdminPermission } from "@/utils/discordPermissions";
 import {
   Card,
   CardContent,
@@ -40,7 +41,7 @@ export default function WebsiteGuildSelector() {
         // Filter guilds where user has admin permissions
         const filteredGuilds = userGuildsResponse.data.filter(
           (guild: GuildData) => {
-            return (parseInt(guild.permissions) & 0x0000000000000008) !== 0;
+            return hasAdminPermission(guild.permissions);
           }
         );
 
